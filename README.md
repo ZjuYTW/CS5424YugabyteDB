@@ -18,12 +18,31 @@ git clone --recurse-submodules\
 ```
 
 **Build**
+Before building the demo, we should first install some dependencies
 ```
-cd CS5424YugabyteDB && mkdir build
-cmake ..
-make
-# To Run the Demo
-./build/src/ycql_perf
+$ make init
+```
+> For YCQL
+```bash
+# then you should build the driver manully
+$ mkdir tmp && cd tmp
+$ git clone https://github.com/yugabyte/cassandra-cpp-driver.git
+$ mkdir build && cd build
+$ sudo make && make install
+```
+> For YSQL (TBD)
+```
+```
+> Build the Demo
+```
+# make sure you are at YugabyteDB folder
+$ make build
+```
+
+### Formatter
+We use `clang-format` as the formatter, every time before you commit. Do
+```
+$ make format
 ```
 
 ## TODO

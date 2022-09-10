@@ -27,9 +27,13 @@
 *.lib
 
 # Executables
+bin/*
 *.exe
 *.out
 *.app
 
 # Cmake
 build/*
+
+# Others
+.DS_Store

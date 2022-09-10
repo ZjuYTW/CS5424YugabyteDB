@@ -4,16 +4,13 @@
 #include <iostream>
 #include <string>
 
-namespace ydb_cql{
-  class Parser{
-    public:
-    explicit Parser(std::string input){
-      std::cout << input << std::endl; 
-    } 
+namespace ydb_cql {
+class Parser {
+ public:
+  explicit Parser(std::string input) { std::cout << input << std::endl; }
 
-    void Foo() noexcept;
-  };
-}
-
+  void Foo() noexcept;
+};
+}  // namespace ydb_cql
 
 #endif
