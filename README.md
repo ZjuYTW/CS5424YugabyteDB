@@ -17,7 +17,7 @@ git clone --recurse-submodules\
 
 ```
 
-**Build**
+**Build**  
 Before building the demo, we should first install some dependencies
 ```
 $ make init
@@ -29,12 +29,13 @@ $ mkdir tmp && cd tmp
 $ git clone https://github.com/yugabyte/cassandra-cpp-driver.git
 $ mkdir build && cd build
 $ sudo make && make install
+$ rm -r tmp
 ```
 > For YSQL (TBD)
 ```
 ```
 > Build the Demo
-```
+```bash
 # make sure you are at YugabyteDB folder
 $ make build
 ```
