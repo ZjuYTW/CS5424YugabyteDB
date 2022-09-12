@@ -28,6 +28,7 @@ $ make init
 $ mkdir tmp && cd tmp
 $ git clone https://github.com/yugabyte/cassandra-cpp-driver.git
 $ mkdir build && cd build
+$ cmake ..
 $ sudo make && make install
 $ rm -r tmp
 ```
