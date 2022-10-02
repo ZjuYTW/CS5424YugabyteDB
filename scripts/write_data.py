@@ -3,6 +3,7 @@ import psycopg2
 import psycopg2.extras
 
 from tqdm import tqdm
+import itertools
 
 config = {
     'host': '10.20.11.96',
@@ -53,7 +54,7 @@ data_cfg = [
         'foreign_keys': ["FOREIGN KEY (S_W_ID) REFERENCES Warehouse(W_ID)",
                          "FOREIGN KEY (S_I_ID) REFERENCES Item(I_ID)"]
     }]
-# data_cfg = data_cfg[6:]
+data_cfg = data_cfg[5:6]
 
 
 def parse_table(file, name):
@@ -132,6 +133,49 @@ def write_data(yb, cfg):
     
     print(f">>>> Successfully wrote data for {cfg['name']}.")
 
+def batch_read(reader, batch_size):
+    while True:
+        lines = list(itertools.islice(reader, batch_size))
+        if not lines:
+            break
+        yield lines
+
+def parse_data_multi(lines, name):
+    """
+    parse data from csv file and return INSERT INTO statement
+    """
+    for line in lines:
+        for i in range(len(line)):
+            if not line[i].isnumeric():
+                if line[i] == "null":
+                    line[i] = "NULL"
+                else:
+                    line[i] = f"'{line[i]}'"
+
+    insert_stmt = f"INSERT INTO {name} VALUES \n"
+    fields = []
+    for line in lines:
+        fields.append("(" + ", ".join(line) + ")")
+    fields = ",\n".join(fields)
+    insert_stmt += fields + ";"
+    return insert_stmt
+
+def write_data_multi(yb, cfg):
+    with open(cfg['file'], 'r') as f:
+        reader = csv.reader(f)
+        try:
+            for row in tqdm(batch_read(reader, 30)):
+                insert_stmt = parse_data_multi(row, cfg['name'])
+                with yb.cursor() as yb_cursor:
+                    yb_cursor.execute(insert_stmt)
+            yb.commit()
+        except Exception as e:
+            print("Exception while writing data")
+            print(e)
+            exit(1)
+    
+    print(f">>>> Successfully wrote data for {cfg['name']}.")
+
 def main(conf):
     print(">>>> Connecting to YugabyteDB!")
 
@@ -153,11 +197,12 @@ def main(conf):
     print(">>>> Successfully connected to YugabyteDB!")
     
     for cfg in data_cfg:
-        # print(f">>>> Creating table for {cfg['name']}")
-        # create_table_stmt = parse_table(cfg['table'], cfg['name'])
-        # create_table(yb, create_table_stmt, cfg['name'])
-        # print(f">>>> Writing data for {cfg['name']}")
+        print(f">>>> Creating table for {cfg['name']}")
+        create_table_stmt = parse_table(cfg['table'], cfg['name'])
+        create_table(yb, create_table_stmt, cfg['name'])
+        print(f">>>> Writing data for {cfg['name']}")
         # write_data(yb, cfg)
+        write_data_multi(yb, cfg)
         print(f">>>> Altering table for {cfg['name']}")
         alter_table(yb, cfg['foreign_keys'], cfg['name'])
 
