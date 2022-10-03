@@ -42,7 +42,9 @@ class Status {
 
   /// Return an error status for IO errors (e.g. Failed to open or read from a
   /// file).
-  static Status IOError() noexcept { return Status(StatusCode::kIOError, ""); }
+  static Status IOError(const std::string& msg = "") noexcept {
+    return Status(StatusCode::kIOError, msg);
+  }
 
   static Status NotImplemented(const std::string& msg = "") noexcept {
     return Status(StatusCode::kNotImplemented, msg);

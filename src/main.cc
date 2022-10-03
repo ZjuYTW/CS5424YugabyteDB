@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "cassandra.h"
-#include "parser/parser.h"
+#include "common/parser/parser.h"
 
 void print_error(CassFuture* future) {
   const char* message;

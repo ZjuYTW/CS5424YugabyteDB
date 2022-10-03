@@ -4,13 +4,33 @@
 #include <iostream>
 #include <string>
 
-namespace ydb_cql {
+#include "common/txn/txn_type.h"
+#include "common/util/status.h"
+
+namespace ydb_util {
+
+// Usage: After init the Parser class with input file path
+// Call GetNextTxn to get next Txn class.
 class Parser {
  public:
-  explicit Parser(std::string input) {}
+  explicit Parser(const std::string& file_name) : file_name_(file_name) {}
 
-  void Foo() noexcept;
+  Status Init() noexcept {
+    fs_ = std::ifstream(file_name_, std::ios::in);
+    if (!fs_.is_open()) {
+      return Status::IOError("Fail to open " + file_name_);
+    }
+    return Status::OK();
+  }
+
+  Status GetNextTxn(Txn** txn) noexcept;
+
+ private:
+  static Txn* GetTxnPtr_(char c) noexcept;
+
+  std::string file_name_;
+  std::ifstream fs_;
 };
-}  // namespace ydb_cql
+}  // namespace ydb_util
 
 #endif

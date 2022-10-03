@@ -1,5 +1,8 @@
 #ifndef YDB_PERF_TYPE_H_
 #define YDB_PERF_TYPE_H_
+
+#include <fstream>
+
 #include "common/util/status.h"
 
 namespace ydb_util {
@@ -20,6 +23,9 @@ class Txn {
 
   virtual Status Execute() noexcept = 0;
 
+  virtual Status Init(const std::string& first_line,
+                      std::ifstream& ifs) noexcept = 0;
+
  private:
   TxnType txn_type_;
 };
@@ -29,6 +35,9 @@ class NewOrderTxn : public Txn {
   explicit NewOrderTxn() : Txn(TxnType::new_order) {}
 
   Status Execute() noexcept override;
+
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override;
 };
 
 class PaymentTxn : public Txn {
@@ -36,6 +45,9 @@ class PaymentTxn : public Txn {
   explicit PaymentTxn() : Txn(TxnType::payment) {}
 
   Status Execute() noexcept override;
+
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override;
 };
 
 class DeliveryTxn : public Txn {
@@ -43,6 +55,9 @@ class DeliveryTxn : public Txn {
   explicit DeliveryTxn() : Txn(TxnType::delivery) {}
 
   Status Execute() noexcept override;
+
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override;
 };
 
 class OrderStatusTxn : public Txn {
@@ -50,6 +65,9 @@ class OrderStatusTxn : public Txn {
   explicit OrderStatusTxn() : Txn(TxnType::order_status) {}
 
   Status Execute() noexcept override;
+
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override;
 };
 
 class StockLevelTxn : public Txn {
@@ -57,6 +75,9 @@ class StockLevelTxn : public Txn {
   explicit StockLevelTxn() : Txn(TxnType::stock_level) {}
 
   Status Execute() noexcept override;
+
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override;
 };
 
 class PopularItemTxn : public Txn {
@@ -64,6 +85,9 @@ class PopularItemTxn : public Txn {
   explicit PopularItemTxn() : Txn(TxnType::popular_item) {}
 
   Status Execute() noexcept override;
+
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override;
 };
 
 class TopBalanceTxn : public Txn {
@@ -71,6 +95,9 @@ class TopBalanceTxn : public Txn {
   explicit TopBalanceTxn() : Txn(TxnType::top_balance) {}
 
   Status Execute() noexcept override;
+
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override;
 };
 
 class RelatedCustomerTxn : public Txn {
@@ -78,6 +105,9 @@ class RelatedCustomerTxn : public Txn {
   explicit RelatedCustomerTxn() : Txn(TxnType::related_customer) {}
 
   Status Execute() noexcept override;
+
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override;
 };
 };  // namespace ydb_util
 
