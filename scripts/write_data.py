@@ -5,7 +5,7 @@ import psycopg2.extras
 from tqdm import tqdm
 
 config = {
-    'host': '10.20.11.96',
+    'host': "127.0.0.1",
     'port': '5433',
     'dbName': 'yugabyte',
     'dbUser': 'yugabyte',
