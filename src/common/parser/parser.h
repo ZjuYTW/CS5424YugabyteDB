@@ -7,7 +7,7 @@
 namespace ydb_cql {
 class Parser {
  public:
-  explicit Parser(std::string input) { std::cout << input << std::endl; }
+  explicit Parser(std::string input) {}
 
   void Foo() noexcept;
 };

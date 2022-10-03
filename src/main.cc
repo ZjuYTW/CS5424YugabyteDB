@@ -97,7 +97,7 @@ int main() {
   CassCluster* cluster = NULL;
   CassSession* session = cass_session_new();
   CassFuture* close_future = NULL;
-  char* hosts = "127.0.0.1";
+  char* hosts = "192.168.48.244";
 
   cluster = create_cluster(hosts);
 
