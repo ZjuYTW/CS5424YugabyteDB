@@ -15,9 +15,12 @@ set(HEADERS_DIR ${PROJECT_SOURCE_DIR}/src)
 
 include_directories(${INSTALL_INCLUDE_DIR})
 include_directories(${HEADERS_DIR})
+include_directories(third-party/threadpool)
+
 # to introduce YCQL lib
 include_directories("/usr/local/include")
 
+# add_subdirectory(third-party/googletest)
 add_subdirectory(src)
 
 # add_subdirectory(test)
