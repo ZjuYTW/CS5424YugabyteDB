@@ -3,7 +3,6 @@
 #include <string>
 
 namespace ydb_util {
-
 enum class StatusCode : unsigned char {
   kOK = 0,
   kInvalid = 1,

@@ -1,8 +1,8 @@
 #include <iostream>
 
+#include "ThreadPool.h"
 #include "cassandra.h"
 #include "common/parser/parser.h"
-#include "ThreadPool.h"
 
 void print_error(CassFuture* future) {
   const char* message;

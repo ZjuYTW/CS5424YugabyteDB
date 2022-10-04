@@ -40,3 +40,6 @@ tmp
 
 # Others
 .DS_Store
+
+# VSCode
+.vscode/*
