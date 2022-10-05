@@ -16,7 +16,11 @@ class NewOrderTxn : public Txn<Connection> {
   // and follows M lines
   Status Init(const std::string& first_line, std::ifstream& ifs) noexcept {
     auto ids = str_split(first_line, ',');
-    assert(ids.size() == 5);
+    if (ids.size() != 5) {
+      return Status::AssertionFailed(
+          "Expect NewOrderTxn has 5 first line args, but got " +
+          std::to_string(ids.size()));
+    }
     uint32_t m;
     // ignore first N
     // C_ID
@@ -33,6 +37,7 @@ class NewOrderTxn : public Txn<Connection> {
       getline(ifs, tmp);
       orders_.push_back(tmp);
     }
+    return Status::OK();
   }
 
   Status ExecuteCQL() noexcept {
@@ -42,13 +47,25 @@ class NewOrderTxn : public Txn<Connection> {
       ParseOneOrder(orders_[i], &i_id, &w_id, &quantity);
       // Put your logic here, from Project New-Order Txn here
     }
+    return Status::OK();
   }
 
-  Status ExecuteSQL() noexcept {}
+  Status ExecuteSQL() noexcept { return Status::OK(); }
 
  private:
   static Status ParseOneOrder(const std::string& order, uint32_t* i_id,
-                              uint32_t* w_id, uint32_t* quantity) {}
+                              uint32_t* w_id, uint32_t* quantity) {
+    auto ret = str_split(order, ',');
+    if (ret.size() != 3) {
+      return Status::AssertionFailed(
+          "Expect one order line has 3 args, but got " +
+          std::to_string(ret.size()));
+    }
+    *i_id = stoi(ret[0]);
+    *w_id = stoi(ret[1]);
+    *quantity = stoi(ret[2]);
+    return Status::OK();
+  }
 
   std::vector<std::string> orders_;
   // Maybe change it into BigInt
