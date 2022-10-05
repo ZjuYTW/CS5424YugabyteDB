@@ -52,7 +52,6 @@ class CQLDriver {
       print_error(future);
     }
     cass_future_free(future);
-
     return rc;
   }
 
@@ -66,10 +65,11 @@ class CQLDriver {
  private:
   const CassCluster* cluster_;
   std::string ip_add_;
-  std::string xactDir = "data/xact-files/";
+  static std::string xactDir;
   int idx_;
 };
 
+std::string CQLDriver::xactDir = "data/xact-files/";
 };  // namespace ycql_impl
 
 #endif

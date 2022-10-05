@@ -2,7 +2,7 @@
 
 namespace ydb_util {
 Status::Status(StatusCode code, const std::string& msg) noexcept {
-  state_ = new State();
+  state_ = new State;
   state_->code = code;
   state_->msg = msg;
 }
