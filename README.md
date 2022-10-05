@@ -26,11 +26,13 @@ $ make init
 ```bash
 # then you should build the driver manully
 $ mkdir tmp && cd tmp
-$ git clone https://github.com/yugabyte/cassandra-cpp-driver.git
+$ git clone https://github.com/yugabyte/cassandra-cpp-driver.git && cd cassandra-cpp-driver
 $ mkdir build && cd build
 $ cmake ..
-$ sudo make && make install
-$ rm -r tmp
+$ sudo make
+$ sudo make install
+# optional: return to YugabyteDB folder and delete tmp dir
+$ cd ../../../ && rm -r tmp
 ```
 > For YSQL (TBD)
 ```
