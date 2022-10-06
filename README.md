@@ -34,8 +34,17 @@ $ sudo make install
 # optional: return to YugabyteDB folder and delete tmp dir
 $ cd ../../../ && rm -r tmp
 ```
-> For YSQL (TBD)
-```
+> For YSQL 
+```bash
+$ mkdir tmp && cd tmp
+$ git clone https://github.com/jtv/libpqxx.git
+$ export PATH=$PATH:<yugabyte-install-dir>/postgres/bin
+$ cd libpqxx
+$ ./configure
+$ make
+$ make install
+# optional: return to YugabyteDB folder and delete tmp dir
+$ cd ../../../ && rm -r tmp
 ```
 > Build the Demo
 ```bash
