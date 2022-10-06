@@ -60,7 +60,7 @@ class Parser {
       case 'P': {
         // Payment
         // Unimplemented yet
-        // txn = new PaymentTxn(conn_);
+        txn = new PaymentTxn(conn_);
         break;
       }
       case 'D': {
