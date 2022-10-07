@@ -4,6 +4,7 @@ project(CS5424_YugabyteDB_Perf)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/bin/")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -21,7 +22,6 @@ include_directories(third-party/threadpool)
 # to introduce YCQL lib
 include_directories("/usr/local/include")
 
-# add_subdirectory(third-party/googletest)
+add_subdirectory(third-party/googletest)
 add_subdirectory(src)
-
-# add_subdirectory(test)
+add_subdirectory(test)
