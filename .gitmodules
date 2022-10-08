@@ -1,7 +1,6 @@
-[submodule "test/lib/googletest"]
-	path = test/lib/googletest
+[submodule "third-party/googletest"]
+	path = third-party/googletest
 	url = https://github.com/google/googletest.git
-	branch = master
-[submodule "lib/fast-cpp-csv-parser"]
-	path = lib/fast-cpp-csv-parser
-	url = https://github.com/ben-strasser/fast-cpp-csv-parser
+[submodule "third-party/threadpool"]
+	path = third-party/threadpool
+	url = https://github.com/ZjuYTW/ThreadPool.git
