@@ -3,7 +3,6 @@
 #include <string>
 
 namespace ydb_util {
-
 enum class StatusCode : unsigned char {
   kOK = 0,
   kInvalid = 1,
@@ -28,6 +27,15 @@ class Status {
   Status() noexcept : state_(nullptr) {}
   Status(StatusCode, const std::string&) noexcept;
   ~Status() noexcept { DeleteState(); }
+
+  // Move semantic
+  inline Status(Status&& s) noexcept;
+  inline Status& operator=(Status&& s) noexcept;
+
+  // Copy semantic
+  inline Status(const Status& s) noexcept;
+  inline Status& operator=(const Status& s) noexcept;
+
   static Status OK() noexcept { return Status(); }
 
   static Status Invalid() noexcept { return Status(StatusCode::kInvalid, ""); }
@@ -112,6 +120,30 @@ class Status {
     state_ = nullptr;
   }
 };
+
+Status::Status(const Status& s) noexcept
+    : state_((s.state_ == nullptr) ? nullptr : new State(*s.state_)) {}
+
+Status::Status(Status&& s) noexcept : state_(s.state_) { s.state_ = nullptr; }
+
+Status& Status::operator=(Status&& s) noexcept {
+  delete state_;
+  state_ = s.state_;
+  s.state_ = nullptr;
+  return *this;
+}
+
+Status& Status::operator=(const Status& s) noexcept {
+  if (state_ != s.state_) {
+    delete state_;
+    if (s.state_) {
+      state_ = new State(*s.state_);
+    } else {
+      state_ = nullptr;
+    }
+  }
+  return *this;
+}
 
 }  // namespace ydb_util
 #endif

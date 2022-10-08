@@ -12,6 +12,9 @@ build:
 run_ycql:			
 			./build/src/ycql_perf
 
+test:
+			./build/test/CS5424_YugabyteDB_Perf_test
+
 clean:
 			rm -r build
 			rm bin/ycql_perf
