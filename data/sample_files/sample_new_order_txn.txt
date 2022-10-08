@@ -1,0 +1,4 @@
+# N, C_ID, W_ID, D_ID, M
+# follows by M lines: OL_I_ID, OL_W_ID, OL_QUALITY
+N,1,1,1,1
+1,1,1
