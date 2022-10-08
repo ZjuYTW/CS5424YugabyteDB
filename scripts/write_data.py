@@ -6,7 +6,11 @@ from tqdm import tqdm
 import itertools
 
 config = {
-    'host': '10.20.11.96',
+<<<<<<< HEAD
+    'host': '127.0.0.1',
+=======
+    'host': "127.0.0.1",
+>>>>>>> cbb647cfed04ae26118d7e4aa6de42bcc406114d
     'port': '5433',
     'dbName': 'yugabyte',
     'dbUser': 'yugabyte',
