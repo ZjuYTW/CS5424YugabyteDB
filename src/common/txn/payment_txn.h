@@ -8,7 +8,9 @@ class PaymentTxn : public Txn<Connection> {
   explicit PaymentTxn(Connection* conn)
       : Txn<Connection>(TxnType::payment, conn) {}
 
-  Status ExecuteCQL() noexcept override;
+  Status ExecuteCQL() noexcept override{
+    return Status::OK();
+  }
   Status ExecuteSQL() noexcept override {
     pqxx::row row = getWarehouseSQL(w_id);
     

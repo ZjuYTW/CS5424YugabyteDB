@@ -21,6 +21,10 @@ include_directories(third-party/threadpool)
 # to introduce YCQL lib
 include_directories("/usr/local/include")
 
+# to introduce YSQL lib
+# TODO(ZjuYTW): Change it to a elegant way
+include_directories("/opt/homebrew/opt/libpqxx/include")
+
 # add_subdirectory(third-party/googletest)
 add_subdirectory(src)
 
