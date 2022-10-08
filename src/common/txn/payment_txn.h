@@ -99,9 +99,9 @@ class PaymentTxn : public Txn<Connection> {
     if constexpr (std::is_same_v<Connection, pqxx::connection*>){
       pqxx::connection* conn = &txn.conn();
       conn->prepare("updateDistrictSQL",
-          "UPDATE warehouses "
-          "SET w_ytd = $1"
-          "WHERE w_id = $2 IF w_ytd = $3;"
+          "UPDATE districts "
+          "SET d_ytd = $1"
+          "WHERE d_w_id = $2 AND d_id = $3 IF d_ytd;"
       );
       pqxx::result contests = txn.exec_prepared("updateWareHouse",w_ytd,w_id,old_w_ytd);
     }
