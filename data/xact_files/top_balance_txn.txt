@@ -1,2 +1,1 @@
-# T with no further arguments
 T

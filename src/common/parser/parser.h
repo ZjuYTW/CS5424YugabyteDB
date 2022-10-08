@@ -83,24 +83,17 @@ class Parser {
       }
       case 'I': {
         // Popular-Item
-        // Unimplemented yet
-        // txn = new PopularItemTxn(conn_);
+        txn = new PopularItemTxn(conn_);
         break;
       }
       case 'T': {
         // Top-Balance
-        // Unimplemented yet
-        // txn = new TopBalanceTxn(conn_);
+        txn = new TopBalanceTxn(conn_);
         break;
       }
       case 'R': {
-        // Related_Customer
-        // Unimplemented yet
-        // txn = new RelatedCustomerTxn(conn_);
-        break;
-      }
-      case '#': {
-        // Support comment in transaction samples
+        // Related-Customer
+        txn = new RelatedCustomerTxn(conn_);
         break;
       }
       default: {
