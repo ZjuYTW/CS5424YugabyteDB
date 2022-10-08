@@ -10,11 +10,13 @@ class OrderStatusTxn : public Txn<Connection> {
   explicit OrderStatusTxn(Connection* conn)
       : Txn<Connection>(TxnType::order_status, conn) {}
 
-  Status ExecuteCQL() noexcept override{ return Status::OK(); }
-  Status ExecuteSQL() noexcept override{ return Status::OK(); }
+  Status ExecuteCQL() noexcept override { return Status::OK(); }
+  Status ExecuteSQL() noexcept override { return Status::OK(); }
 
   Status Init(const std::string& first_line,
-              std::ifstream& ifs) noexcept override{ return Status::OK(); }
+              std::ifstream& ifs) noexcept override {
+    return Status::OK();
+  }
 };
 
 }  // namespace ydb_util
