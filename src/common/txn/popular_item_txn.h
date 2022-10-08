@@ -10,12 +10,12 @@ class PopularItemTxn : public Txn<Connection> {
   explicit PopularItemTxn(Connection* conn)
       : Txn<Connection>(TxnType::popular_item, conn) {}
 
-  Status ExecuteCQL() noexcept override;
+  Status ExecuteCQL() noexcept override{ return Status::OK(); }
 
-  Status ExecuteSQL() noexcept override;
+  Status ExecuteSQL() noexcept override{ return Status::OK(); }
 
   Status Init(const std::string& first_line,
-              std::ifstream& ifs) noexcept override;
+              std::ifstream& ifs) noexcept override{ return Status::OK(); }
 };
 
 }  // namespace ydb_util

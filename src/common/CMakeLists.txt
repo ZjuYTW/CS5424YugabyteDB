@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.2)
-project(parser C CXX)
 
 file(GLOB_RECURSE SRC_COMMON_FILES "parser/*.cc"
                                    "txn/*.cc"
