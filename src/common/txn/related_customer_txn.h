@@ -27,6 +27,7 @@ class RelatedCustomerTxn : public Txn<Connection> {
     c_d_id_ = stoi(ids[2]);
     c_id_ = stoi(ids[3]);
   }
+
  private:
   uint32_t c_w_id_, c_d_id_, c_id_;
 };

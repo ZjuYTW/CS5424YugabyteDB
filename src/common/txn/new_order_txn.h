@@ -2,7 +2,9 @@
 #define YDB_PERF_NEW_ORDER_TXN_H_
 #include <vector>
 
+// #include "gtest/gtest.h"
 #include "common/txn/txn_type.h"
+#include "gtest/gtest_prod.h"
 
 namespace ydb_util {
 
@@ -64,6 +66,9 @@ class NewOrderTxn : public Txn<Connection> {
     *quantity = stoi(ret[2]);
     return Status::OK();
   }
+
+  template <typename>
+  FRIEND_TEST(TxnArgsParserTest, new_order);
 
   std::vector<std::string> orders_;
   // Maybe change it into BigInt

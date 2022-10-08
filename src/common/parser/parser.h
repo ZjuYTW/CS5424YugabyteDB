@@ -40,7 +40,7 @@ class Parser {
       return Status::EndOfFile();
     }
     std::string line;
-    fs_ >> line;
+    getline(fs_, line);
     assert(!line.empty());
     auto txn_ptr = GetTxnPtr_(line[0]);
     auto ret = txn_ptr->Init(line, fs_);

@@ -18,9 +18,8 @@ class TopBalanceTxn : public Txn<Connection> {
               std::ifstream& ifs) noexcept override {
     auto ids = str_split(first_line, ',');
     if (ids.size() != 1) {
-      return Status::AssertionFailed(
-          "Expect TopBalance has 1 args, but got " +
-          std::to_string(ids.size()));
+      return Status::AssertionFailed("Expect TopBalance has 1 args, but got " +
+                                     std::to_string(ids.size()));
     }
     // ignore txn identification 'T'
     return Status::OK();
