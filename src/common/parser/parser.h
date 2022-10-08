@@ -99,6 +99,10 @@ class Parser {
         // txn = new RelatedCustomerTxn(conn_);
         break;
       }
+      case '#': {
+        // Support comment in transaction samples
+        break;
+      }
       default: {
         // Unreachable
         assert(false);

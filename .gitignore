@@ -35,12 +35,10 @@ bin/*
 # Cmake
 build/*
 
-# YCQL init
-tmp
-
 # Others
 .DS_Store
 .cache/*
 
-# VSCode
+# IDE
 .vscode/*
+.idea/*
