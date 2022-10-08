@@ -12,8 +12,8 @@ class NewOrderTxn : public Txn<Connection> {
   explicit NewOrderTxn(Connection* conn)
       : Txn<Connection>(TxnType::new_order, conn) {}
 
-  // NewOrder starts with N, C_ID, W_ID, D_ID, M
-  // and follows M lines
+  // NewOrder starts with 5 values: N, C_ID, W_ID, D_ID, M
+  // and follows M lines, each line consists of order details
   Status Init(const std::string& first_line, std::ifstream& ifs) noexcept {
     auto ids = str_split(first_line, ',');
     if (ids.size() != 5) {
@@ -22,14 +22,11 @@ class NewOrderTxn : public Txn<Connection> {
           std::to_string(ids.size()));
     }
     uint32_t m;
-    // ignore first N
-    // C_ID
+    // ignore txn identification 'N'
     c_id_ = stoi(ids[1]);
-    // W_ID
     w_id_ = stoi(ids[2]);
-    // D_ID
     d_id_ = stoi(ids[3]);
-    // M
+    // M lines of order details
     m = stoi(ids[4]);
     std::string tmp;
     orders_.reserve(m);
@@ -53,6 +50,7 @@ class NewOrderTxn : public Txn<Connection> {
   Status ExecuteSQL() noexcept { return Status::OK(); }
 
  private:
+  // ParseOneOrder parses each line into 3 values: OL_I_ID, OL_W_ID, OL_QUALITY
   static Status ParseOneOrder(const std::string& order, uint32_t* i_id,
                               uint32_t* w_id, uint32_t* quantity) {
     auto ret = str_split(order, ',');
