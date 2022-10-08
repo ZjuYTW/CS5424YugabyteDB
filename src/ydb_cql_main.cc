@@ -24,18 +24,12 @@ int main(int argc, char* argv[]) {
   int idx = 1;
   CassCluster* cluster = nullptr;
   cluster = create_cluster(ip.c_str());
-<<<<<<< HEAD
-  std::cout << "Enque..." << std::endl;
-=======
->>>>>>> main
+
   auto ret_feature = pool.enqueue(ycql_impl::CQLDriver(ip, cluster, idx));
   pool.JoinAll();
 
   cass_cluster_free(cluster);
-<<<<<<< HEAD
-  assert(ret_feature.get().ok());
-=======
+
   assert(ret_feature.get().isConnectionFailed());
   return 0;
->>>>>>> main
 }

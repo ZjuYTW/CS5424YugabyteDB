@@ -1,6 +1,7 @@
 #ifndef YDB_PERF_PAYMENT_TXN_H_
 #define YDB_PERF_PAYMENT_TXN_H_
 #include "common/txn/txn_type.h"
+
 namespace ydb_util {
 template <typename Connection>
 class PaymentTxn : public Txn<Connection> {
@@ -74,36 +75,6 @@ class PaymentTxn : public Txn<Connection> {
             "WHERE w_id = $2 IF w_ytd = $3;"
         );
         pqxx::result contests = txn.exec_prepared("updateWareHouse",w_ytd,w_id,old_w_ytd);
-    }
-    else{
-      throw std::string("the Connection is not SQL connections");
-    }
-  }
-
-  void updateWareHouseSQL(int w_id,double old_w_ytd,double w_ytd,pqxx::work txn) {
-    if constexpr (std::is_same_v<Connection, pqxx::connection*>){
-        pqxx::connection* conn = &txn.conn();
-        conn->prepare("updateWareHouse",
-            "UPDATE warehouses "
-            "SET w_ytd = $1"
-            "WHERE w_id = $2 IF w_ytd = $3;"
-        );
-        pqxx::result contests = txn.exec_prepared("updateWareHouse",w_ytd,w_id,old_w_ytd);
-    }
-    else{
-      throw std::string("the Connection is not SQL connections");
-    }
-  }
-
-  void updateDistrictSQL(int w_id,int d_id,double old_dist,double dist,pqxx::work txn) {
-    if constexpr (std::is_same_v<Connection, pqxx::connection*>){
-      pqxx::connection* conn = &txn.conn();
-      conn->prepare("updateDistrictSQL",
-          "UPDATE districts "
-          "SET d_ytd = $1"
-          "WHERE d_w_id = $2 AND d_id = $3 IF d_ytd;"
-      );
-      pqxx::result contests = txn.exec_prepared("updateWareHouse",w_ytd,w_id,old_w_ytd);
     }
     else{
       throw std::string("the Connection is not SQL connections");
