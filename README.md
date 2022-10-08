@@ -34,8 +34,10 @@ $ sudo make install
 # optional: return to YugabyteDB folder and delete tmp dir
 $ cd ../../../ && rm -r tmp
 ```
-> For YSQL (TBD)
-```
+> For YSQL
+```bash
+$ sudo apt install libpq-dev
+$ sudo apt install libpqxx-dev
 ```
 > Build the Demo
 ```bash
