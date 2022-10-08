@@ -43,6 +43,7 @@ int main(int argc, char* argv[]) {
     auto ret_feature = pool.enqueue(ysql_impl::SQLDriver(
         HOST, PORT, USER, PASSWORD, DB_NAME, SSL_MODE, SSL_ROOT_CERT, idx));
     pool.JoinAll();
+    std::cout <<ret_feature.get().ToString()<<std::endl;
   } else {
     std::cout << "We expect 1 arg for sql or cql" << std::endl;
     return 1;

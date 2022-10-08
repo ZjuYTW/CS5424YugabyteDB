@@ -40,8 +40,13 @@ class Parser {
       return Status::EndOfFile();
     }
     std::string line;
-    fs_ >> line;
-    assert(!line.empty());
+    // fs_ >> line;
+    getline(fs_,line);
+    // assert(!line.empty());
+    if (line.empty()){
+      return Status::EndOfFile();
+    }
+    std::cout<<"line: "<<line<<std::endl;
     auto txn_ptr = GetTxnPtr_(line[0]);
     auto ret = txn_ptr->Init(line, fs_);
     *txn = txn_ptr;
@@ -60,6 +65,7 @@ class Parser {
       case 'P': {
         // Payment
         // Unimplemented yet
+        std::cout << "Payment" << std::endl;
         txn = new PaymentTxn(conn_);
         break;
       }
