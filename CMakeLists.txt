@@ -16,6 +16,24 @@ set(INSTALL_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
 
 set(HEADERS_DIR ${PROJECT_SOURCE_DIR}/src)
 
+find_library(CQL_LIB_NAME NAMES cassandra)
+find_library(SQL_LIB_NAME NAMES pqxx)
+
+if(CQL_LIB_NAME)
+  message("Find libcassandra")
+  set(CQL_LIB_PATH ${CQL_LIB_NAME})
+else()
+  message(FATAL_ERROR "Can't find libcassandra")
+endif()
+
+if(SQL_LIB_NAME)
+  message("Find libpqxx")
+  set(SQL_LIB_PATH ${SQL_LIB_NAME})
+else()
+  message(FATAL_ERROR "Can't find libpqxx")
+endif()
+
+
 include_directories(${INSTALL_INCLUDE_DIR})
 include_directories(${HEADERS_DIR})
 include_directories(third-party/threadpool)
