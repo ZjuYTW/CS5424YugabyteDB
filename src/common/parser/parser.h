@@ -83,17 +83,17 @@ class Parser {
       }
       case 'I': {
         // Popular-Item
-        // txn = new PopularItemTxn(conn_);
+        txn = new PopularItemTxn(conn_);
         break;
       }
       case 'T': {
         // Top-Balance
-        // txn = new TopBalanceTxn(conn_);
+        txn = new TopBalanceTxn(conn_);
         break;
       }
       case 'R': {
         // Related-Customer
-        // txn = new RelatedCustomerTxn(conn_);
+        txn = new RelatedCustomerTxn(conn_);
         break;
       }
       default: {

@@ -6,12 +6,18 @@
 namespace ydb_util {
 template <typename Connection>
 class TopBalanceTxn : public Txn<Connection> {
+FRIEND_TEST(TxnArgsParserTest, top_balance);
  public:
   explicit TopBalanceTxn(Connection* conn)
       : Txn<Connection>(TxnType::top_balance, conn) {}
 
-  Status ExecuteCQL() noexcept override;
-  Status ExecuteSQL() noexcept override;
+  Status ExecuteCQL() noexcept override {
+    return Status::OK();
+  }
+
+  Status ExecuteSQL() noexcept override {
+    return Status::OK();
+  }
 
   // TopBalance consists of one line with 1 values: T
   Status Init(const std::string& first_line,

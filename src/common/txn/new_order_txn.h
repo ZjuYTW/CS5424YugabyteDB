@@ -9,6 +9,7 @@ namespace ydb_util {
 
 template <typename Connection>
 class NewOrderTxn : public Txn<Connection> {
+FRIEND_TEST(TxnArgsParserTest, new_order);
  public:
   explicit NewOrderTxn(Connection* conn)
       : Txn<Connection>(TxnType::new_order, conn) {}
@@ -65,9 +66,6 @@ class NewOrderTxn : public Txn<Connection> {
     *quantity = stoi(ret[2]);
     return Status::OK();
   }
-
-  template <typename>
-  FRIEND_TEST(TxnArgsParserTest, new_order);
 
   std::vector<std::string> orders_;
   // Maybe change it into BigInt
