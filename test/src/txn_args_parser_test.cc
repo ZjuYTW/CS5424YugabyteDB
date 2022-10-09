@@ -1,7 +1,6 @@
 #include "common/parser/parser.h"
 #include "gtest/gtest.h"
 #include "gtest/gtest_prod.h"
-#include "common/txn/new_order_txn.h"
 
 namespace ydb_util {
 
