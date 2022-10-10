@@ -10,18 +10,17 @@ class PopularItemTxn : public Txn<Connection> {
   explicit PopularItemTxn(Connection* conn)
       : Txn<Connection>(TxnType::popular_item, conn) {}
 
-  Status ExecuteCQL() noexcept override;
+  Status ExecuteCQL() noexcept override { return Status::OK(); }
 
-  Status ExecuteSQL() noexcept override;
+  Status ExecuteSQL() noexcept override { return Status::OK(); }
 
   // PopularItem consists of one line with 4 values: I, W_ID, D_ID, L
   Status Init(const std::string& first_line,
               std::ifstream& ifs) noexcept override {
     auto ids = str_split(first_line, ',');
     if (ids.size() != 4) {
-      return Status::AssertionFailed(
-          "Expect PopularItem has 4 args, but got " +
-          std::to_string(ids.size()));
+      return Status::AssertionFailed("Expect PopularItem has 4 args, but got " +
+                                     std::to_string(ids.size()));
     }
     // ignore txn identification 'I'
     w_id_ = stoi(ids[1]);
@@ -32,6 +31,7 @@ class PopularItemTxn : public Txn<Connection> {
 
  private:
   uint32_t w_id_, d_id_, l_;
+  FRIEND_TEST(TxnArgsParserTest, popular_item);
 };
 }  // namespace ydb_util
 #endif

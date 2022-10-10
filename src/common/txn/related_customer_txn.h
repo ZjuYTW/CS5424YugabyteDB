@@ -10,8 +10,9 @@ class RelatedCustomerTxn : public Txn<Connection> {
   explicit RelatedCustomerTxn(Connection* conn)
       : Txn<Connection>(TxnType::related_customer, conn) {}
 
-  Status ExecuteCQL() noexcept override;
-  Status ExecuteSQL() noexcept override;
+  Status ExecuteCQL() noexcept override { return Status::OK(); }
+
+  Status ExecuteSQL() noexcept override { return Status::OK(); }
 
   // RelatedCustomer consists of one line with 4 values: R, C_W_ID, C_D_ID, C_ID
   Status Init(const std::string& first_line,
@@ -26,9 +27,12 @@ class RelatedCustomerTxn : public Txn<Connection> {
     c_w_id_ = stoi(ids[1]);
     c_d_id_ = stoi(ids[2]);
     c_id_ = stoi(ids[3]);
+    return Status::OK();
   }
+
  private:
   uint32_t c_w_id_, c_d_id_, c_id_;
+  FRIEND_TEST(TxnArgsParserTest, related_customer);
 };
 
 }  // namespace ydb_util

@@ -1,4 +1,4 @@
-.PHONY: init build clean format lint
+.PHONY: init build clean format lint test
 
 defualt: build
 

@@ -68,7 +68,9 @@ class NewOrderTxn : public Txn<Connection> {
   std::vector<std::string> orders_;
   // Maybe change it into BigInt
   uint32_t c_id_, w_id_, d_id_;
+  FRIEND_TEST(TxnArgsParserTest, new_order);
 };
-};  // namespace ydb_util
+
+}  // namespace ydb_util
 
 #endif
