@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 project(YDB_Perf)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(common)
 add_subdirectory(ycql_impl)
@@ -16,10 +17,6 @@ find_library(PQXX_LIB PQXX)
 
 add_executable(ydb_perf ${MAIN_SOURCE_FILES})
 
-<<<<<<< HEAD
-target_link_libraries(ydb_perf common_lib ${CQL_LIB_NAME} ${PQXX_LIB})
-=======
-target_link_libraries(ycql_perf gtest common_lib ${CQL_LIB_NAME})
->>>>>>> main
+target_link_libraries(ydb_perf gtest common_lib ${CQL_LIB_NAME} ${PQXX_LIB})
 
 install(TARGETS ydb_perf DESTINATION ${CMAKE_INSTALL_PREFIX})

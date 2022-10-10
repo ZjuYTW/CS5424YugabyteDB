@@ -6,3 +6,4 @@ file(GLOB_RECURSE TEST_SRC_FILES   "src/*.cc")
 
 add_executable(${BINARY} ${TEST_SRC_FILES})
 target_link_libraries(${BINARY} PUBLIC gtest common_lib ${PQXX_LIB})
+
