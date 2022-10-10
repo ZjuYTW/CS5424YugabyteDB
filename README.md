@@ -36,8 +36,13 @@ $ cd ../../../ && rm -r tmp
 ```
 > For YSQL
 ```bash
+# for linux
 $ sudo apt install libpq-dev
 $ sudo apt install libpqxx-dev
+
+# for mac
+$ brew install libpq
+$ brew install libpqxx
 ```
 > Build the Demo
 ```bash

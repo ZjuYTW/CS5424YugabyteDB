@@ -1,15 +1,17 @@
-#include <iostream>
+#include <pqxx/pqxx>
 
 #include "ThreadPool.h"
-#include "cassandra.h"
 #include "common/parser/parser.h"
+#include "ycql_impl/cql_driver.h"
+#include "ysql_impl/sql_driver.h"
 
-void print_error(CassFuture* future) {
-  const char* message;
-  size_t message_length;
-  cass_future_error_message(future, &message, &message_length);
-  fprintf(stderr, "Error: %.*s\n", (int)message_length, message);
-}
+const std::string HOST = "127.0.0.1";
+const std::string PORT = "5433";
+const std::string DB_NAME = "yugabyte";
+const std::string USER = "yugabyte";
+const std::string PASSWORD = "yugabyte";
+const std::string SSL_MODE = "";
+const std::string SSL_ROOT_CERT = "";
 
 // Create a new cluster.
 CassCluster* create_cluster(const char* hosts) {
@@ -18,130 +20,34 @@ CassCluster* create_cluster(const char* hosts) {
   return cluster;
 }
 
-// Connect to the cluster given a session.
-CassError connect_session(CassSession* session, const CassCluster* cluster) {
-  CassError rc = CASS_OK;
-  CassFuture* future = cass_session_connect(session, cluster);
-
-  cass_future_wait(future);
-  rc = cass_future_error_code(future);
-  if (rc != CASS_OK) {
-    print_error(future);
+int main(int argc, char* argv[]) {
+  // DEMO: Since the file name is not set in main now, suppose main accept sql
+  // or cql now.
+  if (argc != 2) {
+    std::cout << "We expect 1 arg for sql or cql" << std::endl;
+    return 1;
   }
-  cass_future_free(future);
-
-  return rc;
-}
-
-CassError execute_query(CassSession* session, const char* query) {
-  CassError rc = CASS_OK;
-  CassFuture* future = NULL;
-  CassStatement* statement = cass_statement_new(query, 0);
-
-  future = cass_session_execute(session, statement);
-  cass_future_wait(future);
-
-  rc = cass_future_error_code(future);
-  if (rc != CASS_OK) {
-    print_error(future);
-  }
-
-  cass_future_free(future);
-  cass_statement_free(statement);
-
-  return rc;
-}
-
-CassError execute_and_log_select(CassSession* session, const char* stmt) {
-  CassError rc = CASS_OK;
-  CassFuture* future = NULL;
-  CassStatement* statement = cass_statement_new(stmt, 0);
-
-  future = cass_session_execute(session, statement);
-  rc = cass_future_error_code(future);
-  if (rc != CASS_OK) {
-    print_error(future);
-  } else {
-    const CassResult* result = cass_future_get_result(future);
-    CassIterator* iterator = cass_iterator_from_result(result);
-    if (cass_iterator_next(iterator)) {
-      const CassRow* row = cass_iterator_get_row(iterator);
-      int age;
-      const char* name;
-      size_t name_length;
-      const char* language;
-      size_t language_length;
-      cass_value_get_string(cass_row_get_column(row, 0), &name, &name_length);
-      cass_value_get_int32(cass_row_get_column(row, 1), &age);
-      cass_value_get_string(cass_row_get_column(row, 2), &language,
-                            &language_length);
-      printf("Select statement returned: Row[%.*s, %d, %.*s]\n",
-             (int)name_length, name, age, (int)language_length, language);
-    } else {
-      printf("Unable to fetch row!\n");
-    }
-
-    cass_result_free(result);
-    cass_iterator_free(iterator);
-  }
-
-  cass_future_free(future);
-  cass_statement_free(statement);
-
-  return rc;
-}
-
-int main() {
-  // Ensure you log errors.
-  cass_log_set_level(CASS_LOG_ERROR);
-
-  CassCluster* cluster = NULL;
-  CassSession* session = cass_session_new();
-  CassFuture* close_future = NULL;
-  char* hosts = "192.168.48.244";
-
-  cluster = create_cluster(hosts);
-
-  if (connect_session(session, cluster) != CASS_OK) {
+  std::string db_type = argv[1];
+  // Thread pool of size 10 => we could change it to match
+  // our txt file number later
+  ThreadPool pool(10);
+  int idx = 1;
+  if (db_type == "cql") {
+    CassCluster* cluster = nullptr;
+    cluster = create_cluster(HOST.c_str());
+    auto ret_feature = pool.enqueue(ycql_impl::CQLDriver(HOST, cluster, idx));
+    pool.JoinAll();
     cass_cluster_free(cluster);
-    cass_session_free(session);
-    return -1;
+    assert(ret_feature.get().isConnectionFailed());
+  } else if (db_type == "sql") {
+    auto ret_feature = pool.enqueue(ysql_impl::SQLDriver(
+        HOST, PORT, USER, PASSWORD, DB_NAME, SSL_MODE, SSL_ROOT_CERT, idx));
+    pool.JoinAll();
+    std::cout <<ret_feature.get().ToString()<<std::endl;
+  } else {
+    std::cout << "We expect 1 arg for sql or cql" << std::endl;
+    return 1;
   }
-
-  CassError rc = CASS_OK;
-  rc = execute_query(session, "CREATE KEYSPACE IF NOT EXISTS ybdemo");
-  if (rc != CASS_OK) return -1;
-  printf("Created keyspace ybdemo\n");
-
-  rc = execute_query(session, "DROP TABLE IF EXISTS ybdemo.employee");
-  if (rc != CASS_OK) return -1;
-
-  rc = execute_query(session,
-                     "CREATE TABLE ybdemo.employee (id int PRIMARY KEY, \
-                                              name varchar, \
-                                              age int, \
-                                              language varchar)");
-  if (rc != CASS_OK) return -1;
-  printf("Created table ybdemo.employee\n");
-
-  const char* insert_stmt =
-      "INSERT INTO ybdemo.employee (id, name, age, language) VALUES (1, "
-      "'John', 35, 'C/C++')";
-  rc = execute_query(session, insert_stmt);
-  if (rc != CASS_OK) return -1;
-  printf("Inserted data: %s\n", insert_stmt);
-
-  const char* select_stmt =
-      "SELECT name, age, language from ybdemo.employee WHERE id = 1";
-  rc = execute_and_log_select(session, select_stmt);
-  if (rc != CASS_OK) return -1;
-
-  close_future = cass_session_close(session);
-  cass_future_wait(close_future);
-  cass_future_free(close_future);
-
-  cass_cluster_free(cluster);
-  cass_session_free(session);
 
   return 0;
 }
