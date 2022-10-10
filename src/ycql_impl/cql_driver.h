@@ -1,4 +1,4 @@
-#ifndef YDB_PERF_CQL_DRIVER_H_
+﻿#ifndef YDB_PERF_CQL_DRIVER_H_
 #define YDB_PERF_CQL_DRIVER_H_
 #include <string>
 
@@ -69,7 +69,7 @@ class CQLDriver {
   int idx_;
 };
 
-std::string CQLDriver::xactDir = "data/xact-files/";
+std::string CQLDriver::xactDir = "data/xact_files/";
 };  // namespace ycql_impl
 
 #endif

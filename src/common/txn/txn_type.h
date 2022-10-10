@@ -8,6 +8,7 @@
 #include "cassandra.h"
 #include "common/util/status.h"
 #include "common/util/string_util.h"
+#include "gtest/gtest_prod.h"
 
 namespace ydb_util {
 enum class TxnType {

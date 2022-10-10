@@ -40,7 +40,6 @@ class Parser {
       return Status::EndOfFile();
     }
     std::string line;
-    // fs_ >> line;
     getline(fs_,line);
     // assert(!line.empty());
     if (line.empty()){
@@ -89,20 +88,17 @@ class Parser {
       }
       case 'I': {
         // Popular-Item
-        // Unimplemented yet
-        // txn = new PopularItemTxn(conn_);
+        txn = new PopularItemTxn(conn_);
         break;
       }
       case 'T': {
         // Top-Balance
-        // Unimplemented yet
-        // txn = new TopBalanceTxn(conn_);
+        txn = new TopBalanceTxn(conn_);
         break;
       }
       case 'R': {
-        // Related_Customer
-        // Unimplemented yet
-        // txn = new RelatedCustomerTxn(conn_);
+        // Related-Customer
+        txn = new RelatedCustomerTxn(conn_);
         break;
       }
       default: {

@@ -16,6 +16,10 @@ find_library(PQXX_LIB PQXX)
 
 add_executable(ydb_perf ${MAIN_SOURCE_FILES})
 
+<<<<<<< HEAD
 target_link_libraries(ydb_perf common_lib ${CQL_LIB_NAME} ${PQXX_LIB})
+=======
+target_link_libraries(ycql_perf gtest common_lib ${CQL_LIB_NAME})
+>>>>>>> main
 
 install(TARGETS ydb_perf DESTINATION ${CMAKE_INSTALL_PREFIX})
