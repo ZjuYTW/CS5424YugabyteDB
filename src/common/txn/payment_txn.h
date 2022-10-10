@@ -1,5 +1,7 @@
 #ifndef YDB_PERF_PAYMENT_TXN_H_
 #define YDB_PERF_PAYMENT_TXN_H_
+#include <thread>
+
 #include "common/txn/txn_type.h"
 
 namespace ydb_util {
