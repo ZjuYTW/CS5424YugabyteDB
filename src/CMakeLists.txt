@@ -10,13 +10,9 @@ add_subdirectory(common)
 add_subdirectory(ycql_impl)
 add_subdirectory(ysql_impl)
 set(MAIN_SOURCE_FILES main.cc)
-set(PQXX /usr/local/include/pqxx)
-
-find_library(CQL_LIB_NAME NAMES cassandra /usr/lib /usr/local/lib)
-find_library(PQXX_LIB PQXX)
 
 add_executable(ydb_perf ${MAIN_SOURCE_FILES})
 
-target_link_libraries(ydb_perf gtest common_lib ${CQL_LIB_NAME} ${PQXX_LIB})
+target_link_libraries(ydb_perf gtest common_lib ${CQL_LIB_PATH} ${SQL_LIB_PATH})
 
 install(TARGETS ydb_perf DESTINATION ${CMAKE_INSTALL_PREFIX})
