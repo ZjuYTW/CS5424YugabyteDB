@@ -3,13 +3,11 @@
 #include <vector>
 
 #include "common/txn/txn_type.h"
-#include "gtest/gtest_prod.h"
 
 namespace ydb_util {
 
 template <typename Connection>
 class NewOrderTxn : public Txn<Connection> {
-FRIEND_TEST(TxnArgsParserTest, new_order);
  public:
   explicit NewOrderTxn(Connection* conn)
       : Txn<Connection>(TxnType::new_order, conn) {}
@@ -70,7 +68,9 @@ FRIEND_TEST(TxnArgsParserTest, new_order);
   std::vector<std::string> orders_;
   // Maybe change it into BigInt
   uint32_t c_id_, w_id_, d_id_;
+  FRIEND_TEST(TxnArgsParserTest, new_order);
 };
-};  // namespace ydb_util
+
+}  // namespace ydb_util
 
 #endif

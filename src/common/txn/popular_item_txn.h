@@ -6,18 +6,13 @@
 namespace ydb_util {
 template <typename Connection>
 class PopularItemTxn : public Txn<Connection> {
-FRIEND_TEST(TxnArgsParserTest, popular_item);
  public:
   explicit PopularItemTxn(Connection* conn)
       : Txn<Connection>(TxnType::popular_item, conn) {}
 
-  Status ExecuteCQL() noexcept override {
-    return Status::OK();
-  }
+  Status ExecuteCQL() noexcept override { return Status::OK(); }
 
-  Status ExecuteSQL() noexcept override {
-    return Status::OK();
-  }
+  Status ExecuteSQL() noexcept override { return Status::OK(); }
 
   // PopularItem consists of one line with 4 values: I, W_ID, D_ID, L
   Status Init(const std::string& first_line,
@@ -36,6 +31,7 @@ FRIEND_TEST(TxnArgsParserTest, popular_item);
 
  private:
   uint32_t w_id_, d_id_, l_;
+  FRIEND_TEST(TxnArgsParserTest, popular_item);
 };
 }  // namespace ydb_util
 #endif
