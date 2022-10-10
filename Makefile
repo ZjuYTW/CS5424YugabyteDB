@@ -11,6 +11,8 @@ build:
 
 run_ycql:			
 			./build/src/ycql_perf
+run_ysql:
+			./build/src/ysql_perf
 
 test:
 			./build/test/CS5424_YugabyteDB_Perf_test

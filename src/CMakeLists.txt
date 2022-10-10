@@ -1,22 +1,17 @@
 cmake_minimum_required(VERSION 3.2)
 project(YDB_Perf)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 add_subdirectory(common)
 add_subdirectory(ycql_impl)
 add_subdirectory(ysql_impl)
-set(MAIN_SOURCE_FILES main.cc)
-set(PQXX /usr/local/include/pqxx)
+set(YSQL_SOURCE_FILES ydb_sql_main.cc)
+set(YCQL_SOURCE_FILES ydb_cql_main.cc)
 
-find_library(CQL_LIB_NAME NAMES cassandra /usr/lib /usr/local/lib)
-find_library(PQXX_LIB PQXX)
+add_executable(ysql_perf ${YSQL_SOURCE_FILES})
+add_executable(ycql_perf ${YCQL_SOURCE_FILES})
 
-add_executable(ydb_perf ${MAIN_SOURCE_FILES})
+target_link_libraries(ysql_perf gtest common_lib ${CQL_LIB_PATH} ${SQL_LIB_PATH})
+target_link_libraries(ycql_perf gtest common_lib ${CQL_LIB_PATH} ${SQL_LIB_PATH})
 
-target_link_libraries(ydb_perf gtest common_lib ${CQL_LIB_NAME} ${PQXX_LIB})
-
-install(TARGETS ydb_perf DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS ysql_perf DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS ycql_perf DESTINATION ${CMAKE_INSTALL_PREFIX})
