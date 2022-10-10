@@ -47,8 +47,8 @@ class PaymentTxn : public Txn<Connection> {
           std::cerr << e.what() << '\n';
           // if Failed, Wait for 100 ms to try again
           // TODO: check if there is a sleep_for 
-          // std::this_thread::sleep_for(
-          //     std::chrono::milliseconds(100 * retryCount));
+           std::this_thread::sleep_for(
+               std::chrono::milliseconds(100 * retryCount));
         }
       }
       return Status::Invalid("retry times exceeded max retry count");
