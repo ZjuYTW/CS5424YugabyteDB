@@ -27,18 +27,4 @@ Logger::LoggerStream::~LoggerStream() noexcept {
   std::cout << this->str() << " (" << line_no << ")" << std::endl;
 }
 
-// BEGIN: demo of the Logger
-void func(int a, int b, int c) { LOG_INFO << a << " " << b << " " << c; }
-
-int main() {
-  SET_LEVEL(ydb_util::LogLevel::DEBUG);
-  LOG_INFO << "hello world " << 123 << " " << 12.45;
-  LOG_WARNING << "hello world " << 123 << " " << 12.45;
-  LOG_DEBUG << "hello world " << 123 << " " << 12.45;
-  LOG_ERROR << "hello world " << 123 << " " << 12.45;
-  LOG_FATAL << "hello world " << 123 << " " << 12.45;
-  return 0;
-}
-// END of demo
-
 }  // namespace ydb_util
