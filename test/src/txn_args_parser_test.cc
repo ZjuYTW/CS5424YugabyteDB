@@ -1,13 +1,16 @@
 #include "common/parser/parser.h"
+#include "common/util/logger.h"
 #include "gtest/gtest.h"
 
 namespace ydb_util {
 
+const std::string TEST_FILE_PATH = "data/xact_files/";
+
 TEST(TxnArgsParserTest, new_order) {
-  Parser<CassSession> parser("data/xact_files/new_order_txn.txt",
+  Parser<CassSession> parser(TEST_FILE_PATH + "new_order_txn.txt",
                                        nullptr);
   auto s = parser.Init();
-  std::cerr << s.ToString() << std::endl;
+  LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
   Txn<CassSession> *t = nullptr;
 
@@ -16,26 +19,90 @@ TEST(TxnArgsParserTest, new_order) {
     auto *newOrderTxn = dynamic_cast<NewOrderTxn<CassSession> *>(t);
     EXPECT_NE(newOrderTxn, nullptr);
     EXPECT_EQ(newOrderTxn->c_id_, 1);
-    EXPECT_EQ(newOrderTxn->w_id_, 1);
-    EXPECT_EQ(newOrderTxn->d_id_, 1);
+    EXPECT_EQ(newOrderTxn->w_id_, 2);
+    EXPECT_EQ(newOrderTxn->d_id_, 3);
     EXPECT_EQ(newOrderTxn->orders_.size(), 2);
   }
 }
 
-// add FRIEND_TEST in each Txn template class first if you want to access private members
-// add sample input files under {WORKSPACE}/data/xact_files/{TXN_NAME}_txn.txt
-/* pending UT tests
-TEST(TxnArgsParserTest, payment) {}
-TEST(TxnArgsParserTest, delivery) {}
-TEST(TxnArgsParserTest, order_status) {}
-TEST(TxnArgsParserTest, stock_level) {}
-*/
-
-TEST(TxnArgsParserTest, popular_item) {
-  Parser<CassSession> parser("data/xact_files/popular_item_txn.txt",
+TEST(TxnArgsParserTest, payment) {
+  Parser<CassSession> parser(TEST_FILE_PATH + "payment_txn.txt",
                              nullptr);
   auto s = parser.Init();
-  std::cerr << s.ToString() << std::endl;
+  LOG_INFO << s.ToString();
+  EXPECT_EQ(s.ok(), true);
+  Txn<CassSession> *t = nullptr;
+
+  while (!parser.GetNextTxn(&t).isEndOfFile()) {
+    EXPECT_NE(t, nullptr);
+    auto *paymentTxn = dynamic_cast<PaymentTxn<CassSession> *>(t);
+    EXPECT_NE(paymentTxn, nullptr);
+    EXPECT_EQ(paymentTxn->w_id_, 1);
+    EXPECT_EQ(paymentTxn->d_id_, 2);
+    EXPECT_EQ(paymentTxn->c_id_, 3);
+    EXPECT_EQ(paymentTxn->payment_, 4.56);
+  }
+}
+
+TEST(TxnArgsParserTest, delivery) {
+  Parser<CassSession> parser(TEST_FILE_PATH + "delivery_txn.txt",
+                             nullptr);
+  auto s = parser.Init();
+  LOG_INFO << s.ToString();
+  EXPECT_EQ(s.ok(), true);
+  Txn<CassSession> *t = nullptr;
+
+  while (!parser.GetNextTxn(&t).isEndOfFile()) {
+    EXPECT_NE(t, nullptr);
+    auto *deliveryTxn = dynamic_cast<DeliveryTxn<CassSession> *>(t);
+    EXPECT_NE(deliveryTxn, nullptr);
+    EXPECT_EQ(deliveryTxn->w_id_, 1);
+    EXPECT_EQ(deliveryTxn->carrier_id_, 2);
+  }
+}
+
+TEST(TxnArgsParserTest, order_status) {
+  Parser<CassSession> parser(TEST_FILE_PATH + "order_status.txt",
+                             nullptr);
+  auto s = parser.Init();
+  LOG_INFO << s.ToString();
+  EXPECT_EQ(s.ok(), true);
+  Txn<CassSession> *t = nullptr;
+
+  while (!parser.GetNextTxn(&t).isEndOfFile()) {
+    EXPECT_NE(t, nullptr);
+    auto *orderStatusTxn = dynamic_cast<OrderStatusTxn<CassSession> *>(t);
+    EXPECT_NE(orderStatusTxn, nullptr);
+    EXPECT_EQ(orderStatusTxn->c_w_id_, 1);
+    EXPECT_EQ(orderStatusTxn->c_d_id_, 2);
+    EXPECT_EQ(orderStatusTxn->c_id_, 3);
+  }
+}
+
+TEST(TxnArgsParserTest, stock_level) {
+  Parser<CassSession> parser(TEST_FILE_PATH + "stock_level.txt",
+                             nullptr);
+  auto s = parser.Init();
+  LOG_INFO << s.ToString();
+  EXPECT_EQ(s.ok(), true);
+  Txn<CassSession> *t = nullptr;
+
+  while (!parser.GetNextTxn(&t).isEndOfFile()) {
+    EXPECT_NE(t, nullptr);
+    auto *stockLevelTxn = dynamic_cast<StockLevelTxn<CassSession> *>(t);
+    EXPECT_NE(stockLevelTxn, nullptr);
+    EXPECT_EQ(stockLevelTxn->w_id_, 1);
+    EXPECT_EQ(stockLevelTxn->d_id_, 2);
+    EXPECT_EQ(stockLevelTxn->t_, 3);
+    EXPECT_EQ(stockLevelTxn->l_, 4);
+  }
+}
+
+TEST(TxnArgsParserTest, popular_item) {
+  Parser<CassSession> parser(TEST_FILE_PATH + "popular_item_txn.txt",
+                             nullptr);
+  auto s = parser.Init();
+  LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
   Txn<CassSession> *t = nullptr;
 
@@ -44,16 +111,16 @@ TEST(TxnArgsParserTest, popular_item) {
     auto *popularItemTxn = dynamic_cast<PopularItemTxn<CassSession> *>(t);
     EXPECT_NE(popularItemTxn, nullptr);
     EXPECT_EQ(popularItemTxn->w_id_, 1);
-    EXPECT_EQ(popularItemTxn->d_id_, 1);
-    EXPECT_EQ(popularItemTxn->l_, 1);
+    EXPECT_EQ(popularItemTxn->d_id_, 2);
+    EXPECT_EQ(popularItemTxn->l_, 3);
   }
 }
 
 TEST(TxnArgsParserTest, top_balance) {
-  Parser<CassSession> parser("data/xact_files/top_balance_txn.txt",
+  Parser<CassSession> parser(TEST_FILE_PATH + "top_balance_txn.txt",
                              nullptr);
   auto s = parser.Init();
-  std::cerr << s.ToString() << std::endl;
+  LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
   Txn<CassSession> *t = nullptr;
 
@@ -68,7 +135,7 @@ TEST(TxnArgsParserTest, related_customer) {
     Parser<CassSession> parser("data/xact_files/related_customer_txn.txt",
                                nullptr);
     auto s = parser.Init();
-    std::cerr << s.ToString() << std::endl;
+    LOG_INFO << s.ToString();
     EXPECT_EQ(s.ok(), true);
     Txn<CassSession> *t = nullptr;
 
@@ -77,8 +144,8 @@ TEST(TxnArgsParserTest, related_customer) {
         auto *relatedCustomerTxn = dynamic_cast<RelatedCustomerTxn<CassSession> *>(t);
         EXPECT_NE(relatedCustomerTxn, nullptr);
         EXPECT_EQ(relatedCustomerTxn->c_w_id_, 1);
-        EXPECT_EQ(relatedCustomerTxn->c_d_id_, 1);
-        EXPECT_EQ(relatedCustomerTxn->c_id_, 1);
+        EXPECT_EQ(relatedCustomerTxn->c_d_id_, 2);
+        EXPECT_EQ(relatedCustomerTxn->c_id_, 3);
     }
 }
 

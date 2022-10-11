@@ -40,12 +40,12 @@ class Parser {
       return Status::EndOfFile();
     }
     std::string line;
-    getline(fs_,line);
+    getline(fs_, line);
     // assert(!line.empty());
-    if (line.empty()){
+    if (line.empty()) {
       return Status::EndOfFile();
     }
-    std::cout<<"line: "<<line<<std::endl;
+    LOG_INFO << "line: " << line;
     auto txn_ptr = GetTxnPtr_(line[0]);
     auto ret = txn_ptr->Init(line, fs_);
     *txn = txn_ptr;
@@ -64,26 +64,23 @@ class Parser {
       case 'P': {
         // Payment
         // Unimplemented yet
-        std::cout << "Payment" << std::endl;
+        LOG_INFO << "Payment";
         txn = new PaymentTxn(conn_);
         break;
       }
       case 'D': {
         // Delivery
-        // Unimplemented yet
-        // txn = new DeliveryTxn(conn_);
+        txn = new DeliveryTxn(conn_);
         break;
       }
       case 'O': {
         // Order-Status
-        // Unimplemented yet
-        // txn = new OrderStatusTxn(conn_);
+        txn = new OrderStatusTxn(conn_);
         break;
       }
       case 'S': {
         // Stock-Level
-        // Unimplemented yet
-        // txn = new StockLevelTxn(conn_);
+        txn = new StockLevelTxn(conn_);
         break;
       }
       case 'I': {
