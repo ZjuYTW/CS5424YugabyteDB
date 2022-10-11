@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "cassandra.h"
+#include "common/util/logger.h"
 #include "common/util/status.h"
 #include "common/util/string_util.h"
 #include "gtest/gtest_prod.h"
