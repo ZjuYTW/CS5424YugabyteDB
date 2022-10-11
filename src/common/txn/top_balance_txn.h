@@ -11,8 +11,8 @@ class TopBalanceTxn : public Txn<Connection> {
       : Txn<Connection>(TxnType::top_balance, conn) {}
 
   Status ExecuteCQL() noexcept override { return Status::OK(); }
-
   Status ExecuteSQL() noexcept override { return Status::OK(); }
+
 
   // TopBalance consists of one line with 1 values: T
   Status Init(const std::string& first_line,

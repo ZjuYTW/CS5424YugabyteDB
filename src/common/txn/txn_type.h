@@ -2,6 +2,7 @@
 #define YDB_PERF_TXN_TYPE_H_
 
 #include <fstream>
+#include <pqxx/pqxx>
 #include <vector>
 
 #include "cassandra.h"

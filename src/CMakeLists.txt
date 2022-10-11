@@ -1,13 +1,17 @@
 cmake_minimum_required(VERSION 3.2)
-project(YCQL_Perf)
+project(YDB_Perf)
 
 add_subdirectory(common)
 add_subdirectory(ycql_impl)
-set(CQL_SOURCE_FILES ydb_cql_main.cc)
-find_library(CQL_LIB_NAME NAMES cassandra /usr/lib /usr/local/lib)
+add_subdirectory(ysql_impl)
+set(YSQL_SOURCE_FILES ydb_sql_main.cc)
+set(YCQL_SOURCE_FILES ydb_cql_main.cc)
 
-add_executable(ycql_perf ${CQL_SOURCE_FILES})
+add_executable(ysql_perf ${YSQL_SOURCE_FILES})
+add_executable(ycql_perf ${YCQL_SOURCE_FILES})
 
-target_link_libraries(ycql_perf gtest common_lib ${CQL_LIB_NAME})
+target_link_libraries(ysql_perf gtest common_lib ${CQL_LIB_PATH} ${SQL_LIB_PATH})
+target_link_libraries(ycql_perf gtest common_lib ${CQL_LIB_PATH} ${SQL_LIB_PATH})
 
+install(TARGETS ysql_perf DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(TARGETS ycql_perf DESTINATION ${CMAKE_INSTALL_PREFIX})

@@ -28,7 +28,6 @@ class PopularItemTxn : public Txn<Connection> {
     l_ = stoi(ids[3]);
     return Status::OK();
   }
-
  private:
   uint32_t w_id_, d_id_, l_;
   FRIEND_TEST(TxnArgsParserTest, popular_item);

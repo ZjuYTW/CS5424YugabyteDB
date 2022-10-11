@@ -15,7 +15,7 @@ class CQLDriver {
  public:
   CQLDriver(const std::string& ip, const CassCluster* cluster, int idx)
       : ip_add_(ip) {
-    idx = idx_;
+    idx_ = idx;
     cluster_ = cluster;
   }
 
