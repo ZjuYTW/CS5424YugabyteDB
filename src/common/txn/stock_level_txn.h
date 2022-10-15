@@ -4,14 +4,13 @@
 #include "common/txn/txn_type.h"
 
 namespace ydb_util {
-template <typename Connection>
-class StockLevelTxn : public Txn<Connection> {
+class StockLevelTxn : public Txn {
  public:
-  explicit StockLevelTxn(Connection* conn)
-      : Txn<Connection>(TxnType::stock_level, conn) {}
+  explicit StockLevelTxn() : Txn(TxnType::stock_level) {}
 
-  Status ExecuteCQL() noexcept override { return Status::OK(); }
-  Status ExecuteSQL() noexcept override { return Status::OK(); }
+  virtual ~StockLevelTxn() = default;
+
+  virtual Status Execute() noexcept override = 0;
 
   Status Init(const std::string& first_line,
               std::ifstream& ifs) noexcept override {
@@ -28,8 +27,10 @@ class StockLevelTxn : public Txn<Connection> {
     return Status::OK();
   }
 
- private:
+ protected:
   uint32_t w_id_, d_id_, t_, l_;
+
+ private:
   FRIEND_TEST(TxnArgsParserTest, stock_level);
 };
 

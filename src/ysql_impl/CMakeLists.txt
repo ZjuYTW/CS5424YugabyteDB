@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
 
-set(SRC_YSQL_IMPL_FILES sql_driver.cc)
+file(GLOB_RECURSE SRC_YSQL_IMPL_FILES "*.cc")
 add_library(ysql_impl_lib SHARED STATIC ${SRC_YSQL_IMPL_FILES})
+target_link_libraries(ysql_impl_lib gtest common_lib ${SQL_LIB_PATH})

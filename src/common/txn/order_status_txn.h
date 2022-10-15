@@ -4,14 +4,13 @@
 #include "common/txn/txn_type.h"
 
 namespace ydb_util {
-template <typename Connection>
-class OrderStatusTxn : public Txn<Connection> {
+class OrderStatusTxn : public Txn {
  public:
-  explicit OrderStatusTxn(Connection* conn)
-      : Txn<Connection>(TxnType::order_status, conn) {}
+  explicit OrderStatusTxn() : Txn(TxnType::order_status) {}
 
-  Status ExecuteCQL() noexcept override { return Status::OK(); }
-  Status ExecuteSQL() noexcept override { return Status::OK(); }
+  virtual ~OrderStatusTxn() = default;
+
+  virtual Status Execute() noexcept override = 0;
 
   Status Init(const std::string& first_line,
               std::ifstream& ifs) noexcept override {
@@ -27,8 +26,10 @@ class OrderStatusTxn : public Txn<Connection> {
     return Status::OK();
   }
 
- private:
+ protected:
   uint32_t c_w_id_, c_d_id_, c_id_;
+
+ private:
   FRIEND_TEST(TxnArgsParserTest, order_status);
 };
 

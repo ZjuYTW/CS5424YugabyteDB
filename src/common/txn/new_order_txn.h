@@ -6,15 +6,14 @@
 
 namespace ydb_util {
 
-template <typename Connection>
-class NewOrderTxn : public Txn<Connection> {
+class NewOrderTxn : public Txn {
  public:
-  explicit NewOrderTxn(Connection* conn)
-      : Txn<Connection>(TxnType::new_order, conn) {}
-
+  explicit NewOrderTxn() : Txn(TxnType::new_order) {}
+  virtual ~NewOrderTxn() = default;
   // NewOrder starts with 5 values: N, C_ID, W_ID, D_ID, M
   // and follows M lines, each line consists of order details
-  Status Init(const std::string& first_line, std::ifstream& ifs) noexcept {
+  Status Init(const std::string& first_line,
+              std::ifstream& ifs) noexcept override {
     auto ids = str_split(first_line, ',');
     if (ids.size() != 5) {
       return Status::AssertionFailed(
@@ -37,6 +36,8 @@ class NewOrderTxn : public Txn<Connection> {
     return Status::OK();
   }
 
+  virtual Status Execute() noexcept override = 0;
+
   Status ExecuteCQL() noexcept {
     CassError rc = CASS_OK;
     for (int i = 0; i < orders_.size(); i++) {
@@ -46,8 +47,6 @@ class NewOrderTxn : public Txn<Connection> {
     }
     return Status::OK();
   }
-
-  Status ExecuteSQL() noexcept { return Status::OK(); }
 
  private:
   // ParseOneOrder parses each line into 3 values: OL_I_ID, OL_W_ID, OL_QUALITY
@@ -65,9 +64,12 @@ class NewOrderTxn : public Txn<Connection> {
     return Status::OK();
   }
 
+ protected:
   std::vector<std::string> orders_;
   // Maybe change it into BigInt
   uint32_t c_id_, w_id_, d_id_;
+
+ private:
   FRIEND_TEST(TxnArgsParserTest, new_order);
 };
 

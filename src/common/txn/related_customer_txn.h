@@ -4,15 +4,13 @@
 #include "common/txn/txn_type.h"
 
 namespace ydb_util {
-template <typename Connection>
-class RelatedCustomerTxn : public Txn<Connection> {
+class RelatedCustomerTxn : public Txn {
  public:
-  explicit RelatedCustomerTxn(Connection* conn)
-      : Txn<Connection>(TxnType::related_customer, conn) {}
+  explicit RelatedCustomerTxn() : Txn(TxnType::related_customer) {}
 
-  Status ExecuteCQL() noexcept override { return Status::OK(); }
+  virtual ~RelatedCustomerTxn() = default;
 
-  Status ExecuteSQL() noexcept override { return Status::OK(); }
+  virtual Status Execute() noexcept override = 0;
 
   // RelatedCustomer consists of one line with 4 values: R, C_W_ID, C_D_ID, C_ID
   Status Init(const std::string& first_line,
@@ -30,8 +28,10 @@ class RelatedCustomerTxn : public Txn<Connection> {
     return Status::OK();
   }
 
- private:
+ protected:
   uint32_t c_w_id_, c_d_id_, c_id_;
+
+ private:
   FRIEND_TEST(TxnArgsParserTest, related_customer);
 };
 

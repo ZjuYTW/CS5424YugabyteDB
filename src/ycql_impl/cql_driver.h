@@ -1,16 +1,17 @@
 ﻿#ifndef YDB_PERF_CQL_DRIVER_H_
 #define YDB_PERF_CQL_DRIVER_H_
+#include <memory>
 #include <string>
 
 #include "cassandra.h"
-#include "common/parser/parser.h"
 #include "common/txn/txn_type.h"
 #include "common/util/status.h"
+#include "ycql_impl/ycql_parser.h"
 
 namespace ycql_impl {
 class CQLDriver {
   using Status = ydb_util::Status;
-  using Txn = ydb_util::Txn<CassSession>;
+  using Txn = ydb_util::Txn;
 
  public:
   CQLDriver(const std::string& ip, const CassCluster* cluster, int idx)
@@ -26,17 +27,18 @@ class CQLDriver {
       cass_session_free(session);
       return Status::ConnectionFailed();
     }
-    ydb_util::Parser<CassSession> parser(filename, session);
-    auto s = parser.Init();
+    std::unique_ptr<ydb_util::Parser> parser_p =
+        std::make_unique<ydb_util::YCQLParser>(filename, session);
+    auto s = parser_p->Init();
     if (!s.ok()) {
       return s;
     }
     while (true) {
       Txn* t = nullptr;
-      if (parser.GetNextTxn(&t).isEndOfFile()) {
+      if (parser_p->GetNextTxn(&t).isEndOfFile()) {
         break;
       }
-      t->ExecuteCQL();
+      t->Execute();
     }
     cass_session_free(session);
     return Status::OK();

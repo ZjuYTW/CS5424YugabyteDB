@@ -1,8 +1,6 @@
 #include <pqxx/pqxx>
 
 #include "ThreadPool.h"
-#include "common/parser/parser.h"
-#include "ycql_impl/cql_driver.h"
 #include "ysql_impl/sql_driver.h"
 
 const std::string HOST = "127.0.0.1";
@@ -12,13 +10,6 @@ const std::string USER = "yugabyte";
 const std::string PASSWORD = "yugabyte";
 const std::string SSL_MODE = "";
 const std::string SSL_ROOT_CERT = "";
-
-// Create a new cluster.
-CassCluster* create_cluster(const char* hosts) {
-  CassCluster* cluster = cass_cluster_new();
-  cass_cluster_set_contact_points(cluster, hosts);
-  return cluster;
-}
 
 int main(int argc, char* argv[]) {
   // DEMO: Since the file name is not set in main now, suppose main accept sql

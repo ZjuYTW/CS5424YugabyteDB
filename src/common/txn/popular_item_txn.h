@@ -4,15 +4,13 @@
 #include "common/txn/txn_type.h"
 
 namespace ydb_util {
-template <typename Connection>
-class PopularItemTxn : public Txn<Connection> {
+class PopularItemTxn : public Txn {
  public:
-  explicit PopularItemTxn(Connection* conn)
-      : Txn<Connection>(TxnType::popular_item, conn) {}
+  explicit PopularItemTxn() : Txn(TxnType::popular_item) {}
 
-  Status ExecuteCQL() noexcept override { return Status::OK(); }
+  virtual ~PopularItemTxn() = default;
 
-  Status ExecuteSQL() noexcept override { return Status::OK(); }
+  virtual Status Execute() noexcept override = 0;
 
   // PopularItem consists of one line with 4 values: I, W_ID, D_ID, L
   Status Init(const std::string& first_line,
@@ -29,8 +27,10 @@ class PopularItemTxn : public Txn<Connection> {
     return Status::OK();
   }
 
- private:
+ protected:
   uint32_t w_id_, d_id_, l_;
+
+ private:
   FRIEND_TEST(TxnArgsParserTest, popular_item);
 };
 }  // namespace ydb_util
