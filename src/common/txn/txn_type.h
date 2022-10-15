@@ -2,7 +2,6 @@
 #define YDB_PERF_TXN_TYPE_H_
 
 #include <fstream>
-#include <pqxx/pqxx>
 #include <vector>
 
 #include "cassandra.h"
@@ -23,24 +22,21 @@ enum class TxnType {
   related_customer,
 };
 
-template <typename Connection>
 class Txn {
  public:
-  explicit Txn(TxnType type, Connection* conn) : txn_type_(type), conn_(conn) {}
+  explicit Txn(TxnType type) : txn_type_(type) {}
 
-  virtual Status ExecuteCQL() noexcept = 0;
-  virtual Status ExecuteSQL() noexcept = 0;
+  virtual ~Txn() = default;
+
+  virtual Status Execute() noexcept = 0;
 
   virtual Status Init(const std::string& first_line,
                       std::ifstream& ifs) noexcept = 0;
 
   inline TxnType GetTxnType() noexcept { return txn_type_; }
 
-  inline Connection* GetConnection() noexcept { return conn_; }
-
  private:
   TxnType txn_type_;
-  Connection* conn_;
 };
 
 };  // namespace ydb_util

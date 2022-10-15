@@ -7,6 +7,8 @@ namespace ydb_util {
 // TODO(ZjuYTW): Refine it to string_view
 std::vector<std::string> str_split(const std::string& input,
                                    char delimiter) noexcept;
+
+std::string format(const char* fmt, ...) noexcept;
 }  // namespace ydb_util
 
 #endif

@@ -1,16 +1,16 @@
 #ifndef YDB_PERF_SQL_DRIVER_H_
 #define YDB_PERF_SQL_DRIVER_H_
-#include <pqxx/pqxx>
+#include <memory>
 #include <string>
 
-#include "common/parser/parser.h"
 #include "common/txn/txn_type.h"
 #include "common/util/status.h"
+#include "ysql_impl/ysql_parser.h"
 
 namespace ysql_impl {
 class SQLDriver {
   using Status = ydb_util::Status;
-  using Txn = ydb_util::Txn<pqxx::connection>;
+  using Txn = ydb_util::Txn;
 
  public:
   SQLDriver(const std::string host, const std::string port,
@@ -34,18 +34,19 @@ class SQLDriver {
     if (conn == NULL) {
       return Status::ConnectionFailed();
     }
-    ydb_util::Parser<pqxx::connection> parser(filename, conn);
-    auto s = parser.Init();
+    std::unique_ptr<ydb_util::Parser> parser_p =
+        std::make_unique<ydb_util::YSQLParser>(filename, conn);
+    auto s = parser_p->Init();
     if (!s.ok()) {
       return s;
     }
     while (true) {
       Txn* t = nullptr;
-      if (parser.GetNextTxn(&t).isEndOfFile()) {
+      if (parser_p->GetNextTxn(&t).isEndOfFile()) {
         break;
       }
       std::cout << "start to sql" << std::endl;
-      t->ExecuteSQL();
+      t->Execute();
     }
     return Status::OK();
   }

@@ -4,27 +4,17 @@
 #include <iostream>
 #include <string>
 
-#include "common/txn/delivery_txn.h"
-#include "common/txn/new_order_txn.h"
-#include "common/txn/order_status_txn.h"
-#include "common/txn/payment_txn.h"
-#include "common/txn/popular_item_txn.h"
-#include "common/txn/related_customer_txn.h"
-#include "common/txn/stock_level_txn.h"
-#include "common/txn/top_balance_txn.h"
+#include "common/txn/txn_type.h"
+#include "common/util/logger.h"
 #include "common/util/status.h"
 
 namespace ydb_util {
-
 // Usage: After init the Parser class with input file path
 // Call GetNextTxn to get next Txn class.
-template <typename Connection>
 class Parser {
-  using Txn = Txn<Connection>;
-
  public:
-  explicit Parser(const std::string& file_name, Connection* conn)
-      : file_name_(file_name), conn_(conn) {}
+  explicit Parser(const std::string& file_name) : file_name_(file_name) {}
+  virtual ~Parser() = default;
 
   Status Init() noexcept {
     fs_ = std::ifstream(file_name_, std::ios::in);
@@ -41,7 +31,6 @@ class Parser {
     }
     std::string line;
     getline(fs_, line);
-    // assert(!line.empty());
     if (line.empty()) {
       return Status::EndOfFile();
     }
@@ -52,63 +41,12 @@ class Parser {
     return ret;
   }
 
- private:
-  Txn* GetTxnPtr_(char c) noexcept {
-    Txn* txn = nullptr;
-    switch (c) {
-      case 'N': {
-        // New Order
-        txn = new NewOrderTxn(conn_);
-        break;
-      }
-      case 'P': {
-        // Payment
-        // Unimplemented yet
-        LOG_INFO << "Payment";
-        txn = new PaymentTxn(conn_);
-        break;
-      }
-      case 'D': {
-        // Delivery
-        txn = new DeliveryTxn(conn_);
-        break;
-      }
-      case 'O': {
-        // Order-Status
-        txn = new OrderStatusTxn(conn_);
-        break;
-      }
-      case 'S': {
-        // Stock-Level
-        txn = new StockLevelTxn(conn_);
-        break;
-      }
-      case 'I': {
-        // Popular-Item
-        txn = new PopularItemTxn(conn_);
-        break;
-      }
-      case 'T': {
-        // Top-Balance
-        txn = new TopBalanceTxn(conn_);
-        break;
-      }
-      case 'R': {
-        // Related-Customer
-        txn = new RelatedCustomerTxn(conn_);
-        break;
-      }
-      default: {
-        // Unreachable
-        assert(false);
-      }
-    }
-    return txn;
-  }
+ protected:
+  virtual Txn* GetTxnPtr_(char c) noexcept = 0;
 
+ private:
   std::string file_name_;
   std::ifstream fs_;
-  Connection* conn_;
 };
 }  // namespace ydb_util
 

@@ -4,14 +4,13 @@
 #include "common/txn/txn_type.h"
 
 namespace ydb_util {
-template <typename Connection>
-class TopBalanceTxn : public Txn<Connection> {
+class TopBalanceTxn : public Txn {
  public:
-  explicit TopBalanceTxn(Connection* conn)
-      : Txn<Connection>(TxnType::top_balance, conn) {}
+  explicit TopBalanceTxn() : Txn(TxnType::top_balance) {}
 
-  Status ExecuteCQL() noexcept override { return Status::OK(); }
-  Status ExecuteSQL() noexcept override { return Status::OK(); }
+  virtual ~TopBalanceTxn() = default;
+
+  virtual Status Execute() noexcept override = 0;
 
   // TopBalance consists of one line with 1 values: T
   Status Init(const std::string& first_line,
