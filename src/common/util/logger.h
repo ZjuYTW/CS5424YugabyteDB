@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <map>
-#include <sstream>
 #include <mutex>
+#include <sstream>
 
 // separate release log and debug log for benchmarking
 // thread-safe Logger

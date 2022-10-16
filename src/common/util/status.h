@@ -1,5 +1,6 @@
 #ifndef YDB_PERF_COMMON_STATUS_H_
 #define YDB_PERF_COMMON_STATUS_H_
+#include <cassert>
 #include <string>
 
 namespace ydb_util {
