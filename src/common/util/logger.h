@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <mutex>
 
 // separate release log and debug log for benchmarking
 // thread-safe Logger
