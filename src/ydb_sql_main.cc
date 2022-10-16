@@ -1,10 +1,11 @@
 #include <pqxx/pqxx>
 
 #include "ThreadPool.h"
+#include "common/util/env_util.h"
 #include "ysql_impl/sql_driver.h"
 
-const std::string HOST = "127.0.0.1";
-const std::string PORT = "5433";
+const std::string HOST = ydb_util::getenv("YDB_HOST", "127.0.0.1");
+const std::string PORT = ydb_util::getenv("YDB_SQL_PORT", "5433");
 const std::string DB_NAME = "yugabyte";
 const std::string USER = "yugabyte";
 const std::string PASSWORD = "yugabyte";
