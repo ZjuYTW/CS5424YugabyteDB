@@ -1,5 +1,9 @@
 #include "string_util.h"
 
+#include <stdarg.h>
+
+#include <cassert>
+
 namespace ydb_util {
 std::vector<std::string> str_split(const std::string& input,
                                    char delimiter) noexcept {
