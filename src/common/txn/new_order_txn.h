@@ -33,6 +33,19 @@ class NewOrderTxn : public Txn {
       getline(ifs, tmp);
       orders_.push_back(tmp);
     }
+
+    for (int i = 0; i < orders_.size(); i++) {
+      auto ret = str_split(orders_[i], ',');
+      if (ret.size() != 3) {
+        return Status::AssertionFailed(
+            "Expect one order line with 3 args, but got " +
+            std::to_string(ret.size()));
+      }
+      i_ids.push_back(stoi(ret[0]));
+      w_ids.push_back(stoi(ret[1]));
+      quantities.push_back(stoi(ret[2]));
+    }
+
     return Status::OK();
   }
 
@@ -68,6 +81,7 @@ class NewOrderTxn : public Txn {
   std::vector<std::string> orders_;
   // Maybe change it into BigInt
   uint32_t c_id_, w_id_, d_id_;
+  std::vector<int> i_ids, w_ids, quantities;
 
  private:
   FRIEND_TEST(TxnArgsParserTest, new_order);
