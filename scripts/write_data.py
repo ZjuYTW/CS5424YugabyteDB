@@ -42,7 +42,7 @@ data_cfg = [
         'table': 'data/table_files/item.csv',
         'foreign_keys': []
     },{
-        'name': 'order-line',
+        'name': 'orderline',
         'file': 'data/data_files/order-line.csv',
         'table': 'data/table_files/order-line.csv',
         'foreign_keys': ["FOREIGN KEY (OL_W_ID,OL_D_ID,OL_O_ID) REFERENCES orders(O_W_ID,O_D_ID,O_ID)",
