@@ -6,6 +6,9 @@ namespace ydb_util {
 Status YCQLPaymentTxn::Execute() noexcept {
   LOG_INFO << "Payment Transaction started";
   int retry = 0;
-  return Status::OK();
+  auto st = Status::OK();
+  while(retry++ < MaxRetryCnt) {
+    // st = getWarehouse_(w_id_, );
+  }
 }
 }  // namespace ydb_util
