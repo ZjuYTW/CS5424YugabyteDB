@@ -26,6 +26,7 @@ class YSQLNewOrderTxn : public NewOrderTxn {
 
   pqxx::connection* conn_;
   static constexpr int MAX_RETRY_COUNT = 3;
+  std::vector<std::string> outputs;
 };
 }  // namespace ydb_util
 #endif

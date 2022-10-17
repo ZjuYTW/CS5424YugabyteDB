@@ -45,11 +45,14 @@ Status YSQLNewOrderTxn::Execute() noexcept {
         float item_amount = quantities[i] * i_price;
         total_amount += item_amount;
 
-        std::cout
-            << "Supplier Warehouse=" << w_ids[i] << ", "
-            << "Quantity=" << quantities[i] << ", "
-            << "OL_AMOUNT=" << item_amount << ", "
-            << "S_QUANTITY=" << s_quantity << std::endl;
+        outputs.push_back(format("SUPPLIER_WAREHOUSE: %d, QUANTITY: %d, OL_AMOUNT: %d, S_QUANTITY: %d",
+                                 w_ids[i], quantities[i], item_amount, s_quantity));
+        outputs.push_back("");
+//        std::cout
+//            << "Supplier Warehouse=" << w_ids[i] << ", "
+//            << "Quantity=" << quantities[i] << ", "
+//            << "OL_AMOUNT=" << item_amount << ", "
+//            << "S_QUANTITY=" << s_quantity << std::endl;
 
         SQL_InsertNewOrderLine(d_next_o_id, i+1, i_ids[i], item_amount, w_ids[i], quantities[i], &txn);
       }
@@ -59,11 +62,17 @@ Status YSQLNewOrderTxn::Execute() noexcept {
       float c_discount = SQL_Get_C_Discount(w_id_, d_id_, c_id_, &txn);
       total_amount *= (1 + d_tax + w_tax) * (1 - c_discount);
       txn.commit();
-      std::cout
-          << "Number of items=" << orders_.size() << ", "
-          << "Total amount=" << total_amount << std::endl;
+      outputs.push_back(format("NUM_ITEMS: %d, TOTAL_AMOUNT: %d", orders_.size(), total_amount));
+//      std::cout
+//          << "Number of items=" << orders_.size() << ", "
+//          << "Total amount=" << total_amount << std::endl;
+
+      for (int i = 0; i < outputs.size(); i++) {
+        std::cout << outputs[i] << std::endl;
+      }
 
       return Status::OK();
+
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
@@ -117,18 +126,13 @@ void YSQLNewOrderTxn::SQL_InsertNewOrder(int n, int allLocal, pqxx::work* txn) {
       "(%d, %d, %d, %d, null, %d, %d, '%s')",
       w_id_, d_id_, n, c_id_, orders_.size(), allLocal, local_time);
   LOG_INFO << query;
+  txn->exec(query);
 
-
-  try {
-    auto r = txn->exec(query);
-  }
-  catch (const std::exception &e) {
-    std::cerr << e.what() << std::endl;
-  }
-
-  std::cout
-      << "Order number=" << std::to_string(n) << ", "
-      << "entry date=" << local_time << std::endl;
+  outputs.push_back(format("O_ID: %d, O_ENTRY_D: %s", n, local_time));
+  outputs.push_back("");
+//  std::cout
+//      << "Order number=" << std::to_string(n) << ", "
+//      << "entry date=" << local_time << std::endl;
 }
 
 char* YSQLNewOrderTxn::get_local_time(char *time_str, int len, struct timeval *tv) {
@@ -189,9 +193,11 @@ float YSQLNewOrderTxn::SQL_Get_I_Price(int i_id, pqxx::work* txn) {
   }
 
   for (auto row: res) {
-    std::cout
-        << "I_NAME=" << row["I_NAME"].c_str() << ", "
-        << "Item Number=" << i_id << std::endl;
+    outputs.push_back(format("ITEM_NUMBER: %d, I_NAME: %d", i_id, row["I_NAME"].c_str()));
+    outputs.push_back("");
+//    std::cout
+//        << "I_NAME=" << row["I_NAME"].c_str() << ", "
+//        << "Item Number=" << i_id << std::endl;
   }
 
   return res[0]["I_Price"].as<float>();
@@ -223,8 +229,10 @@ float YSQLNewOrderTxn::SQL_Get_D_Tax(int w_id, int d_id, pqxx::work* txn) {
   }
 
   for (auto row: res) {
-    std::cout
-        << "District tax rate=" << row["D_TAX"].as<float>() << std::endl;
+    outputs.push_back(format("D_TAX: %f", row["D_TAX"].as<float>()));
+    outputs.push_back("");
+//    std::cout
+//        << "District tax rate=" << row["D_TAX"].as<float>() << std::endl;
   }
 
   return res[0]["D_Tax"].as<float>();
@@ -244,8 +252,10 @@ float YSQLNewOrderTxn::SQL_Get_W_Tax(int w_id, pqxx::work* txn) {
   }
 
   for (auto row: res) {
-    std::cout
-        << "Warehouse tax rate=" << row["W_TAX"].as<float>() << std::endl;
+    outputs.push_back(format("W_TAX: %f", row["W_TAX"].as<float>()));
+    outputs.push_back("");
+//    std::cout
+//        << "Warehouse tax rate=" << row["W_TAX"].as<float>() << std::endl;
   }
   return res[0]["W_TAX"].as<float>();
 }
@@ -264,10 +274,14 @@ float YSQLNewOrderTxn::SQL_Get_C_Discount(int w_id, int d_id, int id, pqxx::work
   }
 
   for (auto row: res) {
-    std::cout
-        << "Customer lastname=" << row["C_LAST"].c_str() << ", "
-        << "credit=" << row["C_CREDIT"].c_str() << ", "
-        << "discount=" << row["C_DISCOUNT"].as<float>() << std::endl;
+    outputs.push_back(format("Customer identifier (W_ID: %d, D_ID: %d, C_ID: %d)",
+                             "C_LAST: %s, C_CREDIT: %s, C_DISCOUNT: %f",
+                             w_id, d_id, id, row["C_LAST"].c_str(), row["C_CREDIT"].c_str(), row["C_DISCOUNT"].as<float>()));
+    outputs.push_back("");
+//    std::cout
+//        << "Customer lastname=" << row["C_LAST"].c_str() << ", "
+//        << "credit=" << row["C_CREDIT"].c_str() << ", "
+//        << "discount=" << row["C_DISCOUNT"].as<float>() << std::endl;
   }
 
   return res[0]["C_DISCOUNT"].as<float>();
