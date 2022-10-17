@@ -8,10 +8,11 @@ class YCQLPaymentTxn : public PaymentTxn {
   explicit YCQLPaymentTxn(CassSession* session)
       : PaymentTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  Status Execute() noexcept override;
 
  private:
   CassSession* conn_;
+  static constexpr int MaxRetryCnt = 3;
 };
 }  // namespace ydb_util
 

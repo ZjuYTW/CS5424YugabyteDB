@@ -13,6 +13,7 @@ enum class StatusCode : unsigned char {
   kAssertionFailed = 5,
   kEndOfFile = 6,
   kConnectionFailed = 7,
+  kExecutionFailed = 8,
 
   kUnknownError = 255,
 };
@@ -71,6 +72,10 @@ class Status {
     return Status(StatusCode::kConnectionFailed, msg);
   }
 
+  static Status ExecutionFailed(const std::string& msg = "") noexcept {
+    return Status(StatusCode::kExecutionFailed, msg);
+  }
+
   static Status UnknownError(const std::string& msg = "") noexcept {
     return Status(StatusCode::kUnknownError, msg);
   }
@@ -95,6 +100,10 @@ class Status {
 
   bool isConnectionFailed() const noexcept {
     return code() == StatusCode::kConnectionFailed;
+  }
+
+  bool isExecutionFailed() const noexcept {
+    return code() == StatusCode::kExecutionFailed;
   }
 
   bool isUnknownError() const noexcept {
