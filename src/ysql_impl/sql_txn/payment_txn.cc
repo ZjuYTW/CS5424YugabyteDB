@@ -39,10 +39,10 @@ Status YSQLPaymentTxn::Execute() noexcept {
       pqxx::row customer=customers[0];
       txn.commit();
       std::cout << "Customer Information:\n "
-                << "identifier (C_W_ID,C_D_ID,C_ID)=(" << customer["c_w_id"].c_str()<<customer["c_d_id"].c_str()<<customer["c_id"].c_str() << "),\n "
-                << "name (C_FIRST,C_MIDDLE,C_LAST)=" << customer["c_first"].c_str()<<customer["c_middle"].c_str()<<customer["c_last"].c_str() << ",\n "
-                << "address (C_STREET_1,C_STREET_2,C_CITY,C_STATE,C_ZIP)=" << customer["C_STREET_1"].c_str() << customer["C_STREET_2"].c_str()
-                <<customer["C_CITY"].c_str()<<customer["C_STATE"].c_str() << customer["C_ZIP"].c_str() << ",\n "
+                << "identifier (C_W_ID,C_D_ID,C_ID)=(" << customer["c_w_id"].c_str()<<","<<customer["c_d_id"].c_str()<<","<<customer["c_id"].c_str() << "),\n "
+                << "name (C_FIRST,C_MIDDLE,C_LAST)=(" << customer["c_first"].c_str()<<","<<customer["c_middle"].c_str()<<","<<customer["c_last"].c_str() << "),\n "
+                << "address (C_STREET_1,C_STREET_2,C_CITY,C_STATE,C_ZIP)=(" << customer["C_STREET_1"].c_str() <<","<< customer["C_STREET_2"].c_str()
+                <<","<<customer["C_CITY"].c_str()<<","<<customer["C_STATE"].c_str() <<","<< customer["C_ZIP"].c_str() << ")\n "
                 << "C_PHONE=" << customer["C_PHONE"].c_str()<<","
                 << "C_SINCE=" << customer["C_SINCE"].c_str() << ", "
                 << "C_CREDIT=" << customer["C_CREDIT"].c_str()<<", "

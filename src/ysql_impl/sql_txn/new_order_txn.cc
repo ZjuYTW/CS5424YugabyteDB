@@ -45,7 +45,7 @@ Status YSQLNewOrderTxn::Execute() noexcept {
         float item_amount = quantities[i] * i_price;
         total_amount += item_amount;
 
-        outputs.push_back(format("SUPPLIER_WAREHOUSE: %d, QUANTITY: %d, OL_AMOUNT: %d, S_QUANTITY: %d",
+        outputs[outputs.size() - 1] += (format(", SUPPLIER_WAREHOUSE: %d, QUANTITY: %d, OL_AMOUNT: %d, S_QUANTITY: %d",
                                  w_ids[i], quantities[i], item_amount, s_quantity));
         outputs.push_back("");
 //        std::cout
@@ -194,7 +194,6 @@ float YSQLNewOrderTxn::SQL_Get_I_Price(int i_id, pqxx::work* txn) {
 
   for (auto row: res) {
     outputs.push_back(format("ITEM_NUMBER: %d, I_NAME: %d", i_id, row["I_NAME"].c_str()));
-    outputs.push_back("");
 //    std::cout
 //        << "I_NAME=" << row["I_NAME"].c_str() << ", "
 //        << "Item Number=" << i_id << std::endl;
