@@ -89,8 +89,8 @@ int YSQLNewOrderTxn::SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn) {
   }
 
   for (auto row : res) {
-    LOG_INFO << "D_W_ID=" << row["D_W_ID"].as<int>() << ", "
-             << "D_ID=" << row["D_ID"].as<int>() << ", "
+    LOG_INFO << "D_W_ID=" << w_id << ", "
+             << "D_ID=" << d_id << ", "
              << "D_Next_O_ID=" << row["D_Next_O_ID"].as<int>();
   }
   return res[0]["D_Next_O_ID"].as<int>();
@@ -112,14 +112,12 @@ void YSQLNewOrderTxn::SQL_InsertNewOrder(int n, int allLocal, pqxx::work* txn) {
   gettimeofday(&current_time_tmp, NULL);
   char *local_time = NULL;
   local_time = get_local_time(local_time_str, sizeof(local_time_str), &current_time_tmp);
-
   std::string query = format(
-      "INSERT INTO Order VALUES\
-            (%d, %d, %d, %d, null, %d, %d, %s)",
+      "INSERT INTO Orders VALUES"
+      "(%d, %d, %d, %d, null, %d, %d, '%s')",
       w_id_, d_id_, n, c_id_, orders_.size(), allLocal, local_time);
   LOG_INFO << query;
   txn->exec(query);
-
   std::cout
       << "Order number=" << std::to_string(n) << ", "
       << "entry date=" << local_time << std::endl;
@@ -134,8 +132,9 @@ char* YSQLNewOrderTxn::get_local_time(char *time_str, int len, struct timeval *t
 
   // Output format: 2018-12-09 10:52:57.200
   strftime(time_string, sizeof(time_string), "%Y-%m-%d %H:%M:%S", ptm);
-  snprintf (time_str, len, "%s", time_string);
+  milliseconds = tv->tv_usec / 10;
 
+  snprintf (time_str, len, "%s.%05ld", time_string, milliseconds);
   return time_str;
 }
 
@@ -193,9 +192,9 @@ float YSQLNewOrderTxn::SQL_Get_I_Price(int i_id, pqxx::work* txn) {
 void YSQLNewOrderTxn::SQL_InsertNewOrderLine(int n, int i, int item_number, float ol_amount, int supply_w_id, int quantity, pqxx::work* txn) {
   LOG_INFO << ">>>> Insert New OrderLine:";
   std::string query = format(
-      "INSERT INTO Order-Line VALUES\
-            (%d, %d, %d, %d, %d, null, %.2f, %d, %d, S_DIST_%d",
-      w_id_, d_id_, n, i, item_number, ol_amount, supply_w_id, quantity,d_id_);
+      "INSERT INTO orderline VALUES"
+      "(%d, %d, %d, %d, %d, null, %.2f, %d, %d, 'S_DIST_%d')",
+      w_id_, d_id_, n, i, item_number, ol_amount, supply_w_id, quantity, d_id_);
   LOG_INFO << query;
   txn->exec(query);
 
