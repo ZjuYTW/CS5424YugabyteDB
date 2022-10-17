@@ -58,7 +58,7 @@ Status YSQLNewOrderTxn::Execute() noexcept {
       float w_tax = SQL_Get_W_Tax(w_id_, &txn);
       float c_discount = SQL_Get_C_Discount(w_id_, d_id_, c_id_, &txn);
       total_amount *= (1 + d_tax + w_tax) * (1 - c_discount);
-
+      txn.commit();
       std::cout
           << "Number of items=" << orders_.size() << ", "
           << "Total amount=" << total_amount << std::endl;
@@ -113,11 +113,19 @@ void YSQLNewOrderTxn::SQL_InsertNewOrder(int n, int allLocal, pqxx::work* txn) {
   char *local_time = NULL;
   local_time = get_local_time(local_time_str, sizeof(local_time_str), &current_time_tmp);
   std::string query = format(
-      "INSERT INTO Orders VALUES"
+      "INSERT INTO orders VALUES"
       "(%d, %d, %d, %d, null, %d, %d, '%s')",
       w_id_, d_id_, n, c_id_, orders_.size(), allLocal, local_time);
   LOG_INFO << query;
-  txn->exec(query);
+
+
+  try {
+    auto r = txn->exec(query);
+  }
+  catch (const std::exception &e) {
+    std::cerr << e.what() << std::endl;
+  }
+
   std::cout
       << "Order number=" << std::to_string(n) << ", "
       << "entry date=" << local_time << std::endl;
