@@ -39,6 +39,7 @@ build/*
 .DS_Store
 .cache/*
 data/data_files
+/tmp
 
 # IDE
 .vscode/*
