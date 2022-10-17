@@ -38,6 +38,7 @@ build/*
 # Others
 .DS_Store
 .cache/*
+data/data_files
 
 # IDE
 .vscode/*
