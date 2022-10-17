@@ -17,44 +17,43 @@ config = {
 
 data_cfg = [
     {   
-        'name': 'Warehouse',
+        'name': 'warehouse',
         'file': 'data/data_files/warehouse.csv',
         'table': 'data/table_files/warehouse.csv',
         'foreign_keys': []
     },{ 
-        'name': 'District',
+        'name': 'district',
         'file': 'data/data_files/district.csv',
         'table': 'data/table_files/district.csv',
-        'foreign_keys': ["FOREIGN KEY (D_W_ID) REFERENCES Warehouse(W_ID)"]
+        'foreign_keys': ["FOREIGN KEY (D_W_ID) REFERENCES warehouse(W_ID)"]
     },{
-        'name': 'Customer',
+        'name': 'customer',
         'file': 'data/data_files/customer.csv',
         'table': 'data/table_files/customer.csv',
-        'foreign_keys': ["FOREIGN KEY (C_W_ID, C_D_ID) REFERENCES District(D_W_ID, D_ID)"]
+        'foreign_keys': ["FOREIGN KEY (C_W_ID, C_D_ID) REFERENCES district(D_W_ID, D_ID)"]
     },{ 
-        'name': '"Order"',
+        'name': 'orders',
         'file': 'data/data_files/order.csv',
         'table': 'data/table_files/order.csv',
-        'foreign_keys': ["FOREIGN KEY (O_W_ID, O_D_ID, O_C_ID) REFERENCES Customer(C_W_ID, C_D_ID, C_ID)"]
+        'foreign_keys': ["FOREIGN KEY (O_W_ID, O_D_ID, O_C_ID) REFERENCES customer(C_W_ID, C_D_ID, C_ID)"]
     },{ 
-        'name': 'Item',
+        'name': 'item',
         'file': 'data/data_files/item.csv',
         'table': 'data/table_files/item.csv',
         'foreign_keys': []
     },{
-        'name': '"Order-Line"',
+        'name': 'order-line',
         'file': 'data/data_files/order-line.csv',
         'table': 'data/table_files/order-line.csv',
-        'foreign_keys': ["FOREIGN KEY (OL_W_ID,OL_D_ID,OL_O_ID) REFERENCES \"Order\"(O_W_ID,O_D_ID,O_ID)",
-                         "FOREIGN KEY (OL_I_ID) REFERENCES Item(I_ID)"]
+        'foreign_keys': ["FOREIGN KEY (OL_W_ID,OL_D_ID,OL_O_ID) REFERENCES orders(O_W_ID,O_D_ID,O_ID)",
+                         "FOREIGN KEY (OL_I_ID) REFERENCES item(I_ID)"]
     },{
-        'name': 'Stock',
+        'name': 'stock',
         'file': 'data/data_files/stock.csv',
         'table': 'data/table_files/stock.csv',
-        'foreign_keys': ["FOREIGN KEY (S_W_ID) REFERENCES Warehouse(W_ID)",
-                         "FOREIGN KEY (S_I_ID) REFERENCES Item(I_ID)"]
+        'foreign_keys': ["FOREIGN KEY (S_W_ID) REFERENCES warehouse(W_ID)",
+                         "FOREIGN KEY (S_I_ID) REFERENCES item(I_ID)"]
     }]
-data_cfg = data_cfg[5:6]
 
 
 def parse_table(file, name):
