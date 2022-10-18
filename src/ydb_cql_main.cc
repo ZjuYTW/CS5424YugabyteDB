@@ -1,5 +1,6 @@
 #include "ThreadPool.h"
 #include "common/parser/parser.h"
+#include "common/util/env_util.h"
 #include "ycql_impl/cql_driver.h"
 
 // Create a new cluster.
@@ -20,7 +21,7 @@ int main(int argc, char* argv[]) {
   // Thread pool of size 10 => we could change it to match
   // our txt file number later
   ThreadPool pool(10);
-  std::string ip = "127.0.0.1";
+  std::string ip = ydb_util::getenv("YDB_HOST", "127.0.0.1");
   int idx = 1;
   CassCluster* cluster = nullptr;
   cluster = create_cluster(ip.c_str());

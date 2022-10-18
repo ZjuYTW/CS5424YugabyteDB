@@ -13,6 +13,11 @@ class YSQLTopBalanceTxn : public TopBalanceTxn {
   Status Execute() noexcept override;
 
  private:
+  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int TOP_K = 10;
+
+  pqxx::row getWarehouseSQL_(int w_id, pqxx::work* txn);
+  pqxx::row getDistrictSQL_(int w_id, int d_id, pqxx::work* txn);
   pqxx::connection* conn_;
 };
 }  // namespace ydb_util
