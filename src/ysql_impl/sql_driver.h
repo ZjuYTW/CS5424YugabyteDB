@@ -45,7 +45,6 @@ class SQLDriver {
       if (parser_p->GetNextTxn(&t).isEndOfFile()) {
         break;
       }
-      std::cout << "start to sql" << std::endl;
       t->Execute();
     }
     return Status::OK();

@@ -7,14 +7,12 @@
 namespace ydb_util {
 class YSQLDeliveryTxn : public DeliveryTxn {
  public:
-  explicit YSQLDeliveryTxn(pqxx::connection* conn)
-      : DeliveryTxn(), conn_(conn) {}
+  explicit YSQLDeliveryTxn(pqxx::connection* conn): DeliveryTxn(), conn_(conn) {}
 
-  virtual ~YSQLDeliveryTxn() = default;
-
-  Status Execute() noexcept override { return Status::OK(); }
+  Status Execute() noexcept;
 
  private:
+  static constexpr int MAX_RETRY_COUNT = 3;
   pqxx::connection* conn_;
 };
 }  // namespace ydb_util

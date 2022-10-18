@@ -16,32 +16,33 @@ config = {
 }
 
 data_cfg = [
-    {   
-        'name': 'warehouse',
-        'file': 'data/data_files/warehouse.csv',
-        'table': 'data/table_files/warehouse.csv',
-        'foreign_keys': []
-    },{ 
-        'name': 'district',
-        'file': 'data/data_files/district.csv',
-        'table': 'data/table_files/district.csv',
-        'foreign_keys': ["FOREIGN KEY (D_W_ID) REFERENCES warehouse(W_ID)"]
-    },{
-        'name': 'customer',
-        'file': 'data/data_files/customer.csv',
-        'table': 'data/table_files/customer.csv',
-        'foreign_keys': ["FOREIGN KEY (C_W_ID, C_D_ID) REFERENCES district(D_W_ID, D_ID)"]
-    },{ 
-        'name': 'orders',
-        'file': 'data/data_files/order.csv',
-        'table': 'data/table_files/order.csv',
-        'foreign_keys': ["FOREIGN KEY (O_W_ID, O_D_ID, O_C_ID) REFERENCES customer(C_W_ID, C_D_ID, C_ID)"]
-    },{ 
-        'name': 'item',
-        'file': 'data/data_files/item.csv',
-        'table': 'data/table_files/item.csv',
-        'foreign_keys': []
-    },{
+    # {
+    #     'name': 'warehouse',
+    #     'file': 'data/data_files/warehouse.csv',
+    #     'table': 'data/table_files/warehouse.csv',
+    #     'foreign_keys': []
+    # },{
+    #     'name': 'district',
+    #     'file': 'data/data_files/district.csv',
+    #     'table': 'data/table_files/district.csv',
+    #     'foreign_keys': ["FOREIGN KEY (D_W_ID) REFERENCES warehouse(W_ID)"]
+    # },{
+    #     'name': 'customer',
+    #     'file': 'data/data_files/customer.csv',
+    #     'table': 'data/table_files/customer.csv',
+    #     'foreign_keys': ["FOREIGN KEY (C_W_ID, C_D_ID) REFERENCES district(D_W_ID, D_ID)"]
+    # },{
+    #     'name': 'orders',
+    #     'file': 'data/data_files/order.csv',
+    #     'table': 'data/table_files/order.csv',
+    #     'foreign_keys': ["FOREIGN KEY (O_W_ID, O_D_ID, O_C_ID) REFERENCES customer(C_W_ID, C_D_ID, C_ID)"]
+    # },{
+    #     'name': 'item',
+    #     'file': 'data/data_files/item.csv',
+    #     'table': 'data/table_files/item.csv',
+    #     'foreign_keys': []
+    # },
+    {
         'name': 'orderline',
         'file': 'data/data_files/order-line.csv',
         'table': 'data/table_files/order-line.csv',

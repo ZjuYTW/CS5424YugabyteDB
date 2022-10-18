@@ -37,6 +37,7 @@ class YSQLParser : public Parser {
       }
       case 'D': {
         // Delivery
+        LOG_INFO << "Delivery";
         txn = new YSQLDeliveryTxn(conn_);
         break;
       }
