@@ -1,10 +1,9 @@
 #include "string_util.h"
 
 #include <stdarg.h>
+#include <sys/time.h>
 
 #include <cassert>
-
-#include<sys/time.h>
 
 namespace ydb_util {
 std::vector<std::string> str_split(const std::string& input,
@@ -34,7 +33,7 @@ std::string format(const char* fmt, ...) noexcept {
   return r;
 }
 
-char* getLocalTimeString() noexcept{
+char* getLocalTimeString() noexcept {
   static char local_time_str[128];
   timeval current_time_tmp{};
   gettimeofday(&current_time_tmp, nullptr);
@@ -44,7 +43,8 @@ char* getLocalTimeString() noexcept{
   ptm = localtime(&(current_time_tmp.tv_sec));
   strftime(time_string, sizeof(time_string), "%Y-%m-%d %H:%M:%S", ptm);
   milliseconds = current_time_tmp.tv_usec / 10;
-  snprintf (local_time_str, sizeof(local_time_str), "%s.%05ld", time_string, milliseconds);
+  snprintf(local_time_str, sizeof(local_time_str), "%s.%05ld", time_string,
+           milliseconds);
   return local_time_str;
 }
 }  // namespace ydb_util

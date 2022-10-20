@@ -7,7 +7,8 @@
 namespace ydb_util {
 class YSQLDeliveryTxn : public DeliveryTxn {
  public:
-  explicit YSQLDeliveryTxn(pqxx::connection* conn): DeliveryTxn(), conn_(conn) {}
+  explicit YSQLDeliveryTxn(pqxx::connection* conn)
+      : DeliveryTxn(), conn_(conn) {}
 
   Status Execute() noexcept;
 
