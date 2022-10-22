@@ -1,6 +1,7 @@
 #ifndef YCQL_POPULAR_ITEM_TXN_H_
 #define YCQL_POPULAR_ITEM_TXN_H_
 #include "common/txn/popular_item_txn.h"
+#include <unordered_map>
 
 namespace ycql_impl {
 class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
@@ -21,6 +22,14 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  constexpr static int MaxRetryTime = 3;
+
+  uint32_t getNextOrderId();
+  std::pair<Status, CassIterator*> getLastOrders(uint32_t);
+  CassIterator *getCustomerName(uint32_t);
+  CassIterator *getMaxOrderLines(uint32_t);
+  std::string getItemName(uint32_t);
+
 };
 }  // namespace ycql_impl
 

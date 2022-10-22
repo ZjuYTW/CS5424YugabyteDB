@@ -11,12 +11,20 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
                              std::ofstream& err_out)
       : TopBalanceTxn(), conn_(session), txn_out_(txn_out), err_out_(err_out) {}
 
-  Status Execute(double* diff_t) noexcept override { return Status::OK(); }
+  Status Execute(double* diff_t) noexcept override;
 
  private:
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  constexpr static int TOP_K = 10;
+  constexpr static int MAX_RETRY_ATTEMPTS = 3;
+
+  Status execute() noexcept;
+  std::pair<Status, CassIterator*> getTopBalCustomers();
+  std::pair<Status, CassIterator*> getWarehouse(int32_t w_id);
+  std::pair<Status, CassIterator*> getDistrict(int32_t w_id, int32_t d_id);
+
 };
 }  // namespace ycql_impl
 #endif

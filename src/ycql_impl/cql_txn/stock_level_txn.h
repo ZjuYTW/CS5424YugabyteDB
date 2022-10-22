@@ -18,6 +18,11 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  constexpr static int MaxRetryTime = 3;
+
+  uint32_t getNextOrderId();
+  std::pair<Status, CassIterator*> getItemsInLastOrders(uint32_t);
+  CassIterator *getItemQuantityFromStock(uint32_t);
 };
 }  // namespace ycql_impl
 #endif

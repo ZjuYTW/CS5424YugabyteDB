@@ -18,6 +18,17 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  constexpr static int MaxRetryTime = 3;
+
+  CassIterator *getNextDeliveryOrder(uint32_t d_id);
+
+  Status updateCarrierId(uint32_t d_id, uint32_t o_id);
+
+  Status updateOrderLineDeliveryDate(uint32_t d_id, uint32_t o_id);
+
+  CassIterator *getOrderPaymentAmount(uint32_t d_id, uint32_t o_id);
+
+  Status updateCustomerBalAndDeliveryCnt(uint32_t d_id, uint32_t c_id, uint32_t total_amount);
 };
 };  // namespace ycql_impl
 

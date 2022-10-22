@@ -21,6 +21,14 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  constexpr static int MaxRetryTime = 3;
+
+  CassIterator *getCustomerInfo();
+  CassIterator *getLastOrder();
+  std::pair<Status, CassIterator*> getOrderLines(uint32_t o_id);
+
+
+
 };
 }  // namespace ycql_impl
 

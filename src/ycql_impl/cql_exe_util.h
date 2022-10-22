@@ -13,12 +13,12 @@
 
 namespace ycql_impl {
 template <size_t idx>
-CassError cql_statment_fill_args(CassStatement* statement) noexcept {
+CassError cql_statement_fill_args(CassStatement* statement) noexcept {
   return CassError::CASS_OK;
 }
 
 template <size_t idx = 0, typename T, typename... Args>
-CassError cql_statment_fill_args(CassStatement* statement, T first,
+CassError cql_statement_fill_args(CassStatement* statement, T first,
                                  Args... args) noexcept {
   CassError rc = CASS_OK;
   if constexpr (std::is_same_v<bool, T>) {
@@ -26,42 +26,42 @@ CassError cql_statment_fill_args(CassStatement* statement, T first,
     if (rc != CASS_OK) {
       return rc;
     }
-    return cql_statment_fill_args<idx + 1>(statement, args...);
+    return cql_statement_fill_args<idx + 1>(statement, args...);
   }
   if constexpr (std::is_same_v<uint32_t, T>) {
     rc = cass_statement_bind_uint32(statement, idx, first);
     if (rc != CASS_OK) {
       return rc;
     }
-    return cql_statment_fill_args<idx + 1>(statement, args...);
+    return cql_statement_fill_args<idx + 1>(statement, args...);
   }
   if constexpr (std::is_same_v<uint64_t, T>) {
     rc = cass_statement_bind_uint64(statement, idx, first);
     if (rc != CASS_OK) {
       return rc;
     }
-    return cql_statment_fill_args<idx + 1>(statement, args...);
+    return cql_statement_fill_args<idx + 1>(statement, args...);
   }
   if constexpr (std::is_same_v<double, T>) {
     rc = cass_statement_bind_double(statement, idx, first);
     if (rc != CASS_OK) {
       return rc;
     }
-    return cql_statment_fill_args<idx + 1>(statement, args...);
+    return cql_statement_fill_args<idx + 1>(statement, args...);
   }
   if constexpr (std::is_same_v<int32_t, T>) {
     rc = cass_statement_bind_int32(statement, idx, first);
     if (rc != CASS_OK) {
       return rc;
     }
-    return cql_statment_fill_args<idx + 1>(statement, args...);
+    return cql_statement_fill_args<idx + 1>(statement, args...);
   }
   if constexpr (std::is_same_v<const char*, T> || std::is_same_v<char*, T>) {
     rc = cass_statement_bind_string(statement, idx, first);
     if (rc != CASS_OK) {
       return rc;
     }
-    return cql_statment_fill_args<idx + 1>(statement, args...);
+    return cql_statement_fill_args<idx + 1>(statement, args...);
   }
   // TODO(ZjuYTW): Add more type if needed
 
@@ -87,7 +87,7 @@ ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
   };
   DEFER(std::move(ret_func));
 
-  rc = cql_statment_fill_args(statement, args...);
+  rc = cql_statement_fill_args(statement, args...);
   if (rc != CASS_OK) {
     st = ydb_util::Status::ExecutionFailed(cass_error_desc(rc));
     return st;
@@ -123,7 +123,7 @@ ydb_util::Status execute_write_cql(CassSession* session,
   };
   DEFER(std::move(ret_func));
 
-  rc = cql_statment_fill_args(statement, args...);
+  rc = cql_statement_fill_args(statement, args...);
   if (rc != CASS_OK) {
     st = ydb_util::Status::ExecutionFailed(cass_error_desc(rc));
     return st;
