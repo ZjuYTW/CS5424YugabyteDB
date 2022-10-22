@@ -28,7 +28,7 @@ class CQLDriver {
       return Status::ConnectionFailed();
     }
     std::unique_ptr<ydb_util::Parser> parser_p =
-        std::make_unique<ydb_util::YCQLParser>(filename, session);
+        std::make_unique<YCQLParser>(filename, session);
     auto s = parser_p->Init();
     if (!s.ok()) {
       cass_session_free(session);

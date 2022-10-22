@@ -195,4 +195,12 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer() noexcept {
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, c_id_);
   return {st, it};
 }
+
+std::pair<Status, CassIterator*> YCQLNewOrderTxn::getStock(
+    uint32_t i_id, uint32_t w_id) noexcept {
+  std::string stmt = "SELECT * FROM stock WHERE s_w_id = ? and s_i_id = ?";
+  CassIterator* it = nullptr;
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, i_id);
+  return {st, it};
+}
 }  // namespace ycql_impl

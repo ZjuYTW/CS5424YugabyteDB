@@ -1,5 +1,5 @@
 #!/bin/bash
-SUBDIRS="./src ./src/* ./src/*/* ./src/*/*/* ./test ./test/src/*"
+SUBDIRS="./src ./src/* ./src/*/* ./src/*/*/* ./test ./test/* ./test/src/*"
 FILETYPES="*.hpp *.h *.inl *.cc *.cpp *.c"
 CLANG_FORMAT="clang-format"
 echo "start format..."

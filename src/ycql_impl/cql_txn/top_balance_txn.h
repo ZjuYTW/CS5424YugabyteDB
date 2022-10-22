@@ -2,7 +2,7 @@
 #define YCQL_TOP_BALANCE_TXN_H_
 #include "common/txn/top_balance_txn.h"
 
-namespace ydb_util {
+namespace ycql_impl {
 class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
   using Status = ydb_util::Status;
 
@@ -15,5 +15,5 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
  private:
   CassSession* conn_;
 };
-}  // namespace ydb_util
+}  // namespace ycql_impl
 #endif

@@ -2,7 +2,7 @@
 #define YCQL_STOCK_LEVEL_TXN_H_
 #include "common/txn/stock_level_txn.h"
 
-namespace ydb_util {
+namespace ycql_impl {
 class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
   using Status = ydb_util::Status;
 
@@ -15,5 +15,5 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
  private:
   CassSession* conn_;
 };
-}  // namespace ydb_util
+}  // namespace ycql_impl
 #endif
