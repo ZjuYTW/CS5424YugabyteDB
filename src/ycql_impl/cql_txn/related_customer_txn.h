@@ -3,7 +3,9 @@
 #include "common/txn/related_customer_txn.h"
 
 namespace ydb_util {
-class YCQLRelatedCustomerTxn : public RelatedCustomerTxn {
+class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
+  using Status = ydb_util::Status;
+
  public:
   explicit YCQLRelatedCustomerTxn(CassSession* session)
       : RelatedCustomerTxn(), conn_(session) {}

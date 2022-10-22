@@ -50,6 +50,13 @@ CassError cql_statment_fill_args(CassStatement* statement, T first,
     }
     return cql_statment_fill_args<idx + 1>(statement, args...);
   }
+  if constexpr (std::is_same_v<const char*, T> || std::is_same_v<char*, T>) {
+    rc = cass_statement_bind_string(statement, idx, first);
+    if (rc != CASS_OK) {
+      return rc;
+    }
+    return cql_statment_fill_args<idx + 1>(statement, args...);
+  }
   // TODO(ZjuYTW): Add more type if needed
 
   // unreachable here
@@ -59,7 +66,7 @@ CassError cql_statment_fill_args(CassStatement* statement, T first,
 
 template <typename... Args>
 ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
-                                  CassIterator* iterator,
+                                  CassIterator** iterator,
                                   Args... args) noexcept {
   CassError rc = CASS_OK;
   auto st = ydb_util::Status::OK();
@@ -89,7 +96,7 @@ ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
     return st;
   }
   // Else we process the result
-  iterator = cass_iterator_from_result(result);
+  *iterator = cass_iterator_from_result(result);
   return st;
 }
 
@@ -122,5 +129,37 @@ ydb_util::Status execute_write_cql(CassSession* session,
     st = ydb_util::Status::ExecutionFailed(cass_error_desc(rc));
   }
   return st;
+}
+
+template <typename T>
+T GetValueFromCassRow(CassIterator* it, const char* col_name) noexcept {
+  T ret;
+  auto rc = CASS_OK;
+  auto row = cass_iterator_get_row(it);
+  if constexpr (std::is_same_v<int64_t, T>) {
+    rc = cass_value_get_int64(cass_row_get_column_by_name(row, col_name), &ret);
+    assert(rc == CASS_OK);
+  } else if constexpr (std::is_same_v<uint32_t, T>) {
+    rc =
+        cass_value_get_uint32(cass_row_get_column_by_name(row, col_name), &ret);
+    assert(rc == CASS_OK);
+  } else if constexpr (std::is_same_v<double, T>) {
+    rc =
+        cass_value_get_double(cass_row_get_column_by_name(row, col_name), &ret);
+    assert(rc == CASS_OK);
+  } else if constexpr (std::is_same_v<int32_t, T>) {
+    rc = cass_value_get_int32(cass_row_get_column_by_name(row, col_name), &ret);
+    assert(rc == CASS_OK);
+  } else if constexpr (std::is_same_v<std::string, T>) {
+    const char* buf;
+    size_t sz = 0;
+    rc = cass_value_get_string(cass_row_get_column_by_name(row, col_name), &buf,
+                               &sz);
+    assert(rc == CASS_OK);
+    return std::string(buf);
+  } else {
+    assert(false);
+  }
+  return ret;
 }
 }  // namespace ycql_impl

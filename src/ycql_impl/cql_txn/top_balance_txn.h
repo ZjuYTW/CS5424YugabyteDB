@@ -3,7 +3,9 @@
 #include "common/txn/top_balance_txn.h"
 
 namespace ydb_util {
-class YCQLTopBalanceTxn : public TopBalanceTxn {
+class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
+  using Status = ydb_util::Status;
+
  public:
   explicit YCQLTopBalanceTxn(CassSession* session)
       : TopBalanceTxn(), conn_(session) {}

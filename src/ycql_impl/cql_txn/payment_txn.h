@@ -2,8 +2,10 @@
 #define YCQL_PAYMENT_TXN_H_
 #include "common/txn/payment_txn.h"
 
-namespace ydb_util {
-class YCQLPaymentTxn : public PaymentTxn {
+namespace ycql_impl {
+class YCQLPaymentTxn : public ydb_util::PaymentTxn {
+  using Status = ydb_util::Status;
+
  public:
   explicit YCQLPaymentTxn(CassSession* session)
       : PaymentTxn(), conn_(session) {}
@@ -11,7 +13,6 @@ class YCQLPaymentTxn : public PaymentTxn {
   Status Execute() noexcept override;
 
  private:
-
   std::pair<Status, CassRow> GetWarehouse_(uint32_t) noexcept;
   Status UpdateWarehouse_(uint32_t) noexcept;
 
@@ -22,6 +23,6 @@ class YCQLPaymentTxn : public PaymentTxn {
   CassSession* conn_;
   static constexpr int MaxRetryCnt = 3;
 };
-}  // namespace ydb_util
+}  // namespace ycql_impl
 
 #endif

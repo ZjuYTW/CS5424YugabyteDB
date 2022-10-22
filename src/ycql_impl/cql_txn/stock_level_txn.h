@@ -3,7 +3,9 @@
 #include "common/txn/stock_level_txn.h"
 
 namespace ydb_util {
-class YCQLStockLevelTxn : public StockLevelTxn {
+class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
+  using Status = ydb_util::Status;
+
  public:
   explicit YCQLStockLevelTxn(CassSession* session)
       : StockLevelTxn(), conn_(session) {}
