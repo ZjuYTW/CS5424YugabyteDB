@@ -2,6 +2,7 @@
 #define YDB_PERF_PARSER_H_
 
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include "common/txn/txn_type.h"
@@ -24,7 +25,7 @@ class Parser {
     return Status::OK();
   }
 
-  Status GetNextTxn(Txn** txn) noexcept {
+  Status GetNextTxn(std::unique_ptr<Txn>* txn) noexcept {
     assert(txn != nullptr);
     if (!fs_.good()) {
       return Status::EndOfFile();
@@ -35,9 +36,9 @@ class Parser {
       return Status::EndOfFile();
     }
     LOG_INFO << "line: " << line;
-    auto txn_ptr = GetTxnPtr_(line[0]);
+    auto txn_ptr = std::unique_ptr<Txn>(GetTxnPtr_(line[0]));
     auto ret = txn_ptr->Init(line, fs_);
-    *txn = txn_ptr;
+    *txn = std::move(txn_ptr);
     return ret;
   }
 

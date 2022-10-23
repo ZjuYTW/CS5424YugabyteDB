@@ -38,6 +38,9 @@ std::string Status::CodeAsString() const noexcept {
     case StatusCode::kConnectionFailed:
       type = "ConnectionFailed";
       break;
+    case StatusCode::kExecutionFailed:
+      type = "ExecutionFailed";
+      break;
     case StatusCode::kUnknownError:
       type = "UnknownError";
       break;

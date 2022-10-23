@@ -41,14 +41,19 @@ class SQLDriver {
       return s;
     }
     while (true) {
-      Txn* t = nullptr;
-      if (parser_p->GetNextTxn(&t).isEndOfFile()) {
+      // here we use smart ptr to avoid delete manully
+      std::unique_ptr<Txn> t = nullptr;
+      s = parser_p->GetNextTxn(&t);
+      if (!s.ok()) {
+        // EndOfFile or Somethin Bad
         break;
       }
-      std::cout << "start to sql" << std::endl;
-      t->Execute();
+      s = t->Execute();
+      if (!s.ok()) {
+        break;
+      }
     }
-    return Status::OK();
+    return s.isEndOfFile() ? Status::OK() : s;
   }
 
   pqxx::connection* connect() {

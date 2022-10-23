@@ -11,8 +11,10 @@
 #include "ycql_impl/cql_txn/stock_level_txn.h"
 #include "ycql_impl/cql_txn/top_balance_txn.h"
 
-namespace ydb_util {
-class YCQLParser : public Parser {
+namespace ycql_impl {
+class YCQLParser : public ydb_util::Parser {
+  using Txn = ydb_util::Txn;
+
  public:
   YCQLParser(const std::string& file_name, CassSession* session)
       : Parser(file_name), conn_(session) {}
@@ -74,5 +76,5 @@ class YCQLParser : public Parser {
  private:
   CassSession* conn_;
 };
-}  // namespace ydb_util
+}  // namespace ycql_impl
 #endif
