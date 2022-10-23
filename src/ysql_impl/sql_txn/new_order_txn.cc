@@ -71,9 +71,11 @@ Status YSQLNewOrderTxn::Execute() noexcept {
       //          << "Number of items=" << orders_.size() << ", "
       //          << "Total amount=" << total_amount << std::endl;
 
-      for (int i = 0; i < outputs.size(); i++) {
-        std::cout << outputs[i] << std::endl;
+      for (auto & output : outputs) {
+        txn_out_ << output+"\n";
       }
+
+
 
       return Status::OK();
 

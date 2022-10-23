@@ -29,15 +29,19 @@ class SQLDriver {
 
   Status operator()() {
     std::string filename = xactDir + std::to_string(idx_) + ".txt";
-    std::string outputMeasure= outDir+"measure_"+std::to_string(idx_)+".out";
-    std::string outputTXn= outDir+"transaction_"+std::to_string(idx_)+".out";
+    std::string outputMeasure= outDir+"sql_measure_"+std::to_string(idx_)+".out";
+    std::string outputTXN= outDir+"sql_transaction_"+std::to_string(idx_)+".out";
+
+    auto out_txn_fs = std::ofstream(outputTXN, std::ios::out);
+    auto out_measure_fs = std::ofstream(outputMeasure, std::ios::out);
+
     pqxx::connection* conn = nullptr;
     conn = connect();
     if (conn == nullptr) {
       return Status::ConnectionFailed();
     }
     std::unique_ptr<ydb_util::Parser> parser_p =
-        std::make_unique<ydb_util::YSQLParser>(filename, conn);
+        std::make_unique<ydb_util::YSQLParser>(filename,out_txn_fs,out_measure_fs, conn);
     auto s = parser_p->Init();
     if (!s.ok()) {
       return s;
