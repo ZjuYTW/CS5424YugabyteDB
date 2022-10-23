@@ -8,7 +8,7 @@ class YCQLStockLevelTxn : public StockLevelTxn {
   explicit YCQLStockLevelTxn(CassSession* session)
       : StockLevelTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  float Execute() noexcept override { return 0; }
 
  private:
   CassSession* conn_;

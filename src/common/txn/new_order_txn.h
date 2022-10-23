@@ -49,7 +49,7 @@ class NewOrderTxn : public Txn {
     return Status::OK();
   }
 
-  virtual Status Execute() noexcept override = 0;
+  virtual float Execute() noexcept override = 0;
 
   Status ExecuteCQL() noexcept {
     CassError rc = CASS_OK;

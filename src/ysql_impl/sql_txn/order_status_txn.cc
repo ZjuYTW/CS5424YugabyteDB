@@ -7,9 +7,14 @@
 #include "thread"
 
 namespace ydb_util {
-Status YSQLOrderStatusTxn::Execute() noexcept {
+float YSQLOrderStatusTxn::Execute() noexcept {
   LOG_INFO << "Order Status Transaction started";
+
+  time_t start_t, end_t;
+  double diff_t;
+  time(&start_t);
   int retryCount = 0;
+
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::work txn(*conn_);
@@ -17,7 +22,9 @@ Status YSQLOrderStatusTxn::Execute() noexcept {
       int O_ID = SQL_Get_Last_O_ID(c_w_id_, c_d_id_, c_id_, &txn);
       SQL_Get_Item(c_w_id_, c_d_id_, O_ID, &txn);
 
-      return Status::OK();
+      time(&end_t);
+      diff_t = difftime(end_t, start_t);
+      return diff_t;
 
     } catch (const std::exception& e) {
       retryCount++;
@@ -27,7 +34,7 @@ Status YSQLOrderStatusTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return Status::Invalid("retry times exceeded max retry count");
+  return 0;
 }
 
 void YSQLOrderStatusTxn::SQL_Output_Customer_Name(int c_w_id, int c_d_id, int c_id, pqxx::work* txn) {
@@ -44,9 +51,11 @@ void YSQLOrderStatusTxn::SQL_Output_Customer_Name(int c_w_id, int c_d_id, int c_
   }
 
   for (auto row : res) {
-    std::cout << "C_FIRST: " << row["C_FIRST"].c_str() << ", "
-              << "C_MIDDLE: " << row["C_MIDDLE"].c_str() << ", "
-              << "C_LAST: " << row["C_LAST"].c_str() << std::endl;
+    outputs.push_back(format("C_FIRST: %s, C_MIDDLE: %s, C_LAST: %S",
+                      row["C_FIRST"].c_str(), row["C_MIDDLE"].c_str(), row["C_LAST"].c_str()));
+//    std::cout << "C_FIRST: " << row["C_FIRST"].c_str() << ", "
+//              << "C_MIDDLE: " << row["C_MIDDLE"].c_str() << ", "
+//              << "C_LAST: " << row["C_LAST"].c_str() << std::endl;
   }
 }
 
@@ -60,9 +69,11 @@ int YSQLOrderStatusTxn::SQL_Get_Last_O_ID(int o_w_id, int o_d_id, int o_c_id, pq
   res = txn->exec(query);
 
   for (auto row : res) {
-    std::cout << "O_ID: " << row["O_ID"].as<int>() << ", "
-              << "O_ENTRY_D: " << row["O_ENTRY_D"].c_str() << ", "
-              << "O_CARRIER_ID: " << row["O_CARRIER_ID"].as<int>() << std::endl;
+    outputs.push_back(format("O_ID: %d, O_ENTRY_D: %s, O_CARRIER_ID: %d",
+                             row["O_ID"].as<int>(), row["O_ENTRY_D"].c_str(), row["O_CARRIER_ID"].as<int>()));
+//    std::cout << "O_ID: " << row["O_ID"].as<int>() << ", "
+//              << "O_ENTRY_D: " << row["O_ENTRY_D"].c_str() << ", "
+//              << "O_CARRIER_ID: " << row["O_CARRIER_ID"].as<int>() << std::endl;
   }
   return res[0]["O_ID"].as<int>();
 }
@@ -82,11 +93,14 @@ void YSQLOrderStatusTxn::SQL_Get_Item(int ol_w_id, int ol_d_id, int ol_o_id, pqx
   }
 
   for (auto row: res) {
-    std::cout << "OL_I_ID: " << row["OL_I_ID"].as<int>() << ", "
-              << "OL_SUPPLY_W_ID: " << row["OL_SUPPLY_W_ID"].as<int>() << ", "
-              << "OL_QUANTITY: " << row["OL_QUANTITY"].as<int>() << ", "
-              << "OL_AMOUNT: " << row["OL_AMOUNT"].as<float>() << ", "
-              << "OL_DELIVERY: " << row["OL_DELIVERY_D"].c_str() << std::endl;
+    outputs.push_back(format("OL_I_ID: %d, OL_SUPPLY_W_ID: %d, OL_QUANTITY: %d, OL_AMOUNT: %f, OL_DELIVERY_D: %s",
+                             row["OL_I_ID"].as<int>(), row["OL_SUPPLY_W_ID"].as<int>(), row["OL_QUANTITY"].as<int>(),
+                             row["OL_AMOUNT"].as<float>(), row["OL_DELIVERY_D"].c_str()));
+//    std::cout << "OL_I_ID: " << row["OL_I_ID"].as<int>() << ", "
+//              << "OL_SUPPLY_W_ID: " << row["OL_SUPPLY_W_ID"].as<int>() << ", "
+//              << "OL_QUANTITY: " << row["OL_QUANTITY"].as<int>() << ", "
+//              << "OL_AMOUNT: " << row["OL_AMOUNT"].as<float>() << ", "
+//              << "OL_DELIVERY_D: " << row["OL_DELIVERY_D"].c_str() << std::endl;
   }
 }
 

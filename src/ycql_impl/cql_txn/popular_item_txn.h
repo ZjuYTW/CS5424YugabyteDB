@@ -8,7 +8,7 @@ class YCQLPopularItemTxn : public PopularItemTxn {
   explicit YCQLPopularItemTxn(CassSession* session)
       : PopularItemTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  float Execute() noexcept override { return 0; }
 
  private:
   CassSession* conn_;

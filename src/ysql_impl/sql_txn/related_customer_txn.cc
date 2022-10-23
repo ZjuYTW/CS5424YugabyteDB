@@ -3,10 +3,15 @@
 #include <pqxx/pqxx>
 
 namespace ydb_util {
-Status YSQLRelatedCustomerTxn::Execute() noexcept {
+float YSQLRelatedCustomerTxn::Execute() noexcept {
   LOG_INFO << "Related-Customer Transaction started";
+
+  time_t start_t, end_t;
+  double diff_t;
+  time(&start_t);
   pqxx::work txn(*conn_);
   int retryCount = 0;
+
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::result orders = getOrdersSQL_(c_w_id_, c_d_id_, c_id_, &txn);
@@ -23,27 +28,42 @@ Status YSQLRelatedCustomerTxn::Execute() noexcept {
         addCustomerSQL_(c_w_id_, orderLineIds, customers, &txn);
       }
 
-      for (auto customer : customers) {
-        LOG_INFO << customer;
+      if (customers.size() != 0) {
+        outputs.push_back("(a) Customer Identifiers:");
+        for (auto customer : customers) {
+          outputs.push_back(customer);
+        }
+      }else{
+        outputs.push_back("(a) No customer found");
       }
-      LOG_INFO << "Related-Customer Transaction finished";
+
       txn.commit();
-      return Status::OK();
+      break;
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
+      if (!outputs.empty()) {
+        std::vector<std::string>().swap(outputs);  // clean the memory
+      }
       // if Failed, Wait for 100 ms to try again
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return Status::Invalid("retry times exceeded max retry count");
+  if (retryCount == MAX_RETRY_COUNT) {
+    return 0;
+  }
+  for (auto& output : outputs) {
+    std::cout << output << std::endl;
+  }
+  time(&end_t);
+  diff_t = difftime(end_t, start_t);
+  return diff_t;
 }
 
 void YSQLRelatedCustomerTxn::addCustomerSQL_(
     int w_id, std::vector<int> items, std::unordered_set<std::string> customers,
     pqxx::work* txn) {
-  LOG_INFO << "addCustomerSQL_ started!";
-  LOG_INFO << "Got " << items.size() << " items";
+
 
   std::string itemsStr = "";
   for (auto item : items) {
@@ -68,8 +88,8 @@ void YSQLRelatedCustomerTxn::addCustomerSQL_(
     int ol_d_id = row["ol_d_id"].as<int>();
     int ol_o_id = row["ol_o_id"].as<int>();
     int count = row["count"].as<int>();
-    LOG_INFO << "ol_w_id: " << ol_w_id << " ol_d_id: " << ol_d_id
-             << " ol_o_id: " << ol_o_id << " count: " << count;
+    // LOG_INFO << "ol_w_id: " << ol_w_id << " ol_d_id: " << ol_d_id
+    //          << " ol_o_id: " << ol_o_id << " count: " << count;
     if (count >= INCOMMON_THRESHOLD) {
       int c_id = getCustomerIdSQL_(ol_w_id, ol_d_id, ol_o_id, txn);
       std::string customer = "(" + std::to_string(ol_w_id) + ", " +

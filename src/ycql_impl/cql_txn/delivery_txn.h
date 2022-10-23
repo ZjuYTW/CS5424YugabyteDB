@@ -8,7 +8,7 @@ class YCQLDeliveryTxn : public DeliveryTxn {
   explicit YCQLDeliveryTxn(CassSession* session)
       : DeliveryTxn(), conn_(session) {}
 
-  Status Execute() noexcept override;
+  float Execute() noexcept override;
 
  private:
   CassSession* conn_;

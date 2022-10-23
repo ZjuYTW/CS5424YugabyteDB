@@ -10,9 +10,10 @@ class YSQLTopBalanceTxn : public TopBalanceTxn {
   explicit YSQLTopBalanceTxn(pqxx::connection* conn)
       : TopBalanceTxn(), conn_(conn) {}
 
-  Status Execute() noexcept override;
+  float Execute() noexcept override;
 
  private:
+  std::vector<std::string> outputs;
   static constexpr int MAX_RETRY_COUNT = 3;
   static constexpr int TOP_K = 10;
 

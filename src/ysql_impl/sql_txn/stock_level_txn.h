@@ -10,7 +10,7 @@ class YSQLStockLevelTxn : public StockLevelTxn {
   explicit YSQLStockLevelTxn(pqxx::connection* conn)
       : StockLevelTxn(), conn_(conn) {}
 
-  Status Execute() noexcept;
+  float Execute() noexcept;
 
  private:
   int SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn);
@@ -19,6 +19,7 @@ class YSQLStockLevelTxn : public StockLevelTxn {
 
   pqxx::connection* conn_;
   static constexpr int MAX_RETRY_COUNT = 3;
+  std::vector<std::string> outputs;
 };
 }  // namespace ydb_util
 #endif

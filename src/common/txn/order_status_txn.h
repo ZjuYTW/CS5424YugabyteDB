@@ -10,7 +10,7 @@ class OrderStatusTxn : public Txn {
 
   virtual ~OrderStatusTxn() = default;
 
-  virtual Status Execute() noexcept override = 0;
+  virtual float Execute() noexcept override = 0;
 
   Status Init(const std::string& first_line,
               std::ifstream& ifs) noexcept override {

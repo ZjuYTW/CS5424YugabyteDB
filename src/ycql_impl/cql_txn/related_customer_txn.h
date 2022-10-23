@@ -8,7 +8,7 @@ class YCQLRelatedCustomerTxn : public RelatedCustomerTxn {
   explicit YCQLRelatedCustomerTxn(CassSession* session)
       : RelatedCustomerTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  float Execute() noexcept override { return 0; }
 
  private:
   CassSession* conn_;

@@ -5,8 +5,13 @@
 #include "common/util/string_util.h"
 
 namespace ydb_util {
-Status YSQLDeliveryTxn::Execute() noexcept {
+float YSQLDeliveryTxn::Execute() noexcept {
   LOG_INFO << "Delivery Transaction started";
+
+  time_t start_t, end_t;
+  double diff_t;
+  time(&start_t);
+
   for (int d_id = 1; d_id <= 10; d_id++) {
     int retryCount = 0;
     while (retryCount < MAX_RETRY_COUNT) {
@@ -81,9 +86,11 @@ Status YSQLDeliveryTxn::Execute() noexcept {
       }
     }
     if (retryCount == MAX_RETRY_COUNT) {
-      return Status::Invalid("retry times exceeded max retry count");
+      return 0;
     }
   }
-  return Status::OK();
+  time(&end_t);
+  diff_t = difftime(end_t, start_t);
+  return diff_t;
 }
 };  // namespace ydb_util
