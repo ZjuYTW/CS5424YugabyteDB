@@ -15,8 +15,9 @@
 namespace ydb_util {
 class YSQLParser : public Parser {
  public:
-  YSQLParser(const std::string& file_name,std::ofstream& txn_out,std::ofstream& measure_out, pqxx::connection* conn)
-      : Parser(file_name), conn_(conn),txn_out_(txn_out),measure_out_(measure_out) {}
+  YSQLParser(const std::string& file_name,std::ofstream& txn_out,std::ofstream& out_err_fs, pqxx::connection* conn)
+      : Parser(file_name), conn_(conn),txn_out_(txn_out),
+        err_out_(out_err_fs) {}
   virtual ~YSQLParser() = default;
 
  protected:
@@ -25,7 +26,7 @@ class YSQLParser : public Parser {
     switch (c) {
       case 'N': {
         // New Order
-        txn = new YSQLNewOrderTxn(conn_,txn_out_,measure_out_);
+        txn = new YSQLNewOrderTxn(conn_,txn_out_, err_out_);
         break;
       }
       case 'P': {
@@ -77,7 +78,7 @@ class YSQLParser : public Parser {
  private:
   pqxx::connection* conn_;
   std::ofstream& txn_out_;
-  std::ofstream& measure_out_;
+  std::ofstream& err_out_;
 };
 }  // namespace ydb_util
 

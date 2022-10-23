@@ -86,6 +86,9 @@ float YSQLNewOrderTxn::Execute() noexcept {
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
+      if (retryCount==MAX_RETRY_COUNT){
+        err_out_<<e.what()<<"\n";
+      }
       // if Failed, Wait for 100 ms to try again
       // TODO: check if there is a sleep_for
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));

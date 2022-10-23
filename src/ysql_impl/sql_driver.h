@@ -29,11 +29,13 @@ class SQLDriver {
 
   Status operator()() {
     std::string filename = xactDir + std::to_string(idx_) + ".txt";
-    std::string outputMeasure= outDir+"sql_measure_"+std::to_string(idx_)+".out";
-    std::string outputTXN= outDir+"sql_transaction_"+std::to_string(idx_)+".out";
+    std::string outputMeasure= outDir+"/measure_log/sql_"+std::to_string(idx_)+".out";
+    std::string outputTXN= outDir+"/txn_log/sql_"+std::to_string(idx_)+".out";
+    std::string outputErr= outDir+"/err_log/sql_"+std::to_string(idx_)+".out";
 
     auto out_txn_fs = std::ofstream(outputTXN, std::ios::out);
     auto out_measure_fs = std::ofstream(outputMeasure, std::ios::out);
+    auto out_err_fs = std::ofstream(outputErr,std::ios::out);
 
     pqxx::connection* conn = nullptr;
     conn = connect();
@@ -41,7 +43,7 @@ class SQLDriver {
       return Status::ConnectionFailed();
     }
     std::unique_ptr<ydb_util::Parser> parser_p =
-        std::make_unique<ydb_util::YSQLParser>(filename,out_txn_fs,out_measure_fs, conn);
+        std::make_unique<ydb_util::YSQLParser>(filename,out_txn_fs,out_err_fs, conn);
     auto s = parser_p->Init();
     if (!s.ok()) {
       return s;
@@ -56,11 +58,11 @@ class SQLDriver {
     sort(elapsedTime.begin(), elapsedTime.end());
 
     float totalTime = 0;
-    for (int i = 0; i < elapsedTime.size(); i++) {
-      totalTime += elapsedTime[i];
+    for (float i : elapsedTime) {
+      totalTime += i;
     }
 
-    std::cout
+    out_measure_fs
         << "Total number of transactions processed: " << elapsedTime.size() << "\n"
         << "Total elapsed time for processing the transactions: " << totalTime << "\n"
         << "Transaction throughput: " << elapsedTime.size()/totalTime << "\n"

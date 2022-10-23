@@ -6,8 +6,8 @@
 namespace ydb_util {
 class YSQLNewOrderTxn : public NewOrderTxn {
  public:
-  explicit YSQLNewOrderTxn(pqxx::connection* conn,std::ofstream& txn_out,std::ofstream& measure_out)
-      : NewOrderTxn(), conn_(conn),txn_out_(txn_out),measure_out_(measure_out) {}
+  explicit YSQLNewOrderTxn(pqxx::connection* conn,std::ofstream& txn_out,std::ofstream& err_out)
+      : NewOrderTxn(), conn_(conn),txn_out_(txn_out),err_out_(err_out) {}
 
   float Execute() noexcept;
 
@@ -31,7 +31,7 @@ class YSQLNewOrderTxn : public NewOrderTxn {
   static constexpr int MAX_RETRY_COUNT = 3;
   std::vector<std::string> outputs;
   std::ofstream& txn_out_;
-  std::ofstream& measure_out_;
+  std::ofstream& err_out_;
 
 };
 }  // namespace ydb_util
