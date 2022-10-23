@@ -24,6 +24,7 @@ class YSQLPaymentTxn : public PaymentTxn {
 
   static constexpr int MAX_RETRY_COUNT = 3;
   pqxx::connection* conn_;
+  std::vector<std::string> outputs;
 };
 }  // namespace ydb_util
 #endif

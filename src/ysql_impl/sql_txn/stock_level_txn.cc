@@ -26,8 +26,10 @@ float YSQLStockLevelTxn::Execute() noexcept {
       for (int i = 0; i < items.size(); i++) {
         items_below_threshold += SQL_check_stock(w_id_, items[i]["OL_I_ID"].as<int>(), &txn);
       }
-      std::cout << "Total number of items in S where its stock quantity at W_ID is below the threshold: "
-                << items_below_threshold << std::endl;
+//      std::cout << "Total number of items in S where its stock quantity at W_ID is below the threshold: "
+//                << items_below_threshold << std::endl;
+      outputs.push_back(format("Total number of items in S where its stock quantity at W_ID is below the threshold: %d",
+                               items_below_threshold));
 
       time(&end_t);
       diff_t = difftime(end_t, start_t);
