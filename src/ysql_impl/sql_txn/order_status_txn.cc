@@ -15,7 +15,7 @@ Status YSQLOrderStatusTxn::Execute() noexcept {
       pqxx::work txn(*conn_);
       SQL_Output_Customer_Name(c_w_id_, c_d_id_, c_id_, &txn);
       int O_ID = SQL_Get_Last_O_ID(c_w_id_, c_d_id_, c_id_, &txn);
-
+      SQL_Get_Item(c_w_id_, c_d_id_, O_ID, &txn);
 
       return Status::OK();
 
