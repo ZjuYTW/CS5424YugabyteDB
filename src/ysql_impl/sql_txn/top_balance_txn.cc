@@ -23,28 +23,38 @@ Status YSQLTopBalanceTxn::Execute() noexcept {
         pqxx::row warehouse = getWarehouseSQL_(w_id, &txn);
         pqxx::row district = getDistrictSQL_(w_id, d_id, &txn);
 
-        LOG_INFO << "W_ID: " << w_id << ", D_ID: " << d_id
-                 << ", C_BALANCE: " << customer["c_balance"].as<double>()
-                 << ", C_FIRST: " << customer["c_first"].as<std::string>()
-                 << ", C_MIDDLE: " << customer["c_middle"].as<std::string>()
-                 << ", C_LAST: " << customer["c_last"].as<std::string>()
-                 << ", W_NAME: " << warehouse["w_name"].as<std::string>()
-                 << ", D_NAME: " << district["d_name"].as<std::string>();
+        outputs.push_back(format(
+            "(a) Name of Customer: (%s, %s, %s)", customer["c_first"].c_str(),
+            customer["c_middle"].c_str(), customer["c_last"].c_str()));
+        outputs.push_back(format("(b) Customer's Balance: %s",
+                                 customer["c_balance"].c_str()));
+        outputs.push_back(format("(c) Customer's Warehouse: %s",
+                                 warehouse["w_name"].c_str()));
+        outputs.push_back(
+            format("(d) Customer's District: %s", district["d_name"].c_str()));
       }
-      LOG_INFO << "Got Result!";
       if (customers.empty()) {
         throw std::runtime_error("Top Balance Customers not found");
       }
       txn.commit();
-      return Status::OK();
+      break;
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
+      if (!outputs.empty()) {
+        std::vector<std::string>().swap(outputs);  // clean the memory
+      }
       // if Failed, Wait for 100 ms to try again
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return Status::Invalid("retry times exceeded max retry count");
+  if (retryCount == MAX_RETRY_COUNT) {
+    return Status::Invalid("retry times exceeded max retry count");
+  }
+  for (auto& output : outputs) {
+    std::cout << output << std::endl;
+  }
+  return Status::OK();
 }
 
 pqxx::row YSQLTopBalanceTxn::getWarehouseSQL_(int w_id, pqxx::work* txn) {
