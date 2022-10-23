@@ -7,9 +7,14 @@
 #include "thread"
 
 namespace ydb_util {
-Status YSQLStockLevelTxn::Execute() noexcept {
-  LOG_INFO << "New Order Transaction started";
+float YSQLStockLevelTxn::Execute() noexcept {
+  LOG_INFO << "Stock Level Transaction started";
+
+  time_t start_t, end_t;
+  double diff_t;
+  time(&start_t);
   int retryCount = 0;
+
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::work txn(*conn_);
@@ -24,7 +29,9 @@ Status YSQLStockLevelTxn::Execute() noexcept {
       std::cout << "Total number of items in S where its stock quantity at W_ID is below the threshold: "
                 << items_below_threshold << std::endl;
 
-      return Status::OK();
+      time(&end_t);
+      diff_t = difftime(end_t, start_t);
+      return diff_t;
 
     } catch (const std::exception& e) {
       retryCount++;
@@ -34,7 +41,7 @@ Status YSQLStockLevelTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return Status::Invalid("retry times exceeded max retry count");
+  return 0;
 }
 
 int YSQLStockLevelTxn::SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn) {
@@ -57,7 +64,7 @@ pqxx::result YSQLStockLevelTxn::SQL_Get_OL_I_ID(int ol_w_id, int ol_d_id, int d_
   LOG_INFO << ">>>> Get OL_I_ID:";
   pqxx::result res;
   std::string query = format(
-      "SELECT OL_I_ID FROM orderline WHERE OL_W_ID = %d AND OL_D_ID = %d AND OL_O_ID >= %d AND OL_O_ID < %d",
+      "SELECT DISTINCT OL_I_ID FROM orderline WHERE OL_W_ID = %d AND OL_D_ID = %d AND OL_O_ID >= %d AND OL_O_ID < %d",
       ol_w_id, ol_d_id, d_next_o_id-l_, d_next_o_id);
   LOG_INFO << query;
   res = txn->exec(query);

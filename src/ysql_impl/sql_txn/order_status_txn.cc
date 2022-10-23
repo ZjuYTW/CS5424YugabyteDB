@@ -7,9 +7,14 @@
 #include "thread"
 
 namespace ydb_util {
-Status YSQLOrderStatusTxn::Execute() noexcept {
+float YSQLOrderStatusTxn::Execute() noexcept {
   LOG_INFO << "Order Status Transaction started";
+
+  time_t start_t, end_t;
+  double diff_t;
+  time(&start_t);
   int retryCount = 0;
+
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::work txn(*conn_);
@@ -17,7 +22,9 @@ Status YSQLOrderStatusTxn::Execute() noexcept {
       int O_ID = SQL_Get_Last_O_ID(c_w_id_, c_d_id_, c_id_, &txn);
       SQL_Get_Item(c_w_id_, c_d_id_, O_ID, &txn);
 
-      return Status::OK();
+      time(&end_t);
+      diff_t = difftime(end_t, start_t);
+      return diff_t;
 
     } catch (const std::exception& e) {
       retryCount++;
@@ -27,7 +34,7 @@ Status YSQLOrderStatusTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return Status::Invalid("retry times exceeded max retry count");
+  return 0;
 }
 
 void YSQLOrderStatusTxn::SQL_Output_Customer_Name(int c_w_id, int c_d_id, int c_id, pqxx::work* txn) {
@@ -72,7 +79,7 @@ void YSQLOrderStatusTxn::SQL_Get_Item(int ol_w_id, int ol_d_id, int ol_o_id, pqx
   LOG_INFO << ">>>> Get items in the last order:";
 
   std::string query = format(
-          "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY FROM orderline WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %d",
+          "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM orderline WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %d",
       ol_w_id, ol_d_id, ol_o_id);
   LOG_INFO << query;
   res = txn->exec(query);
@@ -86,7 +93,7 @@ void YSQLOrderStatusTxn::SQL_Get_Item(int ol_w_id, int ol_d_id, int ol_o_id, pqx
               << "OL_SUPPLY_W_ID: " << row["OL_SUPPLY_W_ID"].as<int>() << ", "
               << "OL_QUANTITY: " << row["OL_QUANTITY"].as<int>() << ", "
               << "OL_AMOUNT: " << row["OL_AMOUNT"].as<float>() << ", "
-              << "OL_DELIVERY: " << row["OL_DELIVERY"].c_str() << std::endl;
+              << "OL_DELIVERY_D: " << row["OL_DELIVERY_D"].c_str() << std::endl;
   }
 }
 

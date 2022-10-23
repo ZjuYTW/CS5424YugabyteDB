@@ -5,9 +5,14 @@
 #include "common/util/string_util.h"
 
 namespace ydb_util {
-Status YSQLPaymentTxn::Execute() noexcept {
+float YSQLPaymentTxn::Execute() noexcept {
   LOG_INFO << "Payment Transaction started";
+
+  time_t start_t, end_t;
+  double diff_t;
+  time(&start_t);
   int retryCount = 0;
+
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::work txn(*conn_);
@@ -78,7 +83,9 @@ Status YSQLPaymentTxn::Execute() noexcept {
                 << "w_ytd=" << warehouse["w_ytd"].as<float>() << std::endl;
       std::cout << "Payment:" << payment_ << std::endl;
 
-      return Status::OK();
+      time(&end_t);
+      diff_t = difftime(end_t, start_t);
+      return diff_t;
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
@@ -87,7 +94,7 @@ Status YSQLPaymentTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return Status::Invalid("retry times exceeded max retry count");
+  return 0;
 }
 
 void YSQLPaymentTxn::updateWareHouseSQL_(int w_id, double old_w_ytd,

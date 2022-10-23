@@ -3,10 +3,15 @@
 #include <pqxx/pqxx>
 
 namespace ydb_util {
-Status YSQLTopBalanceTxn::Execute() noexcept {
+float YSQLTopBalanceTxn::Execute() noexcept {
   LOG_INFO << "Top-Balance Transaction started";
+
+  time_t start_t, end_t;
+  double diff_t;
+  time(&start_t);
   pqxx::work txn(*conn_);
   int retryCount = 0;
+
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       LOG_INFO << "Start Executing!";
@@ -49,12 +54,14 @@ Status YSQLTopBalanceTxn::Execute() noexcept {
     }
   }
   if (retryCount == MAX_RETRY_COUNT) {
-    return Status::Invalid("retry times exceeded max retry count");
+    return 0;
   }
   for (auto& output : outputs) {
     std::cout << output << std::endl;
   }
-  return Status::OK();
+  time(&end_t);
+  diff_t = difftime(end_t, start_t);
+  return diff_t;
 }
 
 pqxx::row YSQLTopBalanceTxn::getWarehouseSQL_(int w_id, pqxx::work* txn) {

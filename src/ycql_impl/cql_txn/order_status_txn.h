@@ -8,7 +8,7 @@ class YCQLOrderStatusTxn : public OrderStatusTxn {
   explicit YCQLOrderStatusTxn(CassSession* session)
       : OrderStatusTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  float Execute() noexcept override { return 0; }
 
  private:
   CassSession* conn_;

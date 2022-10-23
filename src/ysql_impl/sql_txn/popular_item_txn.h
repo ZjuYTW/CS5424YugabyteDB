@@ -10,7 +10,7 @@ class YSQLPopularItemTxn : public PopularItemTxn {
   explicit YSQLPopularItemTxn(pqxx::connection* conn)
       : PopularItemTxn(), conn_(conn) {}
 
-  Status Execute() noexcept override;
+  float Execute() noexcept override;
 
  private:
   std::vector<std::string> outputs;

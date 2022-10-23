@@ -10,7 +10,7 @@ class YSQLTopBalanceTxn : public TopBalanceTxn {
   explicit YSQLTopBalanceTxn(pqxx::connection* conn)
       : TopBalanceTxn(), conn_(conn) {}
 
-  Status Execute() noexcept override;
+  float Execute() noexcept override;
 
  private:
   std::vector<std::string> outputs;

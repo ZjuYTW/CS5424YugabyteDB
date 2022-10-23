@@ -10,7 +10,7 @@ class YSQLOrderStatusTxn : public OrderStatusTxn {
   explicit YSQLOrderStatusTxn(pqxx::connection* conn)
       : OrderStatusTxn(), conn_(conn) {}
 
-  Status Execute() noexcept;
+  float Execute() noexcept;
 
  private:
   void SQL_Output_Customer_Name(int c_w_id, int c_d_id, int c_id, pqxx::work* txn);

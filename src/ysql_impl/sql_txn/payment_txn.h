@@ -9,7 +9,7 @@ class YSQLPaymentTxn : public PaymentTxn {
  public:
   explicit YSQLPaymentTxn(pqxx::connection* conn) : PaymentTxn(), conn_(conn) {}
 
-  Status Execute() noexcept;
+  float Execute() noexcept;
 
  private:
   void updateWareHouseSQL_(int w_id, double old_w_ytd, double w_ytd,
