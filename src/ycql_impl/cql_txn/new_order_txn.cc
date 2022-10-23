@@ -1,7 +1,6 @@
 #include "ycql_impl/cql_txn/new_order_txn.h"
 
 #include <chrono>
-#include <thread>
 
 #include "ycql_impl/cql_exe_util.h"
 
@@ -67,7 +66,7 @@ Status YCQLNewOrderTxn::Execute() noexcept {
       continue;
     }
     done = true;
-  } while (retry_time++ < MaxRetryTime && !sleep_func(done));
+  } while (retry_time++ < MaxRetryTime && !ValidOrSleep(done));
   if (district_it) {
     cass_iterator_free(district_it);
   }
