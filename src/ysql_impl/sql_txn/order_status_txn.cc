@@ -72,7 +72,7 @@ void YSQLOrderStatusTxn::SQL_Get_Item(int ol_w_id, int ol_d_id, int ol_o_id, pqx
   LOG_INFO << ">>>> Get items in the last order:";
 
   std::string query = format(
-          "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY FROM orderline WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %d",
+          "SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM orderline WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %d",
       ol_w_id, ol_d_id, ol_o_id);
   LOG_INFO << query;
   res = txn->exec(query);
@@ -86,7 +86,7 @@ void YSQLOrderStatusTxn::SQL_Get_Item(int ol_w_id, int ol_d_id, int ol_o_id, pqx
               << "OL_SUPPLY_W_ID: " << row["OL_SUPPLY_W_ID"].as<int>() << ", "
               << "OL_QUANTITY: " << row["OL_QUANTITY"].as<int>() << ", "
               << "OL_AMOUNT: " << row["OL_AMOUNT"].as<float>() << ", "
-              << "OL_DELIVERY: " << row["OL_DELIVERY"].c_str() << std::endl;
+              << "OL_DELIVERY: " << row["OL_DELIVERY_D"].c_str() << std::endl;
   }
 }
 

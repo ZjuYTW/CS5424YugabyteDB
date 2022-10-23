@@ -29,6 +29,8 @@ class SQLDriver {
 
   Status operator()() {
     std::string filename = xactDir + std::to_string(idx_) + ".txt";
+    std::string outputMeasure= outDir+"measure_"+std::to_string(idx_)+".out";
+    std::string outputTXn= outDir+"transaction_"+std::to_string(idx_)+".out";
     pqxx::connection* conn = nullptr;
     conn = connect();
     if (conn == nullptr) {
@@ -73,10 +75,11 @@ class SQLDriver {
 
  private:
   std::string HOST, PORT, DB_NAME, USER, PASSWORD, SSL_MODE, SSL_ROOT_CERT;
-  static std::string xactDir;
+  static std::string xactDir,outDir;
   int idx_;
 };
-std::string SQLDriver::xactDir = "data/xact-files/";
+std::string SQLDriver::xactDir = "data/test_xact_files/";
+std::string SQLDriver::outDir = "data/output/";
 
-};  // namespace ysql_impl
+}
 #endif
