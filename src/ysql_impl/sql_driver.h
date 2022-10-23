@@ -29,9 +29,9 @@ class SQLDriver {
 
   Status operator()() {
     std::string filename = xactDir + std::to_string(idx_) + ".txt";
-    pqxx::connection* conn = NULL;
+    pqxx::connection* conn = nullptr;
     conn = connect();
-    if (conn == NULL) {
+    if (conn == nullptr) {
       return Status::ConnectionFailed();
     }
     std::unique_ptr<ydb_util::Parser> parser_p =
@@ -54,17 +54,17 @@ class SQLDriver {
     std::string url = "host=" + HOST + " port=" + PORT + " dbname=" + DB_NAME +
                       " user=" + USER + " password=" + PASSWORD;
 
-    if (SSL_MODE != "") {
+    if (!SSL_MODE.empty()) {
       url += " sslmode=" + SSL_MODE;
 
-      if (SSL_ROOT_CERT != "") {
+      if (!SSL_ROOT_CERT.empty()) {
         url += " sslrootcert=" + SSL_ROOT_CERT;
       }
     }
 
     std::cout << ">>>> Connecting to YugabyteDB!" << std::endl;
 
-    pqxx::connection* conn = new pqxx::connection(url);
+    auto* conn = new pqxx::connection(url);
 
     std::cout << ">>>> Successfully connected to YugabyteDB!" << std::endl;
 
