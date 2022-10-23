@@ -10,9 +10,11 @@ class YSQLPopularItemTxn : public PopularItemTxn {
   explicit YSQLPopularItemTxn(pqxx::connection* conn)
       : PopularItemTxn(), conn_(conn) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  Status Execute() noexcept override;
 
  private:
+  std::vector<std::string> outputs;
+  static constexpr int MAX_RETRY_COUNT = 3;
   pqxx::connection* conn_;
 };
 }  // namespace ydb_util
