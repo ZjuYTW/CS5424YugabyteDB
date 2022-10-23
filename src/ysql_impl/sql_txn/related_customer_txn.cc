@@ -44,6 +44,9 @@ Status YSQLRelatedCustomerTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
+  if (retryCount == MAX_RETRY_COUNT) {
+    return Status::Invalid("retry times exceeded max retry count");
+  }
   for (auto& output : outputs) {
     std::cout << output << std::endl;
   }
