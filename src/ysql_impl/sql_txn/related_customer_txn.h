@@ -25,6 +25,8 @@ class YSQLRelatedCustomerTxn : public RelatedCustomerTxn {
 
   static constexpr int MAX_RETRY_COUNT = 3;
   static constexpr int INCOMMON_THRESHOLD = 2;
+  std::vector<std::string> outputs;
+
   pqxx::connection* conn_;
 };
 }  // namespace ydb_util
