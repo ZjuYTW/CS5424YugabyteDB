@@ -61,7 +61,7 @@ class SQLDriver {
         << "Average transaction latency: " << totalTime * 60 / elapsedTime.size() << "\n"
         << "Median transaction latency: " << elapsedTime[elapsedTime.size()*0.5] * 60 << "\n"
         << "95th percentile transaction latency: " << elapsedTime[elapsedTime.size()*0.95] * 60 << "\n"
-        << "99th percentile transaction latency: " << elapsedTime[elapsedTime.size()*0.99] << std::endl;
+        << "99th percentile transaction latency: " << elapsedTime[elapsedTime.size()*0.99] * 60<< std::endl;
 
     return Status::OK();
   }
