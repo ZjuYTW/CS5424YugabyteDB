@@ -2,7 +2,7 @@
 #include <thread>
 
 namespace ycql_impl {
-bool ValidOrSleep(bool done) {
+bool ValidOrSleep(bool done) noexcept {
   if (!done) {
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
