@@ -26,12 +26,6 @@ Status YCQLNewOrderTxn::Execute() noexcept {
         OrderLine{.i_id = i_id, .w_id = w_id, .quantity = quantity});
   }
 
-  auto sleep_func = [](bool done) {
-    if (!done) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-    return done;
-  };
   int retry_time = 0;
   Status st;
   CassIterator *district_it = nullptr, *custom_it = nullptr,

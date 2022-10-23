@@ -25,13 +25,9 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
 
   std::pair<Status, CassIterator*> getDistrict() noexcept;
 
-  std::pair<Status, uint32_t> getNextOIdFromDistrict() noexcept;
-
   std::pair<Status, CassIterator*> getCustomer() noexcept;
 
   std::pair<Status, CassIterator*> getItem(uint32_t item_id) noexcept;
-
-  Status updateOrder(std::vector<OrderLine> order_lines) noexcept;
 
   Status updateNextOId(uint32_t next_o_id, uint32_t prev_next_o_id) noexcept;
 

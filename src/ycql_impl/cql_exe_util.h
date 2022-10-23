@@ -162,4 +162,6 @@ T GetValueFromCassRow(CassIterator* it, const char* col_name) noexcept {
   }
   return ret;
 }
+
+bool ValidOrSleep(bool done) noexcept;
 }  // namespace ycql_impl

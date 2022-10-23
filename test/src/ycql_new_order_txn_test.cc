@@ -21,7 +21,6 @@ class CQLNewOrderTxnTest : public ::testing::Test {
     cass_cluster_set_contact_points(cluster, hosts);
     conn = cass_session_new();
     EXPECT_EQ(connect_session(conn, cluster), CASS_OK);
-
   }
 
  protected:
@@ -29,8 +28,8 @@ class CQLNewOrderTxnTest : public ::testing::Test {
   static constexpr char hosts[] = "127.0.0.1";
 };
 
-TEST_F(CQLNewOrderTxnTest, Test1) { 
-  YCQLNewOrderTxn new_order_txn(conn); 
+TEST_F(CQLNewOrderTxnTest, Test1) {
+  YCQLNewOrderTxn new_order_txn(conn);
   // TODO(ZjuYTW): populate new_order_txn and test
 }
 }  // namespace ycql_impl
