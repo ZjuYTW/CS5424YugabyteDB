@@ -1,29 +1,20 @@
-#include "ysql_impl//sql_txn/new_order_txn.h"
+#include "ysql_impl//sql_txn/stock_level_txn.h"
 
 #include <pqxx/pqxx>
 
 #include "common/util/string_util.h"
 
-#include<sys/time.h>
-
 #include "thread"
 
 namespace ydb_util {
-Status YSQLNewOrderTxn::Execute() noexcept {
+Status YSQLStockLevelTxn::Execute() noexcept {
   LOG_INFO << "New Order Transaction started";
   int retryCount = 0;
   while (retryCount < MAX_RETRY_COUNT) {
     try {
-      int allLocal = 1;
-      for (int i = 0; i < orders_.size(); i++) {
-        if (w_ids[i] != w_id_) {
-          allLocal = 0;
-          break;
-        }
-      }
-
       pqxx::work txn(*conn_);
       int d_next_o_id = SQL_Get_D_Next_O_ID(w_id_, d_id_, &txn);
+
       SQL_Update_D_Next_O_ID(1, w_id_, d_id_, &txn);
       SQL_InsertNewOrder(d_next_o_id, allLocal, &txn);
 
@@ -46,13 +37,13 @@ Status YSQLNewOrderTxn::Execute() noexcept {
         total_amount += item_amount;
 
         outputs[outputs.size() - 1] += (format(", SUPPLIER_WAREHOUSE: %d, QUANTITY: %d, OL_AMOUNT: %d, S_QUANTITY: %d",
-                                 w_ids[i], quantities[i], item_amount, s_quantity));
+                                               w_ids[i], quantities[i], item_amount, s_quantity));
         outputs.push_back("");
-//        std::cout
-//            << "Supplier Warehouse=" << w_ids[i] << ", "
-//            << "Quantity=" << quantities[i] << ", "
-//            << "OL_AMOUNT=" << item_amount << ", "
-//            << "S_QUANTITY=" << s_quantity << std::endl;
+        //        std::cout
+        //            << "Supplier Warehouse=" << w_ids[i] << ", "
+        //            << "Quantity=" << quantities[i] << ", "
+        //            << "OL_AMOUNT=" << item_amount << ", "
+        //            << "S_QUANTITY=" << s_quantity << std::endl;
 
         SQL_InsertNewOrderLine(d_next_o_id, i+1, i_ids[i], item_amount, w_ids[i], quantities[i], &txn);
       }
@@ -63,9 +54,9 @@ Status YSQLNewOrderTxn::Execute() noexcept {
       total_amount *= (1 + d_tax + w_tax) * (1 - c_discount);
       txn.commit();
       outputs.push_back(format("NUM_ITEMS: %d, TOTAL_AMOUNT: %d", orders_.size(), total_amount));
-//      std::cout
-//          << "Number of items=" << orders_.size() << ", "
-//          << "Total amount=" << total_amount << std::endl;
+      //      std::cout
+      //          << "Number of items=" << orders_.size() << ", "
+      //          << "Total amount=" << total_amount << std::endl;
 
       for (int i = 0; i < outputs.size(); i++) {
         std::cout << outputs[i] << std::endl;
@@ -84,7 +75,7 @@ Status YSQLNewOrderTxn::Execute() noexcept {
   return Status::Invalid("retry times exceeded max retry count");
 }
 
-int YSQLNewOrderTxn::SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn) {
+int YSQLStockLevelTxn::SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn) {
   pqxx::result res;
   LOG_INFO << ">>>> Get D_Next_O_ID:";
   std::string query = format(
@@ -105,13 +96,21 @@ int YSQLNewOrderTxn::SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn) {
   return res[0]["D_Next_O_ID"].as<int>();
 }
 
-void YSQLNewOrderTxn::SQL_Update_D_Next_O_ID(int amount, int w_id, int d_id, pqxx::work* txn) {
-  LOG_INFO << ">>>> Update D_Next_O_ID:";
+int YSQLStockLevelTxn::SQL_Get_Last_O_ID(int o_w_id, int o_d_id, int o_c_id, pqxx::work* txn) {
+  LOG_INFO << ">>>> Get Last O_ID:";
+  pqxx::result res;
   std::string query = format(
-      "UPDATE District SET D_Next_O_ID = D_Next_O_ID + %d WHERE D_W_ID = %d AND D_ID = %d",
-      amount, w_id, d_id);
+      "SELECT O_ID, O_ENTRY_D, O_CARRIER_ID FROM orders WHERE O_W_ID = %d AND O_D_ID = %d AND O_C_ID = %d ORDER BY O_ID DESC LIMIT 1",
+      o_w_id, o_d_id, o_c_id);
   LOG_INFO << query;
-  txn->exec(query);
+  res = txn->exec(query);
+
+  for (auto row : res) {
+    std::cout << "O_ID: " << row["O_ID"].as<int>() << ", "
+              << "O_ENTRY_D: " << row["O_ENTRY_D"].c_str() << ", "
+              << "O_CARRIER_ID: " << row["O_CARRIER_ID"].as<int>() << std::endl;
+  }
+  return res[0]["O_ID"].as<int>();
 }
 
 void YSQLNewOrderTxn::SQL_InsertNewOrder(int n, int allLocal, pqxx::work* txn) {
@@ -130,9 +129,9 @@ void YSQLNewOrderTxn::SQL_InsertNewOrder(int n, int allLocal, pqxx::work* txn) {
 
   outputs.push_back(format("O_ID: %d, O_ENTRY_D: %s", n, local_time));
   outputs.push_back("");
-//  std::cout
-//      << "Order number=" << std::to_string(n) << ", "
-//      << "entry date=" << local_time << std::endl;
+  //  std::cout
+  //      << "Order number=" << std::to_string(n) << ", "
+  //      << "entry date=" << local_time << std::endl;
 }
 
 char* YSQLNewOrderTxn::get_local_time(char *time_str, int len, struct timeval *tv) {
@@ -163,11 +162,11 @@ int YSQLNewOrderTxn::SQL_Get_S_Quantity(int w_id, int i_id, pqxx::work* txn) {
     throw std::runtime_error("S_Quantity not found");
   }
 
-//  for (auto row : res) {
-//    LOG_INFO << "D_W_ID=" << row["D_W_ID"].as<int>() << ", "
-//             << "D_ID=" << row["D_ID"].as<int>() << ", "
-//             << "D_Next_O_ID=" << row["D_Next_O_ID"].as<int>();
-//  }
+  //  for (auto row : res) {
+  //    LOG_INFO << "D_W_ID=" << row["D_W_ID"].as<int>() << ", "
+  //             << "D_ID=" << row["D_ID"].as<int>() << ", "
+  //             << "D_Next_O_ID=" << row["D_Next_O_ID"].as<int>();
+  //  }
   return res[0]["S_QUANTITY"].as<int>();
 }
 
@@ -194,9 +193,9 @@ float YSQLNewOrderTxn::SQL_Get_I_Price(int i_id, pqxx::work* txn) {
 
   for (auto row: res) {
     outputs.push_back(format("ITEM_NUMBER: %d, I_NAME: %d", i_id, row["I_NAME"].c_str()));
-//    std::cout
-//        << "I_NAME=" << row["I_NAME"].c_str() << ", "
-//        << "Item Number=" << i_id << std::endl;
+    //    std::cout
+    //        << "I_NAME=" << row["I_NAME"].c_str() << ", "
+    //        << "Item Number=" << i_id << std::endl;
   }
 
   return res[0]["I_Price"].as<float>();
@@ -228,8 +227,8 @@ float YSQLNewOrderTxn::SQL_Get_D_Tax(int w_id, int d_id, pqxx::work* txn) {
   for (auto row: res) {
     outputs.push_back(format("D_TAX: %f", row["D_TAX"].as<float>()));
     outputs.push_back("");
-//    std::cout
-//        << "District tax rate=" << row["D_TAX"].as<float>() << std::endl;
+    //    std::cout
+    //        << "District tax rate=" << row["D_TAX"].as<float>() << std::endl;
   }
 
   return res[0]["D_Tax"].as<float>();
@@ -251,8 +250,8 @@ float YSQLNewOrderTxn::SQL_Get_W_Tax(int w_id, pqxx::work* txn) {
   for (auto row: res) {
     outputs.push_back(format("W_TAX: %f", row["W_TAX"].as<float>()));
     outputs.push_back("");
-//    std::cout
-//        << "Warehouse tax rate=" << row["W_TAX"].as<float>() << std::endl;
+    //    std::cout
+    //        << "Warehouse tax rate=" << row["W_TAX"].as<float>() << std::endl;
   }
   return res[0]["W_TAX"].as<float>();
 }
@@ -275,10 +274,10 @@ float YSQLNewOrderTxn::SQL_Get_C_Discount(int w_id, int d_id, int id, pqxx::work
                              "C_LAST: %s, C_CREDIT: %s, C_DISCOUNT: %f",
                              w_id, d_id, id, row["C_LAST"].c_str(), row["C_CREDIT"].c_str(), row["C_DISCOUNT"].as<float>()));
     outputs.push_back("");
-//    std::cout
-//        << "Customer lastname=" << row["C_LAST"].c_str() << ", "
-//        << "credit=" << row["C_CREDIT"].c_str() << ", "
-//        << "discount=" << row["C_DISCOUNT"].as<float>() << std::endl;
+    //    std::cout
+    //        << "Customer lastname=" << row["C_LAST"].c_str() << ", "
+    //        << "credit=" << row["C_CREDIT"].c_str() << ", "
+    //        << "discount=" << row["C_DISCOUNT"].as<float>() << std::endl;
   }
 
   return res[0]["C_DISCOUNT"].as<float>();
