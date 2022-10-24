@@ -12,5 +12,5 @@ Status Retry(const std::function<ydb_util::Status()>& func,
     if (st.ok()) return st;
     ycql_impl::ValidOrSleep(false);
   } while (attempt++ < max_attempts);
-  return ydb_util::Status::ExecutionFailed("Exceed max retry attempts");
+  return st;
 }
