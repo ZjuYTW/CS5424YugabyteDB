@@ -197,4 +197,3 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getStock(
   return {st, it};
 }
 }  // namespace ycql_impl
->>>>>>> main

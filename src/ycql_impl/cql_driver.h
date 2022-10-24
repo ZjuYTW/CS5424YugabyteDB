@@ -42,12 +42,11 @@ class CQLDriver {
         // EndOfFile or Somethin Bad
         break;
       }
-      s = t->Execute();
+      double processTime;
+      s = t->Execute(&processTime);
       if (!s.ok()) {
         break;
       }
-      double processTime;
-      t->Execute(&processTime);
     }
     cass_session_free(session);
     return s.isEndOfFile() ? Status::OK() : s;
