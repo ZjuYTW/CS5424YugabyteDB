@@ -10,7 +10,7 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
   explicit YCQLTopBalanceTxn(CassSession* session)
       : TopBalanceTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
   CassSession* conn_;

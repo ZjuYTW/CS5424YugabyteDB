@@ -4,7 +4,7 @@
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
-Status YCQLPaymentTxn::Execute() noexcept {
+Status YCQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
   int retry = 0;
   auto st = Status::OK();

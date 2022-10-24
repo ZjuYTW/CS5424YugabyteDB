@@ -10,7 +10,7 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   explicit YCQLNewOrderTxn(CassSession* session)
       : NewOrderTxn(), conn_(session) {}
 
-  Status Execute() noexcept override;
+  Status Execute(double* diff_t) noexcept override;
 
  private:
   struct OrderLine {

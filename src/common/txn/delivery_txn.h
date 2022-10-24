@@ -1,5 +1,6 @@
 #ifndef YDB_PERF_DELIVERY_TXN_H_
 #define YDB_PERF_DELIVERY_TXN_H_
+#include <thread>
 
 #include "common/txn/txn_type.h"
 
@@ -10,7 +11,7 @@ class DeliveryTxn : public Txn {
 
   virtual ~DeliveryTxn() = default;
 
-  virtual Status Execute() noexcept override = 0;
+  virtual Status Execute(double* diff_t) noexcept override = 0;
 
   Status Init(const std::string& first_line,
               std::ifstream& ifs) noexcept override {

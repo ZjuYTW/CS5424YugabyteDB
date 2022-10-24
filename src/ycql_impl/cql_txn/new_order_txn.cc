@@ -6,7 +6,7 @@
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
-Status YCQLNewOrderTxn::Execute() noexcept {
+Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
   std::vector<OrderLine> order_lines;
   order_lines.reserve(orders_.size());
   int all_local = 1;
@@ -197,3 +197,4 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getStock(
   return {st, it};
 }
 }  // namespace ycql_impl
+>>>>>>> main

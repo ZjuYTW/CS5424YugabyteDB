@@ -10,7 +10,7 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
   explicit YCQLStockLevelTxn(CassSession* session)
       : StockLevelTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
   CassSession* conn_;

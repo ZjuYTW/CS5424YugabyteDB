@@ -9,8 +9,7 @@ class YCQLPaymentTxn : public ydb_util::PaymentTxn {
  public:
   explicit YCQLPaymentTxn(CassSession* session)
       : PaymentTxn(), conn_(session) {}
-
-  Status Execute() noexcept override;
+  Status Execute(double* diff_t) noexcept override;
 
  private:
   std::pair<Status, CassRow> GetWarehouse_(uint32_t) noexcept;

@@ -10,7 +10,7 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
   explicit YCQLOrderStatusTxn(CassSession* session)
       : OrderStatusTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
   CassSession* conn_;

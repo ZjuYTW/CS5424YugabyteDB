@@ -28,7 +28,7 @@ class PaymentTxn : public Txn {
     return Status::OK();
   }
 
-  virtual Status Execute() noexcept override = 0;
+  virtual Status Execute(double* diff_t) noexcept override = 0;
 
  protected:
   uint32_t w_id_, d_id_, c_id_;

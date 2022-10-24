@@ -1,6 +1,8 @@
 #ifndef YDB_PERF_TOP_BALANCE_TXN_H_
 #define YDB_PERF_TOP_BALANCE_TXN_H_
 
+#include <thread>
+
 #include "common/txn/txn_type.h"
 
 namespace ydb_util {
@@ -10,7 +12,7 @@ class TopBalanceTxn : public Txn {
 
   virtual ~TopBalanceTxn() = default;
 
-  virtual Status Execute() noexcept override = 0;
+  virtual Status Execute(double* diff_t) noexcept override = 0;
 
   // TopBalance consists of one line with 1 values: T
   Status Init(const std::string& first_line,

@@ -10,9 +10,15 @@ class YSQLTopBalanceTxn : public TopBalanceTxn {
   explicit YSQLTopBalanceTxn(pqxx::connection* conn)
       : TopBalanceTxn(), conn_(conn) {}
 
-  Status Execute() noexcept override;
+  Status Execute(double* diff_t) noexcept override;
 
  private:
+  std::vector<std::string> outputs;
+  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int TOP_K = 10;
+
+  pqxx::row getWarehouseSQL_(int w_id, pqxx::work* txn);
+  pqxx::row getDistrictSQL_(int w_id, int d_id, pqxx::work* txn);
   pqxx::connection* conn_;
 };
 }  // namespace ydb_util

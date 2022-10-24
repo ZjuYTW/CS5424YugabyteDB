@@ -10,7 +10,7 @@ class PopularItemTxn : public Txn {
 
   virtual ~PopularItemTxn() = default;
 
-  virtual Status Execute() noexcept override = 0;
+  virtual Status Execute(double* diff_t) noexcept override = 0;
 
   // PopularItem consists of one line with 4 values: I, W_ID, D_ID, L
   Status Init(const std::string& first_line,

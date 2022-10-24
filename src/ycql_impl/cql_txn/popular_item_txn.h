@@ -10,7 +10,7 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
   explicit YCQLPopularItemTxn(CassSession* session)
       : PopularItemTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
   CassSession* conn_;

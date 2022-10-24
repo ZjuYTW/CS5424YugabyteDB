@@ -10,7 +10,7 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   explicit YCQLRelatedCustomerTxn(CassSession* session)
       : RelatedCustomerTxn(), conn_(session) {}
 
-  Status Execute() noexcept override { return Status::OK(); }
+  Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
   CassSession* conn_;

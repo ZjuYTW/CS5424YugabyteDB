@@ -10,7 +10,7 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
   explicit YCQLDeliveryTxn(CassSession* session)
       : DeliveryTxn(), conn_(session) {}
 
-  Status Execute() noexcept override;
+  Status Execute(double* diff_t) noexcept override;
 
  private:
   CassSession* conn_;

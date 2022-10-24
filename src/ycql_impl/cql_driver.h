@@ -46,6 +46,8 @@ class CQLDriver {
       if (!s.ok()) {
         break;
       }
+      double processTime;
+      t->Execute(&processTime);
     }
     cass_session_free(session);
     return s.isEndOfFile() ? Status::OK() : s;
