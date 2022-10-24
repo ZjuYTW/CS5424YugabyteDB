@@ -6,11 +6,10 @@
 #include "common/util/string_util.h"
 
 namespace ydb_util {
-float YSQLPopularItemTxn::Execute() noexcept {
+Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Popular items Transaction started";
 
   time_t start_t, end_t;
-  double diff_t;
   time(&start_t);
   int retryCount = 0;
 
@@ -110,13 +109,13 @@ float YSQLPopularItemTxn::Execute() noexcept {
     }
   }
   if (retryCount == MAX_RETRY_COUNT) {
-    return -1;
+    return Status::Invalid("retry times exceeded max retry count");
   }
   for (auto& output : outputs) {
     std::cout << output << std::endl;
   }
   time(&end_t);
-  diff_t = difftime(end_t, start_t);
-  return diff_t;
+  *diff_t = difftime(end_t, start_t);
+  return Status::OK();
 }
 }  // namespace ydb_util

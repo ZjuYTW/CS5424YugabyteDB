@@ -5,11 +5,10 @@
 #include "common/util/string_util.h"
 
 namespace ydb_util {
-float YSQLPaymentTxn::Execute() noexcept {
+Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
 
   time_t start_t, end_t;
-  double diff_t;
   time(&start_t);
   int retryCount = 0;
 
@@ -102,8 +101,9 @@ float YSQLPaymentTxn::Execute() noexcept {
 //      std::cout << "Payment:" << payment_ << std::endl;
 
       time(&end_t);
-      diff_t = difftime(end_t, start_t);
-      return diff_t;
+      *diff_t = difftime(end_t, start_t);
+      return Status::OK();
+
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
@@ -112,7 +112,7 @@ float YSQLPaymentTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return -1;
+  return Status::Invalid("retry times exceeded max retry count");
 }
 
 void YSQLPaymentTxn::updateWareHouseSQL_(int w_id, double old_w_ytd,

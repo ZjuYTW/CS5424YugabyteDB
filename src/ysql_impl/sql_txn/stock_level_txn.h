@@ -10,7 +10,7 @@ class YSQLStockLevelTxn : public StockLevelTxn {
   explicit YSQLStockLevelTxn(pqxx::connection* conn)
       : StockLevelTxn(), conn_(conn) {}
 
-  float Execute() noexcept;
+  Status Execute(double* diff_t) noexcept;
 
  private:
   int SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn);

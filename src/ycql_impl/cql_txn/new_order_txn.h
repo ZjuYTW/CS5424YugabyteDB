@@ -8,7 +8,7 @@ class YCQLNewOrderTxn : public NewOrderTxn {
   explicit YCQLNewOrderTxn(CassSession* session)
       : NewOrderTxn(), conn_(session) {}
 
-  float Execute() noexcept override;
+  Status Execute(double* diff_t) noexcept override;
 
  private:
   CassSession* conn_;

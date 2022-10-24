@@ -7,11 +7,10 @@
 #include "thread"
 
 namespace ydb_util {
-float YSQLOrderStatusTxn::Execute() noexcept {
+Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Order Status Transaction started";
 
   time_t start_t, end_t;
-  double diff_t;
   time(&start_t);
   int retryCount = 0;
 
@@ -23,8 +22,8 @@ float YSQLOrderStatusTxn::Execute() noexcept {
       SQL_Get_Item(c_w_id_, c_d_id_, O_ID, &txn);
 
       time(&end_t);
-      diff_t = difftime(end_t, start_t);
-      return diff_t;
+      *diff_t = difftime(end_t, start_t);
+      return Status::OK();
 
     } catch (const std::exception& e) {
       retryCount++;
@@ -34,7 +33,7 @@ float YSQLOrderStatusTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return -1;
+  return Status::Invalid("retry times exceeded max retry count");
 }
 
 void YSQLOrderStatusTxn::SQL_Output_Customer_Name(int c_w_id, int c_d_id, int c_id, pqxx::work* txn) {

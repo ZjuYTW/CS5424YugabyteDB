@@ -3,11 +3,10 @@
 #include <pqxx/pqxx>
 
 namespace ydb_util {
-float YSQLRelatedCustomerTxn::Execute() noexcept {
+Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Related-Customer Transaction started";
 
   time_t start_t, end_t;
-  double diff_t;
   time(&start_t);
   pqxx::work txn(*conn_);
   int retryCount = 0;
@@ -50,14 +49,14 @@ float YSQLRelatedCustomerTxn::Execute() noexcept {
     }
   }
   if (retryCount == MAX_RETRY_COUNT) {
-    return -1;
+    return Status::Invalid("retry times exceeded max retry count");
   }
   for (auto& output : outputs) {
     std::cout << output << std::endl;
   }
   time(&end_t);
-  diff_t = difftime(end_t, start_t);
-  return diff_t;
+  *diff_t = difftime(end_t, start_t);
+  return Status::OK();
 }
 
 void YSQLRelatedCustomerTxn::addCustomerSQL_(

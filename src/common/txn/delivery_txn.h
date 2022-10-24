@@ -11,7 +11,7 @@ class DeliveryTxn : public Txn {
 
   virtual ~DeliveryTxn() = default;
 
-  virtual float Execute() noexcept override = 0;
+  virtual Status Execute(double* diff_t) noexcept override = 0;
 
   Status Init(const std::string& first_line,
               std::ifstream& ifs) noexcept override {

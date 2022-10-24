@@ -38,7 +38,8 @@ class CQLDriver {
       if (parser_p->GetNextTxn(&t).isEndOfFile()) {
         break;
       }
-      t->Execute();
+      double processTime;
+      t->Execute(&processTime);
     }
     cass_session_free(session);
     return Status::OK();
