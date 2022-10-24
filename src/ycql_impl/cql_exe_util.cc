@@ -1,4 +1,5 @@
 #include "ycql_impl/cql_exe_util.h"
+
 #include <thread>
 
 namespace ycql_impl {
