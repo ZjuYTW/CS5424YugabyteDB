@@ -8,11 +8,10 @@
 #include "thread"
 
 namespace ydb_util {
-float YSQLNewOrderTxn::Execute() noexcept {
+Status YSQLNewOrderTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "New Order Transaction started";
 
   time_t start_t, end_t;
-  double diff_t;
   time(&start_t);
   int retryCount = 0;
   auto NewOrder= format("N %d %d %d",w_id_,d_id_,c_id_);
@@ -75,26 +74,33 @@ float YSQLNewOrderTxn::Execute() noexcept {
       //      std::cout
       //          << "Number of items=" << orders_.size() << ", "
       //          << "Total amount=" << total_amount << std::endl;
-
+      txn_out_<<NewOrder<<std::endl;
+      for (auto & orderInput : orders_){
+        txn_out_<<orderInput<<std::endl;
+      }
       for (auto & output : outputs) {
         txn_out_ << output+"\n";
       }
 
       time(&end_t);
-      diff_t = difftime(end_t, start_t);
-      return diff_t;
+      *diff_t = difftime(end_t, start_t);
+      return Status::OK();
+
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
       if (retryCount==MAX_RETRY_COUNT){
+        err_out_<<NewOrder<<std::endl;
+        for (auto & orderInput : orders_){
+          err_out_<<orderInput<<std::endl;
+        }
         err_out_<<e.what()<<"\n";
       }
       // if Failed, Wait for 100 ms to try again
-      // TODO: check if there is a sleep_for
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return 0;
+  return Status::Invalid("retry times exceeded max retry count");
 }
 
 int YSQLNewOrderTxn::SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn) {

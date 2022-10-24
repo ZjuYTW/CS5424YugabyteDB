@@ -9,7 +9,7 @@ class YSQLNewOrderTxn : public NewOrderTxn {
   explicit YSQLNewOrderTxn(pqxx::connection* conn,std::ofstream& txn_out,std::ofstream& err_out)
       : NewOrderTxn(), conn_(conn),txn_out_(txn_out),err_out_(err_out) {}
 
-  float Execute() noexcept;
+  Status Execute(double* diff_t) noexcept;
 
  private:
   int SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn);

@@ -12,7 +12,7 @@ class TopBalanceTxn : public Txn {
 
   virtual ~TopBalanceTxn() = default;
 
-  virtual float Execute() noexcept override = 0;
+  virtual Status Execute(double* diff_t) noexcept override = 0;
 
   // TopBalance consists of one line with 1 values: T
   Status Init(const std::string& first_line,

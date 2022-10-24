@@ -10,7 +10,7 @@ class YSQLDeliveryTxn : public DeliveryTxn {
   explicit YSQLDeliveryTxn(pqxx::connection* conn)
       : DeliveryTxn(), conn_(conn) {}
 
-  float Execute() noexcept;
+  Status Execute(double* diff_t) noexcept;
 
  private:
   static constexpr int MAX_RETRY_COUNT = 3;

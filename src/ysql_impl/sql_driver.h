@@ -53,7 +53,14 @@ class SQLDriver {
       if (parser_p->GetNextTxn(&t).isEndOfFile()) {
         break;
       }
-      elapsedTime.push_back(t->Execute());
+      double processTime;
+      auto status=t->Execute(&processTime);
+      if (status.isInvalid()){
+        LOG_ERROR<<"Transaction failed";
+        return status;
+      }else{
+        elapsedTime.push_back(processTime);
+      }
     }
     sort(elapsedTime.begin(), elapsedTime.end());
 

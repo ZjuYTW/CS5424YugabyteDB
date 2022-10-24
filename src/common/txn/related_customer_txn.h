@@ -12,7 +12,7 @@ class RelatedCustomerTxn : public Txn {
 
   virtual ~RelatedCustomerTxn() = default;
 
-  virtual float Execute() noexcept override = 0;
+  virtual Status Execute(double* diff_t) noexcept override = 0;
 
   // RelatedCustomer consists of one line with 4 values: R, C_W_ID, C_D_ID, C_ID
   Status Init(const std::string& first_line,

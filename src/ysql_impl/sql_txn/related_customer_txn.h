@@ -12,7 +12,7 @@ class YSQLRelatedCustomerTxn : public RelatedCustomerTxn {
   explicit YSQLRelatedCustomerTxn(pqxx::connection* conn)
       : RelatedCustomerTxn(), conn_(conn) {}
 
-  float Execute() noexcept;
+  Status Execute(double* diff_t) noexcept;
 
  private:
   void addCustomerSQL_(int w_id, std::vector<int> items,
