@@ -54,7 +54,7 @@ float YSQLTopBalanceTxn::Execute() noexcept {
     }
   }
   if (retryCount == MAX_RETRY_COUNT) {
-    return 0;
+    return -1;
   }
   for (auto& output : outputs) {
     std::cout << output << std::endl;

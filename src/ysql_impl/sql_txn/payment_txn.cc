@@ -112,7 +112,7 @@ float YSQLPaymentTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return 0;
+  return -1;
 }
 
 void YSQLPaymentTxn::updateWareHouseSQL_(int w_id, double old_w_ytd,

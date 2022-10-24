@@ -34,7 +34,7 @@ float YSQLOrderStatusTxn::Execute() noexcept {
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  return 0;
+  return -1;
 }
 
 void YSQLOrderStatusTxn::SQL_Output_Customer_Name(int c_w_id, int c_d_id, int c_id, pqxx::work* txn) {

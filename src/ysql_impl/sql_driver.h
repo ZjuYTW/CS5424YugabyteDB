@@ -53,7 +53,10 @@ class SQLDriver {
       if (parser_p->GetNextTxn(&t).isEndOfFile()) {
         break;
       }
-      elapsedTime.push_back(t->Execute());
+      float processTime = t->Execute();
+      if (processTime != -1) {
+        elapsedTime.push_back();
+      }
     }
     sort(elapsedTime.begin(), elapsedTime.end());
 

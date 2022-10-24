@@ -86,7 +86,7 @@ float YSQLDeliveryTxn::Execute() noexcept {
       }
     }
     if (retryCount == MAX_RETRY_COUNT) {
-      return 0;
+      return -1;
     }
   }
   time(&end_t);
