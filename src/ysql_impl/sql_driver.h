@@ -56,10 +56,6 @@ class SQLDriver {
         // EndOfFile or Somethin Bad
         break;
       }
-      s = t->Execute();
-      if (!s.ok()) {
-        break;
-      }
       double processTime;
       auto status=t->Execute(&processTime);
       if (!status.ok()){

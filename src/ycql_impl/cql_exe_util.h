@@ -1,5 +1,9 @@
+#ifndef YCQL_IMPL_EXE_UTIL_H_
+#define YCQL_IMPL_EXE_UTIL_H_
+
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "cassandra.h"
 #include "common/util/defer.h"
@@ -164,4 +168,10 @@ T GetValueFromCassRow(CassIterator* it, const char* col_name) noexcept {
 }
 
 bool ValidOrSleep(bool done) noexcept;
+
+using ydb_util::Status;
+Status Retry(std::function<Status()> func, size_t max_attempts,
+             unsigned long retry_interval_usecs);
 }  // namespace ycql_impl
+
+#endif
