@@ -15,7 +15,7 @@ float YSQLNewOrderTxn::Execute() noexcept {
   double diff_t;
   time(&start_t);
   int retryCount = 0;
-
+  auto NewOrder= format("N %d %d %d",w_id_,d_id_,c_id_);
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       int allLocal = 1;
