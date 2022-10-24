@@ -61,7 +61,7 @@ class NewOrderTxn : public Txn {
     return Status::OK();
   }
 
- private:
+ protected:
   // ParseOneOrder parses each line into 3 values: OL_I_ID, OL_W_ID, OL_QUALITY
   static Status ParseOneOrder(const std::string& order, uint32_t* i_id,
                               uint32_t* w_id, uint32_t* quantity) {

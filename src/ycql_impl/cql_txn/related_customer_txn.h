@@ -2,8 +2,10 @@
 #define YCQL_RELATED_CUSTOMER_TXN_H_
 #include "common/txn/related_customer_txn.h"
 
-namespace ydb_util {
-class YCQLRelatedCustomerTxn : public RelatedCustomerTxn {
+namespace ycql_impl {
+class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
+  using Status = ydb_util::Status;
+
  public:
   explicit YCQLRelatedCustomerTxn(CassSession* session)
       : RelatedCustomerTxn(), conn_(session) {}
@@ -13,5 +15,5 @@ class YCQLRelatedCustomerTxn : public RelatedCustomerTxn {
  private:
   CassSession* conn_;
 };
-}  // namespace ydb_util
+}  // namespace ycql_impl
 #endif
