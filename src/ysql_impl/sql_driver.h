@@ -55,7 +55,7 @@ class SQLDriver {
       }
       double processTime;
       auto status=t->Execute(&processTime);
-      if (status.isInvalid()){
+      if (!status.ok()){
         LOG_ERROR<<"Transaction failed";
         return status;
       }else{
