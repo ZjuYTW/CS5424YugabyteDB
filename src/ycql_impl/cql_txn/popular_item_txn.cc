@@ -4,7 +4,7 @@
 namespace ycql_impl {
 using Status = ydb_util::Status;
 
-Status YCQLPopularItemTxn::Execute() noexcept {
+Status YCQLPopularItemTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Popular-item Transaction started";
   int retry_time = 0;
   Status st;

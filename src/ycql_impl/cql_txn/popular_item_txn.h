@@ -15,7 +15,7 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
         txn_out_(txn_out),
         err_out_(err_out) {}
 
-  Status Execute(double* diff_t) noexcept override { return Status::OK(); }
+  Status Execute(double* diff_t) noexcept override;
 
  private:
   FRIEND_TEST(TxnArgsParserTest, popular_item);

@@ -3,7 +3,7 @@
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
-Status YCQLStockLevelTxn::Execute() noexcept {
+Status YCQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock-level Transaction started";
   int retry_time = 0;
   Status st;

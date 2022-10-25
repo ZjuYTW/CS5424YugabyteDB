@@ -4,7 +4,7 @@
 namespace ycql_impl {
 using Status = ydb_util::Status;
 
-Status YCQLOrderStatusTxn::Execute() noexcept {
+Status YCQLOrderStatusTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Order-status Transaction started";
   int retry_time = 0;
   Status st;
