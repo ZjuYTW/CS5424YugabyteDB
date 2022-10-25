@@ -13,7 +13,7 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
   Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
- FRIEND_TEST(TxnArgsParserTest, popular_item);
+  FRIEND_TEST(TxnArgsParserTest, popular_item);
   CassSession* conn_;
 };
 }  // namespace ycql_impl

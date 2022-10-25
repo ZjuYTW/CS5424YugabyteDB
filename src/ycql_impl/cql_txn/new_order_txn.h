@@ -9,7 +9,7 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
  public:
   explicit YCQLNewOrderTxn(CassSession* session)
       : NewOrderTxn(), conn_(session) {}
-  
+
   virtual ~YCQLNewOrderTxn() = default;
 
   Status Execute(double* diff_t) noexcept override;

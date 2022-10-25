@@ -13,7 +13,7 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
   Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
- FRIEND_TEST(TxnArgsParserTest, stock_level);
+  FRIEND_TEST(TxnArgsParserTest, stock_level);
   CassSession* conn_;
 };
 }  // namespace ycql_impl

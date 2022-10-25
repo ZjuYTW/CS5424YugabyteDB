@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 #include "ycql_impl/ycql_parser.h"
 
-namespace ycql_impl{
+namespace ycql_impl {
 
 const std::string TEST_FILE_PATH = "data/xact_files/";
 
@@ -151,4 +151,4 @@ TEST(TxnArgsParserTest, related_customer) {
   }
 }
 
-}  // namespace ydb_util
+}  // namespace ycql_impl

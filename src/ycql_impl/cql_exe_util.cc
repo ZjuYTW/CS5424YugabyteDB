@@ -11,7 +11,7 @@ bool ValidOrSleep(bool done) noexcept {
 }
 
 ydb_util::Status Retry(const std::function<ydb_util::Status()>& func,
-             size_t max_attempts) {
+                       size_t max_attempts) {
   ydb_util::Status st;
   int attempt = 0;
   do {
@@ -35,7 +35,8 @@ double GetWTax(CassIterator* warehouse_it) noexcept {
 }
 
 double GetDiscount(CassIterator* custom_it) noexcept {
-  auto c_discount = ycql_impl::GetValueFromCassRow<int64_t>(custom_it, "c_discount");
+  auto c_discount =
+      ycql_impl::GetValueFromCassRow<int64_t>(custom_it, "c_discount");
   double c_discount_d = static_cast<double>(c_discount) / 10000;
   return c_discount_d;
 }
