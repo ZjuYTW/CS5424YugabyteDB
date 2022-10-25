@@ -69,7 +69,6 @@ class NewOrderTxn : public Txn {
 
  protected:
   std::vector<std::string> orders_;
-  // Maybe change it into BigInt
   uint32_t c_id_, w_id_, d_id_;
   std::vector<int> i_ids, w_ids, quantities;
 

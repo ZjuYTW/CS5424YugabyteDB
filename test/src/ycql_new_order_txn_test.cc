@@ -34,13 +34,14 @@ TEST_F(CQLNewOrderTxnTest, NewOrderTest1) {
   // TODO(ZjuYTW): populate new_order_txn and test
   new_order_txn->c_id_ = 1;
   new_order_txn->d_id_ = 1;
+  new_order_txn->w_id_ = 1;
   std::vector<std::string> orders;
   for(int i = 0; i < 4; i++){
     std::string str;
     // item_id
-    str += std::to_string(i+1) + " ";
+    str += std::to_string(i+1) + ",";
     // supply_warehouse id
-    str += std::to_string(i+1) + " ";
+    str += std::to_string(1) + ",";
     // quantity
     str += std::to_string(5);
     new_order_txn->orders_.push_back(std::move(str));

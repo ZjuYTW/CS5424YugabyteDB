@@ -35,14 +35,14 @@ TEST(TxnArgsParserTest, payment) {
   EXPECT_EQ(s.ok(), true);
   std::unique_ptr<Txn> t = nullptr;
 
-  while (!parser->GetNextTxn(&t).isEndOfFile()) {
+  if (!parser->GetNextTxn(&t).isEndOfFile()) {
     EXPECT_NE(t, nullptr);
     auto *paymentTxn = dynamic_cast<YCQLPaymentTxn *>(t.get());
     EXPECT_NE(paymentTxn, nullptr);
     EXPECT_EQ(paymentTxn->w_id_, 1);
-    EXPECT_EQ(paymentTxn->d_id_, 2);
-    EXPECT_EQ(paymentTxn->c_id_, 3);
-    EXPECT_EQ(paymentTxn->payment_, 4.56);
+    EXPECT_EQ(paymentTxn->d_id_, 5);
+    EXPECT_EQ(paymentTxn->c_id_, 2817);
+    EXPECT_EQ(paymentTxn->payment_, 3849.58);
   }
 }
 

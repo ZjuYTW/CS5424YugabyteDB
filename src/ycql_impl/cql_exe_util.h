@@ -9,6 +9,7 @@
 #include "common/util/defer.h"
 #include "common/util/status.h"
 #include "ycql_impl/defines.h"
+#include "common/util/logger.h"
 
 namespace ycql_impl {
 template <size_t idx>
@@ -48,7 +49,7 @@ CassError cql_statment_fill_args(CassStatement* statement, T first,
     }
     return cql_statment_fill_args<idx + 1>(statement, args...);
   }
-  if constexpr (std::is_same_v<int, T>) {
+  if constexpr (std::is_same_v<int32_t, T>) {
     rc = cass_statement_bind_int32(statement, idx, first);
     if (rc != CASS_OK) {
       return rc;
@@ -78,7 +79,6 @@ ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
   CassFuture* future = nullptr;
   auto size = sizeof...(Args);
   CassStatement* statement = cass_statement_new(stmt.c_str(), size);
-  cass_statement_set_keyspace(statement, YCQLKeyspace.c_str());
   auto ret_func = [&statement, &future]() {
     cass_statement_free(statement);
     if (future) {
@@ -163,7 +163,7 @@ T GetValueFromCassRow(CassIterator* it, const char* col_name) noexcept {
                                &sz);
     assert(rc == CASS_OK);
     return std::string(buf);
-  } else {
+  }else {
     assert(false);
   }
   return ret;
@@ -171,8 +171,15 @@ T GetValueFromCassRow(CassIterator* it, const char* col_name) noexcept {
 
 bool ValidOrSleep(bool done) noexcept;
 
-using ydb_util::Status;
-Status Retry(const std::function<Status()>& func, size_t max_attempts);
+ydb_util::Status Retry(std::function<ydb_util::Status()> func, size_t max_attempts,
+             unsigned long retry_interval_usecs);
+
+double GetDTax(CassIterator* district_it) noexcept;
+
+double GetWTax(CassIterator* warehouse_it) noexcept;
+
+double GetDiscount(CassIterator* custom_it) noexcept;
+
 }  // namespace ycql_impl
 
 #endif
