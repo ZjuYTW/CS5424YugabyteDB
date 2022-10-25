@@ -13,6 +13,7 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
   Status Execute(double* diff_t) noexcept override;
 
  private:
+  FRIEND_TEST(TxnArgsParserTest, delivery);
   CassSession* conn_;
 };
 };  // namespace ycql_impl

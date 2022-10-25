@@ -8,6 +8,7 @@
 #include "cassandra.h"
 #include "common/util/defer.h"
 #include "common/util/status.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 template <size_t idx>
@@ -77,6 +78,7 @@ ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
   CassFuture* future = nullptr;
   auto size = sizeof...(Args);
   CassStatement* statement = cass_statement_new(stmt.c_str(), size);
+  cass_statement_set_keyspace(statement, YCQLKeyspace.c_str());
   auto ret_func = [&statement, &future]() {
     cass_statement_free(statement);
     if (future) {
