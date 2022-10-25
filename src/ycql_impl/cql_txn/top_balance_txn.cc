@@ -56,7 +56,7 @@ Status YCQLTopBalanceTxn::execute() noexcept {
   return st;
 }
 
-std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getTopBalCustomers() {
+std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getTopBalCustomers() noexcept {
   std::string stmt =
       "SELECT c_w_id, c_d_id, c_balance, c_first, c_middle, c_last "
       "FROM customer "
@@ -68,7 +68,7 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getTopBalCustomers() {
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(int32_t w_id) {
+std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(int32_t w_id) noexcept {
   std::string stmt =
       "SELECT w_name "
       "FROM warehouse "
@@ -79,7 +79,7 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(int32_t w_id) {
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(int32_t w_id, int32_t d_id) {
+std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(int32_t w_id, int32_t d_id) noexcept {
   std::string stmt =
       "SELECT d_name "
       "FROM district "

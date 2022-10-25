@@ -21,9 +21,9 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
   Status execute() noexcept;
-  std::pair<Status, CassIterator*> getTopBalCustomers();
-  std::pair<Status, CassIterator*> getWarehouse(int32_t w_id);
-  std::pair<Status, CassIterator*> getDistrict(int32_t w_id, int32_t d_id);
+  std::pair<Status, CassIterator*> getTopBalCustomers() noexcept;
+  std::pair<Status, CassIterator*> getWarehouse(int32_t w_id) noexcept;
+  std::pair<Status, CassIterator*> getDistrict(int32_t w_id, int32_t d_id) noexcept;
 
 };
 }  // namespace ycql_impl
