@@ -26,7 +26,7 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
   constexpr static int THRESHOLD = 2;
 
-  Status execute() noexcept;
+  Status executeLocal() noexcept;
   std::pair<Status, CassIterator*> getOrders() noexcept;
   std::pair<Status, CassIterator*> getOrderLines(int32_t o_id) noexcept;
   std::pair<Status, CassIterator*> getRelatedOrders(const std::string& items) noexcept;

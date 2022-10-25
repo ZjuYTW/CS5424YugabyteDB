@@ -6,18 +6,19 @@ using Status = ydb_util::Status;
 
 Status YCQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock-level Transaction started";
-  auto st = Retry(std::bind(&YCQLStockLevelTxn::execute, this), MAX_RETRY_ATTEMPTS);
+  auto st = Retry(std::bind(&YCQLStockLevelTxn::executeLocal, this), MAX_RETRY_ATTEMPTS);
   if (st.ok()) LOG_INFO << "Stock-level transaction completed";
   return st;
 }
 
-Status YCQLStockLevelTxn::execute() noexcept {
+Status YCQLStockLevelTxn::executeLocal() noexcept {
   Status st = Status::OK();
 
-  CassIterator *order_it = nullptr;
-  std::tie(st, order_it) = getNextOrder();
+  CassIterator *next_order_it = nullptr;
+  std::tie(st, next_order_it) = getNextOrder();
   if (!st.ok()) return st;
-  auto next_o_id = GetValueFromCassRow<int32_t>(order_it, "d_next_o_id");
+  auto next_o_id = GetValueFromCassRow<int32_t>(next_order_it, "d_next_o_id");
+  if (next_order_it) cass_iterator_free(next_order_it);
 
   CassIterator *item_it = nullptr;
   std::tie(st, item_it) = getItemsInLastOrders(next_o_id);
@@ -39,7 +40,6 @@ Status YCQLStockLevelTxn::execute() noexcept {
             << items_below_threshold << std::endl;
 
   if (item_it) cass_iterator_free(item_it);
-  if (order_it) cass_iterator_free(order_it);
   return st;
 }
 

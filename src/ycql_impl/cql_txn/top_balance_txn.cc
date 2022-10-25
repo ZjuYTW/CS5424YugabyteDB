@@ -8,12 +8,12 @@ using ydb_util::format;
 
 Status YCQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Top-Balance Transaction started";
-  auto st = Retry(std::bind(&YCQLTopBalanceTxn::execute, this), MAX_RETRY_ATTEMPTS);
+  auto st = Retry(std::bind(&YCQLTopBalanceTxn::executeLocal, this), MAX_RETRY_ATTEMPTS);
   if (st.ok()) LOG_INFO << "Top-Balance Transaction completed";
   return st;
 }
 
-Status YCQLTopBalanceTxn::execute() noexcept {
+Status YCQLTopBalanceTxn::executeLocal() noexcept {
   Status st = Status::OK();
   CassIterator *customer_it = nullptr;
 

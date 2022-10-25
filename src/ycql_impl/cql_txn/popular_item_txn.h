@@ -22,13 +22,14 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
-  constexpr static int MaxRetryTime = 3;
+  constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
-  uint32_t getNextOrderId();
-  std::pair<Status, CassIterator*> getLastOrders(uint32_t);
-  CassIterator *getCustomerName(uint32_t);
-  CassIterator *getMaxOrderLines(uint32_t);
-  std::string getItemName(uint32_t);
+  Status executeLocal() noexcept;
+  std::pair<Status, CassIterator*> getNextOrder() noexcept;
+  std::pair<Status, CassIterator*> getLastOrders(int32_t next_o_id) noexcept;
+  std::pair<Status, CassIterator*> getCustomerName(int32_t c_id) noexcept;
+  std::pair<Status, CassIterator*> getMaxOrderLines(int32_t o_id) noexcept;
+  std::pair<Status, CassIterator*> getItemName(int32_t i_id) noexcept;
 
 };
 }  // namespace ycql_impl

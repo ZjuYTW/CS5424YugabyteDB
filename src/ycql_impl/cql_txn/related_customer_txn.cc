@@ -9,12 +9,12 @@ using ycql_impl::ValidOrSleep;
 
 Status YCQLRelatedCustomerTxn::Execute(double *diff_t) noexcept {
   LOG_INFO << "Related-customer transaction started";
-  auto st = Retry(std::bind(&YCQLRelatedCustomerTxn::execute, this), MAX_RETRY_ATTEMPTS);
+  auto st = Retry(std::bind(&YCQLRelatedCustomerTxn::executeLocal, this), MAX_RETRY_ATTEMPTS);
   if (st.ok()) LOG_INFO << "Related-customer transaction completed";
   return st;
 }
 
-Status YCQLRelatedCustomerTxn::execute() noexcept {
+Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
   std::cout << format("\t1. Customer identifier (%d, %d, %d)", c_w_id_, c_d_id_, c_id_) << std::endl;
 
   Status st = Status::OK();

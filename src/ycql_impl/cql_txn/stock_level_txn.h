@@ -20,7 +20,7 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
   std::ofstream& err_out_;
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
-  Status execute() noexcept;
+  Status executeLocal() noexcept;
   std::pair<Status, CassIterator*> getNextOrder() noexcept;
   std::pair<Status, CassIterator*> getItemsInLastOrders(int32_t next_o_id) noexcept;
   std::pair<Status, CassIterator*> getItemQuantityFromStock(int32_t) noexcept;
