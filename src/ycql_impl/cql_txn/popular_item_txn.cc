@@ -53,6 +53,7 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
       auto i_id = GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id");
       CassIterator *item_it = nullptr;
       std::tie(st, item_it) = getItemName(i_id);
+      if (!st.ok()) return st;
       auto i_name = GetValueFromCassRow<std::string>(item_it, "i_name");
       popularItems[i_name] += 1;
       std::cout << format("\t\t(i).Item name: %s", i_name.c_str()) << std::endl;
