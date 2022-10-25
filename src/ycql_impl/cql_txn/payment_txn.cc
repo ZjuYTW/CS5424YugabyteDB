@@ -7,23 +7,26 @@ using ydb_util::format;
 
 Status YCQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
-  int retry_time = 0;
-  bool done = false;
-  auto st = Status::OK();
+  auto st = Retry(std::bind(&YCQLPaymentTxn::executeLocal, this), MAX_RETRY_ATTEMPTS);
+  if (st.ok()) LOG_INFO << "Payment Transaction completed";
+  return st;
+}
+
+Status YCQLPaymentTxn::executeLocal() noexcept {
+  Status st = Status::OK();
   CassIterator *customer_it = nullptr, *warehouse_it = nullptr, *district_it = nullptr;
 
-  do {
     st = updateWarehouseYTD();
-    if (!st.ok()) continue;
+    if (!st.ok()) return st;
     st = updateDistrictYTD();
-    if (!st.ok()) continue;
+    if (!st.ok()) return st;
     st = updateCustomerPayment();
-    if (!st.ok()) continue;
+    if (!st.ok()) return st;
 
-    if (!customer_it) {
-      std::tie(st, customer_it) = getCustomer();
-      if (!st.ok()) continue;
-    }
+
+    std::tie(st, customer_it) = getCustomer();
+    if (!st.ok()) return st;
+
     std::cout << "\t(a).Customer information:" << std::endl;
     std::cout << format("\t\tIdentifier: (%d, %d, %d)", w_id_, d_id_, c_id_) << std::endl;
     std::cout << format("\t\tName: (%s, %s, %s)",
@@ -41,12 +44,11 @@ Status YCQLPaymentTxn::Execute(double* diff_t) noexcept {
     std::cout << format("\t\tC_CREDIT: %s", GetValueFromCassRow<std::string>(customer_it, "c_credit").c_str()) << std::endl;
     std::cout << format("\t\tC_CREDIT_LIM: %lf", GetValueFromCassRow<double>(customer_it, "c_credit_lim")) << std::endl;
     std::cout << format("\t\tC_DISCOUNT: %lf", GetValueFromCassRow<double>(customer_it, "c_discount")) << std::endl;
-    std::cout << format("\t\tC_BALANCE: %lf", static_cast<double>(GetValueFromCassRow<uint64_t>(customer_it, "c_balance") / 100.0)) << std::endl;
+    std::cout << format("\t\tC_BALANCE: %lf", static_cast<double>(GetValueFromCassRow<int64_t>(customer_it, "c_balance") / 100.0)) << std::endl;
 
-    if (!warehouse_it) {
-      std::tie(st, warehouse_it) = getWarehouse();
-      if (!st.ok()) continue;
-    }
+    std::tie(st, warehouse_it) = getWarehouse();
+    if (!st.ok()) return st;
+
     std::cout << "\t(b).Warehouse information:" << std::endl;
     std::cout << format("\t\tAddress: (%s, %s, %s, %s, %s)",
                         GetValueFromCassRow<std::string>(warehouse_it, "w_street_1").c_str(),
@@ -55,10 +57,9 @@ Status YCQLPaymentTxn::Execute(double* diff_t) noexcept {
                         GetValueFromCassRow<std::string>(warehouse_it, "w_state").c_str(),
                         GetValueFromCassRow<std::string>(warehouse_it, "w_zip").c_str()) << std::endl;
 
-    if (!district_it) {
-      std::tie(st, district_it) = getDistrict();
-      if (!st.ok()) continue;
-    }
+    std::tie(st, district_it) = getDistrict();
+    if (!st.ok()) return st;
+
     std::cout << "\t(c).District information:" << std::endl;
     std::cout << format("\t\tAddress: (%s, %s, %s, %s, %s)",
                         GetValueFromCassRow<std::string>(district_it, "d_street_1").c_str(),
@@ -67,15 +68,13 @@ Status YCQLPaymentTxn::Execute(double* diff_t) noexcept {
                         GetValueFromCassRow<std::string>(district_it, "d_state").c_str(),
                         GetValueFromCassRow<std::string>(district_it, "d_zip").c_str()) << std::endl;
 
-    done = true;
-  } while (retry_time++ < MaxRetryTime /* && sleep(done) */);
   if (customer_it) cass_iterator_free(customer_it);
   if (warehouse_it) cass_iterator_free(warehouse_it);
   if (district_it) cass_iterator_free(district_it);
   return st;
 }
 
-Status YCQLPaymentTxn::updateWarehouseYTD() {
+Status YCQLPaymentTxn::updateWarehouseYTD() noexcept {
   std::string stmt =
       "UPDATE warehouse "
       "SET w_ytd = w_ytd + ? "
@@ -85,7 +84,7 @@ Status YCQLPaymentTxn::updateWarehouseYTD() {
   return ycql_impl::execute_write_cql(conn_, stmt, &it, payment, w_id_);
 }
 
-Status YCQLPaymentTxn::updateDistrictYTD() {
+Status YCQLPaymentTxn::updateDistrictYTD() noexcept {
   std::string stmt =
       "UPDATE district "
       "SET d_ytd = d_ytd + ? "
@@ -95,7 +94,7 @@ Status YCQLPaymentTxn::updateDistrictYTD() {
   return ycql_impl::execute_write_cql(conn_, stmt, &it, payment, w_id_, d_id_);
 }
 
-Status YCQLPaymentTxn::updateCustomerPayment() {
+Status YCQLPaymentTxn::updateCustomerPayment() noexcept {
   std::string stmt =
       "UPDATE customer "
       "SET c_balance = c_balance - ?, "
@@ -107,7 +106,7 @@ Status YCQLPaymentTxn::updateCustomerPayment() {
   return ycql_impl::execute_write_cql(conn_, stmt, &it, payment, payment, w_id_, d_id_, c_id_);
 }
 
-std::pair<Status, CassIterator *> YCQLPaymentTxn::getCustomer() {
+std::pair<Status, CassIterator *> YCQLPaymentTxn::getCustomer() noexcept {
   std::string stmt =
       "SELECT c_first, c_middle, c_last, "
       "c_street_1, c_street_2, c_city, c_state, c_zip, "
@@ -121,7 +120,7 @@ std::pair<Status, CassIterator *> YCQLPaymentTxn::getCustomer() {
   return {st, it};
 }
 
-std::pair<Status, CassIterator *> YCQLPaymentTxn::getWarehouse() {
+std::pair<Status, CassIterator *> YCQLPaymentTxn::getWarehouse() noexcept {
   std::string stmt =
       "SELECT w_street_1, w_street_2, w_city, w_state, w_zip "
       "FROM warehouse "
@@ -132,7 +131,7 @@ std::pair<Status, CassIterator *> YCQLPaymentTxn::getWarehouse() {
   return {st, it};
 }
 
-std::pair<Status, CassIterator *> YCQLPaymentTxn::getDistrict() {
+std::pair<Status, CassIterator *> YCQLPaymentTxn::getDistrict() noexcept {
   std::string stmt =
       "SELECT d_street_1, d_street_2, d_city, d_state, d_zip "
       "FROM district "

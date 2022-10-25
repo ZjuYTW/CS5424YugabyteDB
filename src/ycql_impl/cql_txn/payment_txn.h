@@ -17,14 +17,15 @@ class YCQLPaymentTxn : public ydb_util::PaymentTxn {
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
   FRIEND_TEST(TxnArgsParserTest, payment);
-  static constexpr int MaxRetryTime = 3;
+  static constexpr int MAX_RETRY_ATTEMPTS = 3;
 
-  Status updateWarehouseYTD();
-  Status updateDistrictYTD();
-  Status updateCustomerPayment();
-  std::pair<Status, CassIterator *> getCustomer();
-  std::pair<Status, CassIterator *> getWarehouse();
-  std::pair<Status, CassIterator *> getDistrict();
+  Status executeLocal() noexcept;
+  Status updateWarehouseYTD() noexcept;
+  Status updateDistrictYTD() noexcept;
+  Status updateCustomerPayment() noexcept;
+  std::pair<Status, CassIterator *> getCustomer() noexcept;
+  std::pair<Status, CassIterator *> getWarehouse() noexcept;
+  std::pair<Status, CassIterator *> getDistrict() noexcept;
 
 };
 }  // namespace ycql_impl
