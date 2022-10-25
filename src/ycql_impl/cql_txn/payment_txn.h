@@ -20,6 +20,7 @@ class YCQLPaymentTxn : public ydb_util::PaymentTxn {
   std::pair<Status, CassRow> GetDistrict_(uint32_t) noexcept;
 
   CassSession* conn_;
+  FRIEND_TEST(TxnArgsParserTest, payment);
   static constexpr int MaxRetryCnt = 3;
 };
 }  // namespace ycql_impl

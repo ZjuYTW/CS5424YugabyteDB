@@ -13,6 +13,7 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
   Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
+  FRIEND_TEST(TxnArgsParserTest, order_status);
   CassSession* conn_;
 };
 }  // namespace ycql_impl

@@ -13,7 +13,8 @@ class YSQLOrderStatusTxn : public OrderStatusTxn {
   Status Execute(double* diff_t) noexcept;
 
  private:
-  void SQL_Output_Customer_Name(int c_w_id, int c_d_id, int c_id, pqxx::work* txn);
+  void SQL_Output_Customer_Name(int c_w_id, int c_d_id, int c_id,
+                                pqxx::work* txn);
   int SQL_Get_Last_O_ID(int o_w_id, int o_d_id, int o_c_id, pqxx::work* txn);
   void SQL_Get_Item(int ol_w_id, int ol_d_id, int ol_o_id, pqxx::work* txn);
 

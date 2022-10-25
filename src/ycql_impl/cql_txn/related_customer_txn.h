@@ -13,6 +13,7 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
+  FRIEND_TEST(TxnArgsParserTest, related_customer);
   CassSession* conn_;
 };
 }  // namespace ycql_impl

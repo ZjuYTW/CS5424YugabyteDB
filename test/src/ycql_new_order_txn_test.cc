@@ -28,8 +28,28 @@ class CQLNewOrderTxnTest : public ::testing::Test {
   static constexpr char hosts[] = "127.0.0.1";
 };
 
-TEST_F(CQLNewOrderTxnTest, Test1) {
-  YCQLNewOrderTxn new_order_txn(conn);
+TEST_F(CQLNewOrderTxnTest, NewOrderTest1) {
+  ydb_util::Txn* txn = new YCQLNewOrderTxn(conn);
+  auto new_order_txn = dynamic_cast<YCQLNewOrderTxn*>(txn);
   // TODO(ZjuYTW): populate new_order_txn and test
+  new_order_txn->c_id_ = 1;
+  new_order_txn->d_id_ = 1;
+  new_order_txn->w_id_ = 1;
+  std::vector<std::string> orders;
+  for (int i = 0; i < 4; i++) {
+    std::string str;
+    // item_id
+    str += std::to_string(i + 1) + ",";
+    // supply_warehouse id
+    str += std::to_string(1) + ",";
+    // quantity
+    str += std::to_string(5);
+    new_order_txn->orders_.push_back(std::move(str));
+  }
+
+  double elapsedTime;
+  auto st = new_order_txn->Execute(&elapsedTime);
+  LOG_INFO << st.ToString();
+  ASSERT_TRUE(st.ok());
 }
 }  // namespace ycql_impl

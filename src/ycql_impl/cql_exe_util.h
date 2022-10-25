@@ -7,7 +7,9 @@
 
 #include "cassandra.h"
 #include "common/util/defer.h"
+#include "common/util/logger.h"
 #include "common/util/status.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 template <size_t idx>
@@ -47,7 +49,7 @@ CassError cql_statment_fill_args(CassStatement* statement, T first,
     }
     return cql_statment_fill_args<idx + 1>(statement, args...);
   }
-  if constexpr (std::is_same_v<int, T>) {
+  if constexpr (std::is_same_v<int32_t, T>) {
     rc = cass_statement_bind_int32(statement, idx, first);
     if (rc != CASS_OK) {
       return rc;
@@ -169,8 +171,15 @@ T GetValueFromCassRow(CassIterator* it, const char* col_name) noexcept {
 
 bool ValidOrSleep(bool done) noexcept;
 
-using ydb_util::Status;
-Status Retry(const std::function<Status()>& func, size_t max_attempts);
+ydb_util::Status Retry(const std::function<ydb_util::Status()>& func,
+                       size_t max_attempts);
+
+double GetDTax(CassIterator* district_it) noexcept;
+
+double GetWTax(CassIterator* warehouse_it) noexcept;
+
+double GetDiscount(CassIterator* custom_it) noexcept;
+
 }  // namespace ycql_impl
 
 #endif

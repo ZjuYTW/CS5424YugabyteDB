@@ -14,7 +14,8 @@ class YSQLStockLevelTxn : public StockLevelTxn {
 
  private:
   int SQL_Get_D_Next_O_ID(int w_id, int d_id, pqxx::work* txn);
-  pqxx::result SQL_Get_OL_I_ID(int ol_w_id, int ol_d_id, int d_next_o_id, pqxx::work* txn);
+  pqxx::result SQL_Get_OL_I_ID(int ol_w_id, int ol_d_id, int d_next_o_id,
+                               pqxx::work* txn);
   int SQL_check_stock(int s_w_id, int s_i_id, pqxx::work* txn);
 
   pqxx::connection* conn_;

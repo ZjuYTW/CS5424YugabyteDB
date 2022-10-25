@@ -10,6 +10,8 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   explicit YCQLNewOrderTxn(CassSession* session)
       : NewOrderTxn(), conn_(session) {}
 
+  virtual ~YCQLNewOrderTxn() = default;
+
   Status Execute(double* diff_t) noexcept override;
 
  private:
@@ -44,6 +46,8 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
 
   CassSession* conn_;
 
+  FRIEND_TEST(CQLNewOrderTxnTest, NewOrderTest1);
+  FRIEND_TEST(TxnArgsParserTest, new_order);
   constexpr static int MaxRetryTime = 3;
 };
 }  // namespace ycql_impl
