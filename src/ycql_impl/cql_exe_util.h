@@ -171,8 +171,8 @@ T GetValueFromCassRow(CassIterator* it, const char* col_name) noexcept {
 
 bool ValidOrSleep(bool done) noexcept;
 
-ydb_util::Status Retry(std::function<ydb_util::Status()> func,
-                       size_t max_attempts, unsigned long retry_interval_usecs);
+ydb_util::Status Retry(const std::function<ydb_util::Status()>& func,
+                       size_t max_attempts);
 
 double GetDTax(CassIterator* district_it) noexcept;
 
