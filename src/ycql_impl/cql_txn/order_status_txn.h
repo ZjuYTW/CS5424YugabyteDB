@@ -21,11 +21,12 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
-  constexpr static int MaxRetryTime = 3;
+  constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
-  CassIterator *getCustomerInfo();
-  CassIterator *getLastOrder();
-  std::pair<Status, CassIterator*> getOrderLines(uint32_t o_id);
+  Status executeLocal() noexcept;
+  std::pair<Status, CassIterator*> getCustomerInfo() noexcept;
+  std::pair<Status, CassIterator*> getLastOrder() noexcept;
+  std::pair<Status, CassIterator*> getOrderLines(int32_t o_id) noexcept;
 
 
 

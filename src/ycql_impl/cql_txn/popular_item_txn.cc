@@ -32,7 +32,7 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
     auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id");
     // TODO(winston.yan): check type of o_entry_id
     auto o_entry_d = GetValueFromCassRow<int64_t>(order_it, "o_entry_d");
-    std::cout << format("\t(a).Order number:(%d) & entry date and time (%lld)", o_id, o_entry_d) << std::endl;
+    std::cout << format("\t1.Order number:(%d) & entry date and time (%lld)", o_id, o_entry_d) << std::endl;
 
     CassIterator *customer_it = nullptr;
     std::tie(st, customer_it) = getCustomerName(c_id);
@@ -41,13 +41,13 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
     auto c_mid = GetValueFromCassRow<std::string>(customer_it, "c_middle");
     auto c_lst = GetValueFromCassRow<std::string>(customer_it, "c_last");
     if (customer_it) cass_iterator_free(customer_it);
-    std::cout << format("\t(b).Name of customer who placed this order (%s, %s, %s)",
+    std::cout << format("\t2.Name of customer who placed this order (%s, %s, %s)",
                                   c_fst.c_str(), c_mid.c_str(), c_lst.c_str()) << std::endl;
 
     CassIterator *orderLine_it = nullptr;
     std::tie(st, orderLine_it) = getMaxOrderLines(o_id);
     if (!st.ok()) return st;
-    std::cout << format("\t(c).For each popular item in order %d:\n", o_id) << std::endl;
+    std::cout << format("\t3.For each popular item in order %d:\n", o_id) << std::endl;
     while (cass_iterator_next(orderLine_it)) {
       auto ol_quantity = GetValueFromCassRow<int32_t>(orderLine_it, "max_ol_quantity");
       auto i_id = GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id");
@@ -64,7 +64,7 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
   }
 
   // print the percentage of examined orders that contain each popular item
-  std::cout << "\t(d).For each distinct popular item:" << std::endl;
+  std::cout << "\t4.For each distinct popular item:" << std::endl;
   for (const auto &[i_name, cnt] : popularItems) {
     auto percentage = 1.0 * cnt / order_size;
     std::cout << format("\t\t(i).Item name: %s", i_name.c_str()) << std::endl;
