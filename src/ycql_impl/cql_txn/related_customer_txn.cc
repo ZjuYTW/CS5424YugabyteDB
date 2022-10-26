@@ -89,7 +89,7 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(const std::vector<int32_t>& i
 std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getRelatedOrders(const std::string& items) noexcept {
   std::string stmt =
       "SELECT ol_w_id, ol_d_id, ol_o_id, COUNT(*) as count "
-      "FROM orderline "
+      "FROM " + YCQLKeyspace + ".orderline "
       "WHERE ol_w_id != ? "
       "AND ol_i_id IN (?) "
       "GROUP BY ol_w_id, ol_d_id, ol_o_id "
@@ -102,9 +102,9 @@ std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getRelatedOrders(const 
 std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getCustomerId(int32_t w_id, int32_t d_id, int32_t o_id) noexcept {
   std::string stmt =
       "SELECT o_c_id "
-      "FROM orders "
+      "FROM " + YCQLKeyspace + ".orders "
       "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, d_id, o_id);
   if (!cass_iterator_next(it)) {
@@ -116,9 +116,9 @@ std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getCustomerId(int32_t w
 std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getOrders() noexcept {
   std::string stmt =
       "SELECT o_id "
-      "FROM orders "
+      "FROM " + YCQLKeyspace + ".orders "
       "WHERE o_w_id = ? AND o_d_id = ? AND o_c_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, c_id_);
   return {st, it};
@@ -127,9 +127,9 @@ std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getOrders() noexcept {
 std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getOrderLines(int32_t o_id) noexcept {
   std::string stmt =
       "SELECT ol_i_id "
-      "FROM orderline "
+      "FROM " + YCQLKeyspace + ".orderline "
       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, o_id);
   return {st, it};
