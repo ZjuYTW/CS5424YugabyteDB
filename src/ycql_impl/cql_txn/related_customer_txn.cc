@@ -54,14 +54,8 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(const std::vector<int32_t>& i
   Status st = Status::OK();
   if (i_ids.size() < 2) return st;
 
-  std::string i_id_str = std::to_string(i_ids[0]);
-  for (int i = 1; i < i_ids.size(); ++i) {
-    i_id_str += "," + std::to_string(i_ids[i]);
-  }
-  LOG_INFO << "I_IDs tuple list: (" << i_id_str << ")";
-
   CassIterator *order_it = nullptr;
-  std::tie(st, order_it) = getRelatedOrders(i_id_str);
+  std::tie(st, order_it) = getRelatedOrders(i_ids);
   if (!st.ok()) return st;
 
   while (cass_iterator_next(order_it)) {
@@ -86,7 +80,7 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(const std::vector<int32_t>& i
   return st;
 }
 
-std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getRelatedOrders(const std::string& items) noexcept {
+std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getRelatedOrders(const std::vector<int32_t>& i_ids) noexcept {
   std::string stmt =
       "SELECT ol_w_id, ol_d_id, ol_o_id, COUNT(*) as count "
       "FROM " + YCQLKeyspace + ".orderline "
@@ -95,7 +89,7 @@ std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getRelatedOrders(const 
       "GROUP BY ol_w_id, ol_d_id, ol_o_id "
       "ALLOW FILTERING;";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, items);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, i_ids);
   return {st, it};
 }
 
