@@ -15,6 +15,7 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
 
  private:
   FRIEND_TEST(TxnArgsParserTest, delivery);
+  FRIEND_TEST(CQLTxnExecuteTest, DeliveryTxnTest);
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

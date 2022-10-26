@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 #include "ycql_impl/cql_driver.h"
 #include "ycql_impl/defines.h"
+#include "ycql_impl/cql_txn/delivery_txn.h"
+#include "ycql_impl/cql_txn/new_order_txn.h"
 
 namespace ycql_impl {
 
@@ -34,13 +36,8 @@ class CQLTxnExecuteTest : public ::testing::Test {
   static constexpr char hosts[] = "127.0.0.1";
 };
 
-<<<<<<< HEAD:test/src/ycql_new_order_txn_test.cc
-TEST_F(CQLNewOrderTxnTest, NewOrderTest1) {
-  ydb_util::Txn* txn = new YCQLNewOrderTxn(conn, txn_out_, err_out_);
-=======
 TEST_F(CQLTxnExecuteTest, NewOrderTest1) {
-  ydb_util::Txn* txn = new YCQLNewOrderTxn(conn);
->>>>>>> e0cd184 (framework for txn execute test):test/src/ycql_txn_execute_test.cc
+  ydb_util::Txn* txn = new YCQLNewOrderTxn(conn, txn_out_, err_out_);
   auto new_order_txn = dynamic_cast<YCQLNewOrderTxn*>(txn);
   // TODO(ZjuYTW): populate new_order_txn and test
   new_order_txn->c_id_ = 1;
@@ -64,7 +61,14 @@ TEST_F(CQLTxnExecuteTest, NewOrderTest1) {
   ASSERT_TRUE(st.ok());
 }
 
-TEST_F(CQLTxnExecuteTest, DeliveryTxnTest) {}
+TEST_F(CQLTxnExecuteTest, DeliveryTxnTest) {
+  auto delivery_txn = YCQLDeliveryTxn(conn);
+  delivery_txn.carrier_id_ = 1;
+  delivery_txn.w_id_ = 1;
+  double elapsedTime;
+  auto st = delivery_txn.Execute(&elapsedTime);
+  ASSERT_TRUE(st.ok());
+}
 
 TEST_F(CQLTxnExecuteTest, OrderStatusTxnTest) {}
 
