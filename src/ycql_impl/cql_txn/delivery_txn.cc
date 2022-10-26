@@ -49,7 +49,9 @@ std::pair<Status, CassIterator*>
 YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
   std::string stmt =
       "SELECT o_id, o_c_id "
-      "FROM orders "
+      "FROM " +
+      YCQLKeyspace +
+      ".orders "
       "WHERE o_w_id = ? AND o_d_id = ? AND O_CARRIER_ID IS NULL "
       "ORDER BY o_id ASC"
       "LIMIT 1"
@@ -63,20 +65,22 @@ YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
 }
 
 Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
-  std::string stmt =
-      "UPDATE orders "
-      "SET o_carrier_id = ? "
-      "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ?;";
+  std::string stmt = "UPDATE " + YCQLKeyspace +
+                     ".orders "
+                     "SET o_carrier_id = ? "
+                     "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? "
+                     ";";
   CassIterator* it = nullptr;
   return ycql_impl::execute_write_cql(conn_, stmt, &it, carrier_id_, w_id_,
                                       d_id_, o_id);
 }
 
 Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
-  std::string stmt =
-      "UPDATE orderline "
-      "SET ol_delivery_d = currenttimestamp() "
-      "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?;";
+  std::string stmt = "UPDATE " + YCQLKeyspace +
+                     ".orderline "
+                     "SET ol_delivery_d = currenttimestamp() "
+                     "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
+                     ";";
   CassIterator* it = nullptr;
   return ycql_impl::execute_write_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
 }
@@ -85,9 +89,11 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
     int32_t o_id) noexcept {
   std::string stmt =
       "SELECT SUM(ol_amount) as sum_ol_amount "
-      "FROM orderline "
+      "FROM " +
+      YCQLKeyspace +
+      ".orderline "
       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
   if (!cass_iterator_next(it)) {
@@ -99,9 +105,11 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
 Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(
     int32_t c_id, int32_t total_amount) noexcept {
   std::string stmt =
-      "UPDATE customer "
+      "UPDATE " + YCQLKeyspace +
+      ".customer "
       "SET c_balance = c_balance + ?, c_delivery_cnt = c_delivery_cnt + 1 "
-      "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;";
+      "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
+      ";";
   CassIterator* it = nullptr;
   return ycql_impl::execute_write_cql(conn_, stmt, &it, total_amount, w_id_,
                                       d_id_, c_id);

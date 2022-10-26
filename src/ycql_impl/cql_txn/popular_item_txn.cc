@@ -90,10 +90,12 @@ std::pair<Status, CassIterator*> YCQLPopularItemTxn::getMaxOrderLines(
     int32_t o_id) noexcept {
   std::string stmt =
       "SELECT ol_i_id, MAX(ol_quantity) as max_ol_quantity "
-      "FROM orderline "
-      "WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %s "
+      "FROM " +
+      YCQLKeyspace +
+      ".orderline "
+      "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
       "GROUP BY ol_i_id "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
   return {st, it};
@@ -101,9 +103,12 @@ std::pair<Status, CassIterator*> YCQLPopularItemTxn::getMaxOrderLines(
 
 std::pair<Status, CassIterator*> YCQLPopularItemTxn::getNextOrder() noexcept {
   std::string stmt =
-      "SELECT d_next_o_id FROM district "
+      "SELECT d_next_o_id "
+      "FROM " +
+      YCQLKeyspace +
+      ".district "
       "WHERE d_w_id = ? AND d_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
   if (!cass_iterator_next(it)) {
@@ -116,10 +121,12 @@ std::pair<Status, CassIterator*> YCQLPopularItemTxn::getLastOrders(
     int32_t next_o_id) noexcept {
   std::string stmt =
       "SELECT o_id, o_c_id, o_entry_d "
-      "FROM orders "
+      "FROM " +
+      YCQLKeyspace +
+      ".orders "
       "WHERE o_w_id = ? AND o_d_id = ? "
       "AND o_id >= ? AND o_id < ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_,
                                         next_o_id - l_, next_o_id);
@@ -130,9 +137,11 @@ std::pair<Status, CassIterator*> YCQLPopularItemTxn::getCustomerName(
     int32_t c_id) noexcept {
   std::string stmt =
       "SELECT c_first, c_middle, c_last "
-      "FROM customers "
+      "FROM " +
+      YCQLKeyspace +
+      ".customers "
       "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, c_id);
   if (!cass_iterator_next(it)) {
@@ -145,9 +154,11 @@ std::pair<Status, CassIterator*> YCQLPopularItemTxn::getItemName(
     int32_t i_id) noexcept {
   std::string stmt =
       "SELECT i_name "
-      "FROM item "
+      "FROM " +
+      YCQLKeyspace +
+      ".item "
       "WHERE i_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, i_id);
   if (!cass_iterator_next(it)) {

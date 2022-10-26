@@ -141,7 +141,8 @@ Status YCQLPaymentTxn::updateCustomerPayment() noexcept {
       "SET c_balance = c_balance - ?, "
       "c_ytd_payment = c_ytd_payment + ?, "
       "c_payment_cnt = c_payment + 1 "
-      "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;";
+      "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
+      ";";
   CassIterator* it = nullptr;
   auto payment = static_cast<uint64_t>(payment_ * 100);
   return ycql_impl::execute_write_cql(conn_, stmt, &it, payment, payment, w_id_,

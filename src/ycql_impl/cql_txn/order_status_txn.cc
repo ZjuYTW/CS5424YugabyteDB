@@ -71,9 +71,11 @@ std::pair<Status, CassIterator*>
 YCQLOrderStatusTxn::getCustomerInfo() noexcept {
   std::string stmt =
       "SELECT c_first, c_middle, c_last, c_balance "
-      "FROM customer "
+      "FROM " +
+      YCQLKeyspace +
+      ".customer "
       "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st =
       ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, c_id_);
@@ -86,11 +88,13 @@ YCQLOrderStatusTxn::getCustomerInfo() noexcept {
 std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getLastOrder() noexcept {
   std::string stmt =
       "SELECT o_id, o_entry_d, o_carrier_id "
-      "FROM orders "
+      "FROM " +
+      YCQLKeyspace +
+      ".orders "
       "WHERE o_w_id = ? AND o_d_id = ? AND o_c_id = ? "
       "ORDER BY o_id DESC "
       "LIMIT 1 "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st =
       ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, c_id_);
@@ -104,9 +108,11 @@ std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getOrderLines(
     int32_t o_id) noexcept {
   std::string stmt =
       "SELECT ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_delivery_d "
-      "FROM orderline "
+      "FROM " +
+      YCQLKeyspace +
+      ".orderline "
       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st =
       ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, o_id);

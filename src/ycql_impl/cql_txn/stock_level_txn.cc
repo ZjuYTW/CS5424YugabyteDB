@@ -48,9 +48,12 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
 
 std::pair<Status, CassIterator*> YCQLStockLevelTxn::getNextOrder() noexcept {
   std::string stmt =
-      "SELECT d_next_o_id FROM district "
+      "SELECT d_next_o_id "
+      "FROM " +
+      YCQLKeyspace +
+      ".district "
       "WHERE d_w_id = ? AND d_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
   if (!cass_iterator_next(it)) {
@@ -63,10 +66,12 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemsInLastOrders(
     int32_t next_o_id) noexcept {
   std::string stmt =
       "SELECT DISTINCT ol_i_id "
-      "FROM orderline "
+      "FROM " +
+      YCQLKeyspace +
+      ".orderline "
       "WHERE ol_w_id = ? AND ol_d_id = ? "
       "AND ol_o_id >= ? AND ol_o_id < ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_,
                                         next_o_id - l_, next_o_id);
@@ -77,9 +82,11 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemQuantityFromStock(
     int32_t i_id) noexcept {
   std::string stmt =
       "SELECT s_quantity "
-      "FROM stock "
+      "FROM " +
+      YCQLKeyspace +
+      ".stock "
       "WHERE s_w_id = ? AND s_i_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, i_id);
   if (!cass_iterator_next(it)) {

@@ -44,8 +44,8 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
     if (!st.ok()) return st;
     auto d_name = GetValueFromCassRow<std::string>(district_it, "d_name");
 
-    std::cout << format("\t%d. Customer name: (%s, %s, %s)", c_fst.c_str(),
-                        c_mid.c_str(), c_lst.c_str())
+    std::cout << format("\t%d. Customer name: (%s, %s, %s)", top_i++,
+                        c_fst.c_str(), c_mid.c_str(), c_lst.c_str())
               << std::endl;
     std::cout << format("\t\tCustomer balance: %lf",
                         static_cast<double>(c_bal / 100.0))
