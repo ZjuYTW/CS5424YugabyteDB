@@ -1,15 +1,16 @@
 #include "ycql_impl/cql_txn/delivery_txn.h"
+
 #include "ycql_impl/cql_exe_util.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
 
-Status YCQLDeliveryTxn::Execute(double *diff_t) noexcept {
+Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Delivery transaction started";
   Status st = Status::OK();
   for (d_id_ = 1; d_id_ <= 10; ++d_id_) {
     st = Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this),
-                    MAX_RETRY_ATTEMPTS);
+               MAX_RETRY_ATTEMPTS);
     if (!st.ok()) return st;
   }
   if (st.ok()) LOG_INFO << "Delivery transaction completed";
@@ -44,7 +45,8 @@ Status YCQLDeliveryTxn::executeLocal() noexcept {
   return st;
 }
 
-std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
+std::pair<Status, CassIterator*>
+YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
   std::string stmt =
       "SELECT o_id, o_c_id "
       "FROM orders "
@@ -66,7 +68,8 @@ Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
       "SET o_carrier_id = ? "
       "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ?;";
   CassIterator* it = nullptr;
-  return ycql_impl::execute_write_cql(conn_, stmt, &it, carrier_id_, w_id_, d_id_, o_id);
+  return ycql_impl::execute_write_cql(conn_, stmt, &it, carrier_id_, w_id_,
+                                      d_id_, o_id);
 }
 
 Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
@@ -78,7 +81,8 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
   return ycql_impl::execute_write_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
 }
 
-std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(int32_t o_id) noexcept {
+std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
+    int32_t o_id) noexcept {
   std::string stmt =
       "SELECT SUM(ol_amount) as sum_ol_amount "
       "FROM orderline "
@@ -92,13 +96,15 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(int32_t 
   return {st, it};
 }
 
-Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(int32_t c_id, int32_t total_amount) noexcept {
+Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(
+    int32_t c_id, int32_t total_amount) noexcept {
   std::string stmt =
       "UPDATE customer "
       "SET c_balance = c_balance + ?, c_delivery_cnt = c_delivery_cnt + 1 "
       "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;";
   CassIterator* it = nullptr;
-  return ycql_impl::execute_write_cql(conn_, stmt, &it, total_amount, w_id_, d_id_, c_id);
+  return ycql_impl::execute_write_cql(conn_, stmt, &it, total_amount, w_id_,
+                                      d_id_, c_id);
 }
 
 };  // namespace ycql_impl

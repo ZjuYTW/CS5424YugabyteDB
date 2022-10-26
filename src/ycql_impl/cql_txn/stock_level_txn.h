@@ -22,7 +22,8 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
 
   Status executeLocal() noexcept;
   std::pair<Status, CassIterator*> getNextOrder() noexcept;
-  std::pair<Status, CassIterator*> getItemsInLastOrders(int32_t next_o_id) noexcept;
+  std::pair<Status, CassIterator*> getItemsInLastOrders(
+      int32_t next_o_id) noexcept;
   std::pair<Status, CassIterator*> getItemQuantityFromStock(int32_t) noexcept;
 };
 }  // namespace ycql_impl

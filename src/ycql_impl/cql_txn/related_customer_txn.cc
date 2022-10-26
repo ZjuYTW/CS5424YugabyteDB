@@ -1,25 +1,30 @@
 #include "ycql_impl/cql_txn/related_customer_txn.h"
-#include "ycql_impl/cql_exe_util.h"
+
 #include <thread>
+
+#include "ycql_impl/cql_exe_util.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
-using ydb_util::format;
 using ycql_impl::ValidOrSleep;
+using ydb_util::format;
 
-Status YCQLRelatedCustomerTxn::Execute(double *diff_t) noexcept {
+Status YCQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Related-customer transaction started";
-  auto st = Retry(std::bind(&YCQLRelatedCustomerTxn::executeLocal, this), MAX_RETRY_ATTEMPTS);
+  auto st = Retry(std::bind(&YCQLRelatedCustomerTxn::executeLocal, this),
+                  MAX_RETRY_ATTEMPTS);
   if (st.ok()) LOG_INFO << "Related-customer transaction completed";
   return st;
 }
 
 Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
-  std::cout << format("\t1. Customer identifier (%d, %d, %d)", c_w_id_, c_d_id_, c_id_) << std::endl;
+  std::cout << format("\t1. Customer identifier (%d, %d, %d)", c_w_id_, c_d_id_,
+                      c_id_)
+            << std::endl;
 
   Status st = Status::OK();
 
-  CassIterator *order_it = nullptr;
+  CassIterator* order_it = nullptr;
   std::tie(st, order_it) = getOrders();
   if (!st.ok()) return st;
 
@@ -27,7 +32,7 @@ Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
   while (cass_iterator_next(order_it)) {
     auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id");
 
-    CassIterator *orderLine_it = nullptr;
+    CassIterator* orderLine_it = nullptr;
     std::tie(st, orderLine_it) = getOrderLines(o_id);
     if (!st.ok()) return st;
 
@@ -50,11 +55,13 @@ Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
   return st;
 }
 
-Status YCQLRelatedCustomerTxn::addRelatedCustomers(const std::vector<int32_t>& i_ids, std::unordered_map<int32_t, std::string>& customers) noexcept {
+Status YCQLRelatedCustomerTxn::addRelatedCustomers(
+    const std::vector<int32_t>& i_ids,
+    std::unordered_map<int32_t, std::string>& customers) noexcept {
   Status st = Status::OK();
   if (i_ids.size() < 2) return st;
 
-  CassIterator *order_it = nullptr;
+  CassIterator* order_it = nullptr;
   std::tie(st, order_it) = getRelatedOrders(i_ids);
   if (!st.ok()) return st;
 
@@ -66,7 +73,7 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(const std::vector<int32_t>& i
     auto ol_d_id = GetValueFromCassRow<int32_t>(order_it, "ol_d_id");
     auto ol_o_id = GetValueFromCassRow<int32_t>(order_it, "ol_o_id");
 
-    CassIterator *customer_it = nullptr;
+    CassIterator* customer_it = nullptr;
     std::tie(st, customer_it) = getCustomerId(ol_w_id, ol_d_id, ol_o_id);
     if (!st.ok()) return st;
 
@@ -80,10 +87,13 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(const std::vector<int32_t>& i
   return st;
 }
 
-std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getRelatedOrders(const std::vector<int32_t>& i_ids) noexcept {
+std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getRelatedOrders(
+    const std::vector<int32_t>& i_ids) noexcept {
   std::string stmt =
       "SELECT ol_w_id, ol_d_id, ol_o_id, COUNT(*) as count "
-      "FROM " + YCQLKeyspace + ".orderline "
+      "FROM " +
+      YCQLKeyspace +
+      ".orderline "
       "WHERE ol_w_id != ? "
       "AND ol_i_id IN (?) "
       "GROUP BY ol_w_id, ol_d_id, ol_o_id "
@@ -93,10 +103,13 @@ std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getRelatedOrders(const 
   return {st, it};
 }
 
-std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getCustomerId(int32_t w_id, int32_t d_id, int32_t o_id) noexcept {
+std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getCustomerId(
+    int32_t w_id, int32_t d_id, int32_t o_id) noexcept {
   std::string stmt =
       "SELECT o_c_id "
-      "FROM " + YCQLKeyspace + ".orders "
+      "FROM " +
+      YCQLKeyspace +
+      ".orders "
       "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? "
       ";";
   CassIterator* it = nullptr;
@@ -110,23 +123,30 @@ std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getCustomerId(int32_t w
 std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getOrders() noexcept {
   std::string stmt =
       "SELECT o_id "
-      "FROM " + YCQLKeyspace + ".orders "
+      "FROM " +
+      YCQLKeyspace +
+      ".orders "
       "WHERE o_w_id = ? AND o_d_id = ? AND o_c_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, c_id_);
+  auto st =
+      ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, c_id_);
   return {st, it};
 }
 
-std::pair<Status, CassIterator *>YCQLRelatedCustomerTxn::getOrderLines(int32_t o_id) noexcept {
+std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getOrderLines(
+    int32_t o_id) noexcept {
   std::string stmt =
       "SELECT ol_i_id "
-      "FROM " + YCQLKeyspace + ".orderline "
+      "FROM " +
+      YCQLKeyspace +
+      ".orderline "
       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, o_id);
+  auto st =
+      ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, o_id);
   return {st, it};
 }
 
-}
+}  // namespace ycql_impl

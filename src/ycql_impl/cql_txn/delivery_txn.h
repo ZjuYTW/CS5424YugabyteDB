@@ -19,14 +19,15 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
-  int32_t d_id_ {};
+  int32_t d_id_{};
 
   Status executeLocal() noexcept;
   std::pair<Status, CassIterator*> getNextDeliveryOrder() noexcept;
   Status updateCarrierId(int32_t o_id) noexcept;
   Status updateOrderLineDeliveryDate(int32_t o_id) noexcept;
   std::pair<Status, CassIterator*> getOrderPaymentAmount(int32_t o_id) noexcept;
-  Status updateCustomerBalAndDeliveryCnt(int32_t c_id, int32_t total_amount) noexcept;
+  Status updateCustomerBalAndDeliveryCnt(int32_t c_id,
+                                         int32_t total_amount) noexcept;
 };
 };  // namespace ycql_impl
 

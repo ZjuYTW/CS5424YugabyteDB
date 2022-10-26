@@ -19,7 +19,7 @@ CassError cql_statement_fill_args(CassStatement* statement) noexcept {
 
 template <size_t idx = 0, typename T, typename... Args>
 CassError cql_statement_fill_args(CassStatement* statement, T first,
-                                 Args... args) noexcept {
+                                  Args... args) noexcept {
   CassError rc = CASS_OK;
   if constexpr (std::is_same_v<bool, T>) {
     rc = cass_statement_bind_bool(statement, idx, first);
@@ -65,18 +65,17 @@ CassError cql_statement_fill_args(CassStatement* statement, T first,
   }
   if constexpr (std::is_same_v<std::vector<int32_t>, T>) {
     auto col = cass_collection_new(CASS_COLLECTION_TYPE_LIST, first.size());
-    for(auto& ele : first){
+    for (auto& ele : first) {
       cass_collection_append_int32(col, ele);
     }
     rc = cass_statement_bind_collection(statement, idx, col);
     cass_collection_free(col);
-    if(rc != CASS_OK) {
+    if (rc != CASS_OK) {
       return rc;
     }
-    return cql_statement_fill_args<idx+1>(statement, args...);
+    return cql_statement_fill_args<idx + 1>(statement, args...);
   }
   // TODO(ZjuYTW): Add more type if needed
-
 
   // unreachable here
   assert(false);

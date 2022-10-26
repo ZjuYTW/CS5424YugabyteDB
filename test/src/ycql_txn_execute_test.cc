@@ -15,7 +15,7 @@ CassError connect_session(CassSession* session, const CassCluster* cluster) {
   return rc;
 }
 
-class CQLNewOrderTxnTest : public ::testing::Test {
+class CQLTxnExecuteTest : public ::testing::Test {
  public:
   void SetUp() override {
     txn_out_ = std::ofstream(TEST_TXN_OUT_PATH + "txn_out.out", std::ios::out);
@@ -34,8 +34,13 @@ class CQLNewOrderTxnTest : public ::testing::Test {
   static constexpr char hosts[] = "127.0.0.1";
 };
 
+<<<<<<< HEAD:test/src/ycql_new_order_txn_test.cc
 TEST_F(CQLNewOrderTxnTest, NewOrderTest1) {
   ydb_util::Txn* txn = new YCQLNewOrderTxn(conn, txn_out_, err_out_);
+=======
+TEST_F(CQLTxnExecuteTest, NewOrderTest1) {
+  ydb_util::Txn* txn = new YCQLNewOrderTxn(conn);
+>>>>>>> e0cd184 (framework for txn execute test):test/src/ycql_txn_execute_test.cc
   auto new_order_txn = dynamic_cast<YCQLNewOrderTxn*>(txn);
   // TODO(ZjuYTW): populate new_order_txn and test
   new_order_txn->c_id_ = 1;
@@ -58,4 +63,18 @@ TEST_F(CQLNewOrderTxnTest, NewOrderTest1) {
   LOG_INFO << st.ToString();
   ASSERT_TRUE(st.ok());
 }
+
+TEST_F(CQLTxnExecuteTest, DeliveryTxnTest) {}
+
+TEST_F(CQLTxnExecuteTest, OrderStatusTxnTest) {}
+
+TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {}
+
+TEST_F(CQLTxnExecuteTest, PopularItemTxnTest) {}
+
+TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {}
+
+TEST_F(CQLTxnExecuteTest, StockLevelTxnTest) {}
+
+TEST_F(CQLTxnExecuteTest, TopBalanceTxnTest) {}
 }  // namespace ycql_impl

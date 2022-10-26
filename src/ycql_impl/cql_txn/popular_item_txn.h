@@ -1,7 +1,8 @@
 #ifndef YCQL_POPULAR_ITEM_TXN_H_
 #define YCQL_POPULAR_ITEM_TXN_H_
-#include "common/txn/popular_item_txn.h"
 #include <unordered_map>
+
+#include "common/txn/popular_item_txn.h"
 
 namespace ycql_impl {
 class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
@@ -30,7 +31,6 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
   std::pair<Status, CassIterator*> getCustomerName(int32_t c_id) noexcept;
   std::pair<Status, CassIterator*> getMaxOrderLines(int32_t o_id) noexcept;
   std::pair<Status, CassIterator*> getItemName(int32_t i_id) noexcept;
-
 };
 }  // namespace ycql_impl
 

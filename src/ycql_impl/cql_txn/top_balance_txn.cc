@@ -1,6 +1,8 @@
 #include "ycql_impl/cql_txn/top_balance_txn.h"
-#include "ycql_impl/cql_exe_util.h"
+
 #include <thread>
+
+#include "ycql_impl/cql_exe_util.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
@@ -8,14 +10,15 @@ using ydb_util::format;
 
 Status YCQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Top-Balance Transaction started";
-  auto st = Retry(std::bind(&YCQLTopBalanceTxn::executeLocal, this), MAX_RETRY_ATTEMPTS);
+  auto st = Retry(std::bind(&YCQLTopBalanceTxn::executeLocal, this),
+                  MAX_RETRY_ATTEMPTS);
   if (st.ok()) LOG_INFO << "Top-Balance Transaction completed";
   return st;
 }
 
 Status YCQLTopBalanceTxn::executeLocal() noexcept {
   Status st = Status::OK();
-  CassIterator *customer_it = nullptr;
+  CassIterator* customer_it = nullptr;
 
   std::tie(st, customer_it) = getTopBalCustomers();
   if (!st.ok()) return st;
@@ -41,12 +44,15 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
     if (!st.ok()) return st;
     auto d_name = GetValueFromCassRow<std::string>(district_it, "d_name");
 
-    std::cout << format("\t%d. Customer name: (%s, %s, %s)",
-                        c_fst.c_str(), c_mid.c_str(), c_lst.c_str()) << std::endl;
+    std::cout << format("\t%d. Customer name: (%s, %s, %s)", c_fst.c_str(),
+                        c_mid.c_str(), c_lst.c_str())
+              << std::endl;
     std::cout << format("\t\tCustomer balance: %lf",
-                        static_cast<double>(c_bal / 100.0)) << std::endl;
-    std::cout << format("\t\tWarehouse & district name: %s, %s",
-                        w_name.c_str(), d_name.c_str()) << std::endl;
+                        static_cast<double>(c_bal / 100.0))
+              << std::endl;
+    std::cout << format("\t\tWarehouse & district name: %s, %s", w_name.c_str(),
+                        d_name.c_str())
+              << std::endl;
 
     if (warehouse_it) cass_iterator_free(warehouse_it);
     if (district_it) cass_iterator_free(district_it);
@@ -56,7 +62,8 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
   return st;
 }
 
-std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getTopBalCustomers() noexcept {
+std::pair<Status, CassIterator*>
+YCQLTopBalanceTxn::getTopBalCustomers() noexcept {
   std::string stmt =
       "SELECT c_w_id, c_d_id, c_balance, c_first, c_middle, c_last "
       "FROM customer "
@@ -68,7 +75,8 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getTopBalCustomers() noexcep
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(int32_t w_id) noexcept {
+std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(
+    int32_t w_id) noexcept {
   std::string stmt =
       "SELECT w_name "
       "FROM warehouse "
@@ -79,7 +87,8 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(int32_t w_id) n
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(int32_t w_id, int32_t d_id) noexcept {
+std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(
+    int32_t w_id, int32_t d_id) noexcept {
   std::string stmt =
       "SELECT d_name "
       "FROM district "
@@ -90,4 +99,4 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(int32_t w_id, in
   return {st, it};
 }
 
-};  // namespace ydb_util
+};  // namespace ycql_impl

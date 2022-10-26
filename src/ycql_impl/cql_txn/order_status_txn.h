@@ -27,9 +27,6 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
   std::pair<Status, CassIterator*> getCustomerInfo() noexcept;
   std::pair<Status, CassIterator*> getLastOrder() noexcept;
   std::pair<Status, CassIterator*> getOrderLines(int32_t o_id) noexcept;
-
-
-
 };
 }  // namespace ycql_impl
 

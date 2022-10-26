@@ -1,8 +1,9 @@
 #ifndef YCQL_RELATED_CUSTOMER_TXN_H_
 #define YCQL_RELATED_CUSTOMER_TXN_H_
-#include "common/txn/related_customer_txn.h"
-#include <vector>
 #include <unordered_map>
+#include <vector>
+
+#include "common/txn/related_customer_txn.h"
 
 namespace ycql_impl {
 class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
@@ -29,9 +30,13 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   Status executeLocal() noexcept;
   std::pair<Status, CassIterator*> getOrders() noexcept;
   std::pair<Status, CassIterator*> getOrderLines(int32_t o_id) noexcept;
-  std::pair<Status, CassIterator*> getRelatedOrders(const std::vector<int32_t>& i_ids) noexcept;
-  std::pair<Status, CassIterator*> getCustomerId(int32_t w_id, int32_t d_id, int32_t o_id) noexcept;
-  Status addRelatedCustomers(const std::vector<int32_t>& i_ids, std::unordered_map<int32_t, std::string>& customers) noexcept;
+  std::pair<Status, CassIterator*> getRelatedOrders(
+      const std::vector<int32_t>& i_ids) noexcept;
+  std::pair<Status, CassIterator*> getCustomerId(int32_t w_id, int32_t d_id,
+                                                 int32_t o_id) noexcept;
+  Status addRelatedCustomers(
+      const std::vector<int32_t>& i_ids,
+      std::unordered_map<int32_t, std::string>& customers) noexcept;
 };
 }  // namespace ycql_impl
 #endif
