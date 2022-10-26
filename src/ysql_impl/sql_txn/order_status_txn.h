@@ -7,8 +7,9 @@
 namespace ydb_util {
 class YSQLOrderStatusTxn : public OrderStatusTxn {
  public:
-  explicit YSQLOrderStatusTxn(pqxx::connection* conn)
-      : OrderStatusTxn(), conn_(conn) {}
+  explicit YSQLOrderStatusTxn(pqxx::connection* conn, std::ofstream& txn_out,
+                              std::ofstream& err_out)
+      : OrderStatusTxn(), conn_(conn), txn_out_(txn_out), err_out_(err_out) {}
 
   Status Execute(double* diff_t) noexcept;
 
@@ -21,6 +22,8 @@ class YSQLOrderStatusTxn : public OrderStatusTxn {
   pqxx::connection* conn_;
   static constexpr int MAX_RETRY_COUNT = 3;
   std::vector<std::string> outputs;
+  std::ofstream& txn_out_;
+  std::ofstream& err_out_;
 };
 }  // namespace ydb_util
 #endif

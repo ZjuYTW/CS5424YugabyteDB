@@ -5,7 +5,7 @@
 namespace ydb_util {
 Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Top-Balance Transaction started";
-
+  auto InputString = format("T");
   time_t start_t, end_t;
   time(&start_t);
   pqxx::work txn(*conn_);
@@ -44,6 +44,10 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
       break;
     } catch (const std::exception& e) {
       retryCount++;
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << InputString << std::endl;
+        err_out_ << e.what() << "\n";
+      }
       LOG_ERROR << e.what();
       if (!outputs.empty()) {
         std::vector<std::string>().swap(outputs);  // clean the memory
@@ -55,8 +59,9 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   if (retryCount == MAX_RETRY_COUNT) {
     return Status::Invalid("retry times exceeded max retry count");
   }
+  txn_out_<<InputString<<std::endl;
   for (auto& output : outputs) {
-    std::cout << output << std::endl;
+    txn_out_ << output << std::endl;
   }
   time(&end_t);
   *diff_t = difftime(end_t, start_t);

@@ -57,7 +57,7 @@ class SQLDriver {
       std::unique_ptr<Txn> t = nullptr;
       s = parser_p->GetNextTxn(&t);
       if (!s.ok()) {
-        // EndOfFile or Somethin Bad
+        // EndOfFile or Something Bad
         break;
       }
       double processTime;

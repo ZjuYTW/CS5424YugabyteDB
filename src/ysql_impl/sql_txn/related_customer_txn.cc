@@ -5,7 +5,7 @@
 namespace ydb_util {
 Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Related-Customer Transaction started";
-
+  auto InputString = format("R %d %d %d",c_w_id_,c_d_id_,c_id_);
   time_t start_t, end_t;
   time(&start_t);
   pqxx::work txn(*conn_);
@@ -41,6 +41,10 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << InputString << std::endl;
+        err_out_ << e.what() << "\n";
+      }
       if (!outputs.empty()) {
         std::vector<std::string>().swap(outputs);  // clean the memory
       }
@@ -51,8 +55,9 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   if (retryCount == MAX_RETRY_COUNT) {
     return Status::Invalid("retry times exceeded max retry count");
   }
+  txn_out_<<InputString<<std::endl;
   for (auto& output : outputs) {
-    std::cout << output << std::endl;
+    txn_out_ << output << std::endl;
   }
   time(&end_t);
   *diff_t = difftime(end_t, start_t);
