@@ -8,6 +8,7 @@
 namespace ydb_util {
 Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Popular items Transaction started";
+  auto InputString = format("I %d %d %d", w_id_, d_id_,l_);
 
   time_t start_t, end_t;
   time(&start_t);
@@ -102,6 +103,10 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << InputString << std::endl;
+        err_out_ << e.what() << "\n";
+      }
       LOG_INFO << "Retry time:" << retryCount;
       if (!outputs.empty()) {
         std::vector<std::string>().swap(outputs);  // clean the memory
@@ -112,8 +117,9 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   if (retryCount == MAX_RETRY_COUNT) {
     return Status::Invalid("retry times exceeded max retry count");
   }
+  txn_out_<<InputString<<std::endl;
   for (auto& output : outputs) {
-    std::cout << output << std::endl;
+    txn_out_ << output << std::endl;
   }
   time(&end_t);
   *diff_t = difftime(end_t, start_t);

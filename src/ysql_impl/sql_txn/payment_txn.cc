@@ -7,7 +7,7 @@
 namespace ydb_util {
 Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
-
+  auto InputString = format("P %d %d %d",w_id_,d_id_,c_id_);
   time_t start_t, end_t;
   time(&start_t);
   int retryCount = 0;
@@ -129,16 +129,25 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
 
       time(&end_t);
       *diff_t = difftime(end_t, start_t);
+      txn_out_<<InputString<<std::endl;
+      for (auto& output : outputs) {
+        txn_out_ << output << std::endl;
+      }
       return Status::OK();
 
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << InputString << std::endl;
+        err_out_ << e.what() << "\n";
+      }
       LOG_INFO << "Retry time:" << retryCount;
       // if Failed, Wait for 100 ms to try again
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
+
   return Status::Invalid("retry times exceeded max retry count");
 }
 

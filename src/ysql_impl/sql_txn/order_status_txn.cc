@@ -12,6 +12,7 @@ Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
   time_t start_t, end_t;
   time(&start_t);
   int retryCount = 0;
+  auto OrderStatusInput = format("O %d %d %d", c_w_id_, c_d_id_,c_id_);
 
   while (retryCount < MAX_RETRY_COUNT) {
     try {
@@ -27,8 +28,10 @@ Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
-      // if Failed, Wait for 100 ms to try again
-      // TODO: check if there is a sleep_for
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << OrderStatusInput << std::endl;
+        err_out_ << e.what() << "\n";
+      }
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }

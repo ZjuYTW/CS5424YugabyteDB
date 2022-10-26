@@ -8,7 +8,7 @@
 namespace ydb_util {
 Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock Level Transaction started";
-
+  auto StockLevelInput = format("S %d %d %d %d", w_id_, d_id_,t_,l_);
   time_t start_t, end_t;
   time(&start_t);
   int retryCount = 0;
@@ -40,8 +40,10 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
-      // if Failed, Wait for 100 ms to try again
-      // TODO: check if there is a sleep_for
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << StockLevelInput << std::endl;
+        err_out_ << e.what() << "\n";
+      }
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
