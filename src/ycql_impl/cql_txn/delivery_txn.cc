@@ -93,7 +93,7 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
       YCQLKeyspace +
       ".orderline "
       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
-      ";";
+      "ALLOW FILTERING;";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
   if (!cass_iterator_next(it)) {
@@ -108,8 +108,7 @@ Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(
       "UPDATE " + YCQLKeyspace +
       ".customer "
       "SET c_balance = c_balance + ?, c_delivery_cnt = c_delivery_cnt + 1 "
-      "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
-      ";";
+      "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;";
   CassIterator* it = nullptr;
   return ycql_impl::execute_write_cql(conn_, stmt, &it, total_amount, w_id_,
                                       d_id_, c_id);

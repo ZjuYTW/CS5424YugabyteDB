@@ -66,10 +66,12 @@ std::pair<Status, CassIterator*>
 YCQLTopBalanceTxn::getTopBalCustomers() noexcept {
   std::string stmt =
       "SELECT c_w_id, c_d_id, c_balance, c_first, c_middle, c_last "
-      "FROM customer "
-      "ORDER BY c_balance DESC"
+      "FROM " +
+      YCQLKeyspace +
+      ".customer "
+      "ORDER BY c_balance DESC "
       "LIMIT ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, TOP_K);
   return {st, it};
@@ -79,9 +81,11 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(
     int32_t w_id) noexcept {
   std::string stmt =
       "SELECT w_name "
-      "FROM warehouse "
+      "FROM " +
+      YCQLKeyspace +
+      ".warehouse "
       "WHERE w_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id);
   return {st, it};
@@ -91,9 +95,11 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(
     int32_t w_id, int32_t d_id) noexcept {
   std::string stmt =
       "SELECT d_name "
-      "FROM district "
+      "FROM " +
+      YCQLKeyspace +
+      ".district "
       "WHERE d_w_id = ? and d_id = ? "
-      "ALLOW FILTERING;";
+      ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, d_id);
   return {st, it};
