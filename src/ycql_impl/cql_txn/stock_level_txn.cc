@@ -1,6 +1,6 @@
 #include "ycql_impl/cql_txn/stock_level_txn.h"
-
 #include "ycql_impl/cql_exe_util.h"
+#include <unordered_set>
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
@@ -27,8 +27,11 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
   if (!st.ok()) return st;
 
   int items_below_threshold = 0;
+  std::unordered_set<int32_t> i_id_set;
   while (cass_iterator_next(item_it)) {
     auto i_id = GetValueFromCassRow<int32_t>(item_it, "ol_i_id");
+    if (i_id_set.find(i_id) != i_id_set.end()) continue;
+    i_id_set.insert(i_id);
 
     CassIterator* quantity_it = nullptr;
     std::tie(st, quantity_it) = getItemQuantityFromStock(i_id);
@@ -59,19 +62,21 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getNextOrder() noexcept {
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("NextOrder: District not found"), it};
   }
+  cass_iterator_next(it);
   return {st, it};
 }
 
 std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemsInLastOrders(
     int32_t next_o_id) noexcept {
   std::string stmt =
-      "SELECT DISTINCT ol_i_id "
+      "SELECT ol_i_id "
       "FROM " +
       YCQLKeyspace +
       ".orderline "
       "WHERE ol_w_id = ? AND ol_d_id = ? "
       "AND ol_o_id >= ? AND ol_o_id < ? "
       ";";
+  LOG_INFO << stmt;
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_,
                                         next_o_id - l_, next_o_id);
@@ -88,10 +93,12 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemQuantityFromStock(
       "WHERE s_w_id = ? AND s_i_id = ? "
       ";";
   CassIterator* it = nullptr;
+  LOG_INFO << stmt;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, i_id);
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Item quantity not found"), it};
   }
+  cass_iterator_next(it);
   return {st, it};
 }
 

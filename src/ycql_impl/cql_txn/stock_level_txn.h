@@ -15,6 +15,7 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
 
  private:
   FRIEND_TEST(TxnArgsParserTest, stock_level);
+  FRIEND_TEST(CQLTxnExecuteTest, StockLevelTxnTest);
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
