@@ -80,5 +80,13 @@ TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {}
 
 TEST_F(CQLTxnExecuteTest, StockLevelTxnTest) {}
 
-TEST_F(CQLTxnExecuteTest, TopBalanceTxnTest) {}
+TEST_F(CQLTxnExecuteTest, TopBalanceTxnTest) {
+  ydb_util::Txn* txn = new YCQLTopBalanceTxn(conn);
+  auto top_balance_txn = dynamic_cast<YCQLTopBalanceTxn*>(txn);
+  ASSERT_NE(top_balance_txn, nullptr);
+  double elapsedTime;
+  auto st = top_balance_txn->Execute(&elapsedTime);
+  LOG_INFO << st.ToString();
+  ASSERT_TRUE(st.ok());
+}
 }  // namespace ycql_impl

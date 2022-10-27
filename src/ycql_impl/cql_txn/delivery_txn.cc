@@ -100,7 +100,7 @@ Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
                                       o_id);
 }
 
-Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id, int32_t item_num) noexcept {
+Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
   // TODO(ZjuYTW): Batch Update here
   std::string stmt = "UPDATE " + YCQLKeyspace +
                      ".orderline "

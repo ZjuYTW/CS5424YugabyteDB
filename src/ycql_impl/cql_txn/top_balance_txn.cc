@@ -20,60 +20,73 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
   Status st = Status::OK();
   CassIterator* customer_it = nullptr;
 
-  std::tie(st, customer_it) = getTopBalCustomers();
-  if (!st.ok()) return st;
+  std::priority_queue<CustomerInfo, std::vector<CustomerInfo>, std::greater<>>
+      top_customers;
 
-  std::cout << "For each top-balanced customer:" << std::endl;
-  int top_i = 1;
+  for (int32_t d_id = 1; d_id <= 10; ++d_id) {
+    std::tie(st, customer_it) = getTopBalCustomersInDistrict(d_id);
+    if (!st.ok()) return st;
 
-  while (cass_iterator_next(customer_it)) {
+    while (cass_iterator_next(customer_it)) {
+      auto c_bal = GetValueFromCassRow<int64_t>(customer_it, "c_balance");
+      if (top_customers.size() == TOP_K && top_customers.top().c_bal >= c_bal)
+        continue;
+      auto w_id = GetValueFromCassRow<int32_t>(customer_it, "c_w_id");
+      auto c_fst = GetValueFromCassRow<std::string>(customer_it, "c_first");
+      auto c_mid = GetValueFromCassRow<std::string>(customer_it, "c_middle");
+      auto c_lst = GetValueFromCassRow<std::string>(customer_it, "c_last");
+      top_customers.push(
+          CustomerInfo{
+              .c_bal = c_bal,
+              .c_w_id = w_id,
+              .c_d_id = d_id,
+              .c_name = c_fst.append(", ").append(c_mid).append(", ").append(c_lst)
+          }
+      );
+      if (top_customers.size() > TOP_K) top_customers.pop();
+      assert(top_customers.size() <= 10);
+    }
+  }
+  if (customer_it) cass_iterator_free(customer_it);
+
+  std::cout << "Top-balanced customers in ascending order:" << std::endl;
+
+  while (!top_customers.empty()) {
+    auto customer = top_customers.top();
+
     CassIterator *warehouse_it = nullptr, *district_it = nullptr;
-    auto w_id = GetValueFromCassRow<int32_t>(customer_it, "c_w_id");
-    auto d_id = GetValueFromCassRow<int32_t>(customer_it, "c_d_id");
-    auto c_bal = GetValueFromCassRow<int64_t>(customer_it, "c_balance");
-    auto c_fst = GetValueFromCassRow<std::string>(customer_it, "c_first");
-    auto c_mid = GetValueFromCassRow<std::string>(customer_it, "c_middle");
-    auto c_lst = GetValueFromCassRow<std::string>(customer_it, "c_last");
-
-    LOG_INFO << "W_ID: " << w_id << ", D_ID: " << d_id;
-
-    std::tie(st, warehouse_it) = getWarehouse(w_id);
+    std::tie(st, warehouse_it) = getWarehouse(customer.c_w_id);
     if (!st.ok()) return st;
     auto w_name = GetValueFromCassRow<std::string>(warehouse_it, "w_name");
-    std::tie(st, district_it) = getDistrict(w_id, d_id);
+    std::tie(st, district_it) = getDistrict(customer.c_w_id, customer.c_d_id);
     if (!st.ok()) return st;
     auto d_name = GetValueFromCassRow<std::string>(district_it, "d_name");
 
-    std::cout << format("\t%d. Customer name: (%s, %s, %s)", top_i++,
-                        c_fst.c_str(), c_mid.c_str(), c_lst.c_str())
-              << std::endl;
-    std::cout << format("\t\tCustomer balance: %lf",
-                        static_cast<double>(c_bal / 100.0))
-              << std::endl;
-    std::cout << format("\t\tWarehouse & district name: %s, %s", w_name.c_str(),
-                        d_name.c_str())
-              << std::endl;
+    std::cout << format("\t%d. Customer name: (%s)", top_customers.size(), customer.c_name.c_str()) << std::endl;
+    std::cout << format("\t\tCustomer balance: %lf", static_cast<double>(customer.c_bal / 100.0)) << std::endl;
+    std::cout << format("\t\tWarehouse & district name: %s, %s", w_name.c_str(), d_name.c_str()) << std::endl;
 
     if (warehouse_it) cass_iterator_free(warehouse_it);
     if (district_it) cass_iterator_free(district_it);
+    top_customers.pop();
   }
 
-  if (customer_it) cass_iterator_free(customer_it);
   return st;
 }
 
 std::pair<Status, CassIterator*>
-YCQLTopBalanceTxn::getTopBalCustomers() noexcept {
+YCQLTopBalanceTxn::getTopBalCustomersInDistrict(int32_t d_id) noexcept {
   std::string stmt =
       "SELECT c_w_id, c_d_id, c_balance, c_first, c_middle, c_last "
       "FROM " +
       YCQLKeyspace +
       ".customer "
+      "WHERE c_d_id = ? "
       "ORDER BY c_balance DESC "
       "LIMIT ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, TOP_K);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, d_id, TOP_K);
   return {st, it};
 }
 
@@ -88,6 +101,7 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id);
+  cass_iterator_next(it);
   return {st, it};
 }
 
@@ -102,6 +116,7 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, d_id);
+  cass_iterator_next(it);
   return {st, it};
 }
 
