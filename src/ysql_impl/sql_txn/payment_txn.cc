@@ -111,9 +111,9 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       outputs.push_back(
           format("w_street_1=%s, w_street_2=%s, w_city=%s, w_state=%s, "
                  "w_zip=%s, w_ytd=%f",
-                 warehouse["w_street_1"].c_str(), district["w_street_2"].c_str(),
-                 warehouse["w_city"].c_str(), district["w_state"].c_str(),
-                 warehouse["w_zip"].c_str(), district["w_ytd"].as<float>()));
+                 warehouse["w_street_1"].c_str(), warehouse["w_street_2"].c_str(),
+                 warehouse["w_city"].c_str(), warehouse["w_state"].c_str(),
+                 warehouse["w_zip"].c_str(), warehouse["w_ytd"].as<float>()));
       //      std::cout << "Warehouse Information:\n "
       //                << "w_street_1=" << warehouse["w_street_1"].c_str() <<
       //                ", "
