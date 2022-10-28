@@ -220,7 +220,7 @@ float YSQLNewOrderTxn::SQL_Get_I_Price(int i_id, pqxx::work* txn) {
 
   for (auto row : res) {
     outputs.push_back(
-        format("ITEM_NUMBER: %d, I_NAME: %d", i_id, row["I_NAME"].c_str()));
+        format("ITEM_NUMBER: %d, I_NAME: %s", i_id, row["I_NAME"].c_str()));
     //    std::cout
     //        << "I_NAME=" << row["I_NAME"].c_str() << ", "
     //        << "Item Number=" << i_id << std::endl;

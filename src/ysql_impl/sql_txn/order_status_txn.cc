@@ -23,6 +23,11 @@ Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
 
       time(&end_t);
       *diff_t = difftime(end_t, start_t);
+      txn.commit();
+      txn_out_<<OrderStatusInput<<std::endl;
+      for (auto& output : outputs) {
+        txn_out_ << output << std::endl;
+      }
       return Status::OK();
 
     } catch (const std::exception& e) {

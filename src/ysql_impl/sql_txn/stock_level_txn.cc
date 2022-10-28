@@ -32,9 +32,13 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
           format("Total number of items in S where its stock quantity at W_ID "
                  "is below the threshold: %d",
                  items_below_threshold));
-
+      txn.commit();
       time(&end_t);
       *diff_t = difftime(end_t, start_t);
+      txn_out_<<StockLevelInput<<std::endl;
+      for (auto& output : outputs) {
+        txn_out_ << output << std::endl;
+      }
       return Status::OK();
 
     } catch (const std::exception& e) {
