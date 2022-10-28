@@ -19,10 +19,13 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
   CassIterator *customer_it = nullptr, *warehouse_it = nullptr,
                *district_it = nullptr;
 
+  LOG_DEBUG << "Update Warehouse";
   st = updateWarehouseYTD();
   if (!st.ok()) return st;
+  LOG_DEBUG << "Update District";
   st = updateDistrictYTD();
   if (!st.ok()) return st;
+  LOG_DEBUG << "Update Customer";
   st = updateCustomerPayment();
   if (!st.ok()) return st;
 
@@ -76,13 +79,13 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
                           .c_str())
             << std::endl;
   std::cout << format("\t\tC_CREDIT_LIM: %s",
-                      GetStringValue(GetValueFromCassRow<double>(
-                                         customer_it, "c_credit_lim"))
+                      GetStringValue(GetValueFromCassRow<int64_t>(
+                                         customer_it, "c_credit_lim"), 100)
                           .c_str())
             << std::endl;
   std::cout << format("\t\tC_DISCOUNT: %s",
-                      GetStringValue(GetValueFromCassRow<double>(customer_it,
-                                                                 "c_discount"))
+                      GetStringValue(GetValueFromCassRow<int64_t>(customer_it,
+                                                                 "c_discount"), 10000)
                           .c_str())
             << std::endl;
   std::cout << format("\t\tC_BALANCE: %s",
@@ -143,39 +146,35 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
 }
 
 Status YCQLPaymentTxn::updateWarehouseYTD() noexcept {
+  auto payment = static_cast<int64_t>(payment_ * 100);
   std::string stmt = "UPDATE " + YCQLKeyspace +
                      ".warehouse "
-                     "SET w_ytd = w_ytd + ? "
-                     "WHERE w_id = ? "
-                     ";";
-  CassIterator* it = nullptr;
-  auto payment = static_cast<uint64_t>(payment_ * 100);
-  return ycql_impl::execute_write_cql(conn_, stmt, &it, payment, w_id_);
+                     "SET w_ytd = w_ytd + " +
+                     std::to_string(payment) + " WHERE w_id = ? ";
+  return ycql_impl::execute_write_cql(conn_, stmt, w_id_);
 }
 
 Status YCQLPaymentTxn::updateDistrictYTD() noexcept {
+  auto payment = static_cast<int64_t>(payment_ * 100);
   std::string stmt = "UPDATE " + YCQLKeyspace +
                      ".district "
-                     "SET d_ytd = d_ytd + ? "
-                     "WHERE w_id = ? AND d_id = ? "
-                     ";";
-  CassIterator* it = nullptr;
-  auto payment = static_cast<uint64_t>(payment_ * 100);
-  return ycql_impl::execute_write_cql(conn_, stmt, &it, payment, w_id_, d_id_);
+                     "SET d_ytd = d_ytd + " +
+                     std::to_string(payment) +
+                     " WHERE d_w_id = ? AND d_id = ? ";
+  return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_);
 }
 
 Status YCQLPaymentTxn::updateCustomerPayment() noexcept {
+  auto payment = static_cast<int64_t>(payment_ * 100);
   std::string stmt = "UPDATE " + YCQLKeyspace +
                      ".customer "
-                     "SET c_balance = c_balance - ?, "
-                     "c_ytd_payment = c_ytd_payment + ?, "
-                     "c_payment_cnt = c_payment + 1 "
-                     "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
-                     ";";
-  CassIterator* it = nullptr;
-  auto payment = static_cast<uint64_t>(payment_ * 100);
-  return ycql_impl::execute_write_cql(conn_, stmt, &it, payment, payment, w_id_,
-                                      d_id_, c_id_);
+                     "SET c_balance = c_balance - " +
+                     std::to_string(payment) +
+                     ", c_ytd_payment = c_ytd_payment + " +
+                     std::to_string(payment) +
+                     ", c_payment_cnt = c_payment_cnt + 1 "
+                     "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? ";
+  return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_, c_id_);
 }
 
 std::pair<Status, CassIterator*> YCQLPaymentTxn::getCustomer() noexcept {
@@ -191,6 +190,7 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getCustomer() noexcept {
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, c_id_);
+  cass_iterator_next(it);
   return {st, it};
 }
 
@@ -204,6 +204,11 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getWarehouse() noexcept {
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_);
+  if(!st.ok()){
+    assert(!it);
+    return {st, it};
+  }
+  cass_iterator_next(it);
   return {st, it};
 }
 
@@ -213,10 +218,15 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getDistrict() noexcept {
       "FROM " +
       YCQLKeyspace +
       ".district "
-      "WHERE w_id = ? AND d_id = ? "
+      "WHERE d_w_id = ? AND d_id = ? "
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
+  if(!st.ok()){
+    assert(!it);
+    return {st, it};
+  }
+  cass_iterator_next(it);
   return {st, it};
 }
 

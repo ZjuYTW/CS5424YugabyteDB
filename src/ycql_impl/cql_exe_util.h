@@ -36,13 +36,6 @@ CassError cql_statement_fill_args(CassStatement* statement, T first,
     }
     return cql_statement_fill_args<idx + 1>(statement, args...);
   }
-  if constexpr (std::is_same_v<uint64_t, T>) {
-    rc = cass_statement_bind_uint64(statement, idx, first);
-    if (rc != CASS_OK) {
-      return rc;
-    }
-    return cql_statement_fill_args<idx + 1>(statement, args...);
-  }
   if constexpr (std::is_same_v<int64_t, T>) {
     rc = cass_statement_bind_int64(statement, idx, first);
     if (rc != CASS_OK) {
@@ -198,7 +191,7 @@ std::optional<T> GetValueFromCassRow(CassIterator* it,
       return std::nullopt;
     }
     assert(rc == CASS_OK);
-    return std::string(buf);
+    return std::string(buf, sz);
   } else {
     assert(false);
   }

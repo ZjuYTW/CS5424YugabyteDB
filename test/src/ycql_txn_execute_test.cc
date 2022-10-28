@@ -80,7 +80,15 @@ TEST_F(CQLTxnExecuteTest, OrderStatusTxnTest) {
   ASSERT_TRUE(st.ok());
 }
 
-TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {}
+TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {
+  auto payment_txn = YCQLPaymentTxn(conn);
+  payment_txn.c_id_ = 1;
+  payment_txn.d_id_ = 1;
+  payment_txn.w_id_ = 1;
+  double elapsedTime;
+  auto st = payment_txn.Execute(&elapsedTime);
+  ASSERT_TRUE(st.ok());
+}
 
 TEST_F(CQLTxnExecuteTest, PopularItemTxnTest) {}
 

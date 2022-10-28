@@ -17,6 +17,7 @@ class YCQLPaymentTxn : public ydb_util::PaymentTxn {
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
   FRIEND_TEST(TxnArgsParserTest, payment);
+  FRIEND_TEST(CQLTxnExecuteTest, PaymentTxnTest);
   static constexpr int MAX_RETRY_ATTEMPTS = 3;
 
   Status executeLocal() noexcept;
