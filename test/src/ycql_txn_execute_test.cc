@@ -70,7 +70,15 @@ TEST_F(CQLTxnExecuteTest, DeliveryTxnTest) {
   ASSERT_TRUE(st.ok());
 }
 
-TEST_F(CQLTxnExecuteTest, OrderStatusTxnTest) {}
+TEST_F(CQLTxnExecuteTest, OrderStatusTxnTest) {
+  auto order_status_txn = YCQLOrderStatusTxn(conn);
+  order_status_txn.c_d_id_ = 1;
+  order_status_txn.c_w_id_ = 1;
+  order_status_txn.c_id_ = 1;
+  double elapsedTime;
+  auto st = order_status_txn.Execute(&elapsedTime);
+  ASSERT_TRUE(st.ok());
+}
 
 TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {}
 

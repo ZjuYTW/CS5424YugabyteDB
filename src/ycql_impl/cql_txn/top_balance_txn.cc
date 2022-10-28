@@ -28,13 +28,17 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
     if (!st.ok()) return st;
 
     while (cass_iterator_next(customer_it)) {
-      auto c_bal = GetValueFromCassRow<int64_t>(customer_it, "c_balance");
+      auto c_bal =
+          GetValueFromCassRow<int64_t>(customer_it, "c_balance").value();
       if (top_customers.size() == TOP_K && top_customers.top().c_bal >= c_bal)
         continue;
-      auto w_id = GetValueFromCassRow<int32_t>(customer_it, "c_w_id");
-      auto c_fst = GetValueFromCassRow<std::string>(customer_it, "c_first");
-      auto c_mid = GetValueFromCassRow<std::string>(customer_it, "c_middle");
-      auto c_lst = GetValueFromCassRow<std::string>(customer_it, "c_last");
+      auto w_id = GetValueFromCassRow<int32_t>(customer_it, "c_w_id").value();
+      auto c_fst =
+          GetValueFromCassRow<std::string>(customer_it, "c_first").value();
+      auto c_mid =
+          GetValueFromCassRow<std::string>(customer_it, "c_middle").value();
+      auto c_lst =
+          GetValueFromCassRow<std::string>(customer_it, "c_last").value();
       top_customers.push(CustomerInfo{
           .c_bal = c_bal,
           .c_w_id = w_id,
@@ -66,8 +70,8 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
     std::cout << format("\t\tCustomer balance: %lf",
                         static_cast<double>(customer.c_bal / 100.0))
               << std::endl;
-    std::cout << format("\t\tWarehouse & district name: %s, %s", w_name.c_str(),
-                        d_name.c_str())
+    std::cout << format("\t\tWarehouse & district name: %s, %s",
+                        w_name->c_str(), d_name->c_str())
               << std::endl;
 
     if (warehouse_it) cass_iterator_free(warehouse_it);

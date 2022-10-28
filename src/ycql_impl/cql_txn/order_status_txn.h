@@ -18,6 +18,7 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
 
  private:
   FRIEND_TEST(TxnArgsParserTest, order_status);
+  FRIEND_TEST(CQLTxnExecuteTest, OrderStatusTxnTest);
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

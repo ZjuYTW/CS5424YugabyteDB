@@ -21,7 +21,8 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
   CassIterator* next_order_it = nullptr;
   std::tie(st, next_order_it) = getNextOrder();
   if (!st.ok()) return st;
-  auto next_o_id = GetValueFromCassRow<int32_t>(next_order_it, "d_next_o_id");
+  auto next_o_id =
+      GetValueFromCassRow<int32_t>(next_order_it, "d_next_o_id").value();
   if (next_order_it) cass_iterator_free(next_order_it);
 
   CassIterator* item_it = nullptr;
@@ -31,7 +32,7 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
   int items_below_threshold = 0;
   std::unordered_set<int32_t> i_id_set;
   while (cass_iterator_next(item_it)) {
-    auto i_id = GetValueFromCassRow<int32_t>(item_it, "ol_i_id");
+    auto i_id = GetValueFromCassRow<int32_t>(item_it, "ol_i_id").value();
     if (i_id_set.find(i_id) != i_id_set.end()) continue;
     i_id_set.insert(i_id);
 

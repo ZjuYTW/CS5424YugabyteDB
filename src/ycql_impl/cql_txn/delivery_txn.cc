@@ -13,7 +13,8 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   Status st = Status::OK();
   for (d_id_ = 1; d_id_ <= 10; ++d_id_) {
     LOG_INFO << "Delivery process on d_id[" << d_id_ << "]";
-    st = Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this), 1);
+    st = Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this),
+               MAX_RETRY_ATTEMPTS);
     if (!st.ok()) {
       LOG_FATAL << "Delivery transaction execution failed"
                 << ", " << st.ToString();
@@ -38,8 +39,8 @@ Status YCQLDeliveryTxn::executeLocal() noexcept {
   LOG_DEBUG << "Get Next Delivery Order";
   std::tie(st, order_it) = getNextDeliveryOrder();
   if (!st.ok()) return st;
-  auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id");
-  auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id");
+  auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
+  auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id").value();
   if (order_it) cass_iterator_free(order_it);
 
   LOG_DEBUG << "Update Carrier Id";
@@ -54,7 +55,8 @@ Status YCQLDeliveryTxn::executeLocal() noexcept {
   CassIterator* amount_it = nullptr;
   std::tie(st, amount_it) = getOrderPaymentAmount(o_id);
   if (!st.ok()) return st;
-  auto total_amount = GetValueFromCassRow<int64_t>(amount_it, "sum_ol_amount");
+  auto total_amount =
+      GetValueFromCassRow<int64_t>(amount_it, "sum_ol_amount").value();
   if (amount_it) cass_iterator_free(amount_it);
 
   LOG_DEBUG << "update Customer Bal And Delivery Cnt";
@@ -112,7 +114,7 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
       LOG_DEBUG << "Get All Order Line Number failed, " << st.ToString();
       return st;
     }
-    item_num = GetValueFromCassRow<int64_t>(it, "count");
+    item_num = GetValueFromCassRow<int64_t>(it, "count").value();
     cass_iterator_free(it);
   }
 

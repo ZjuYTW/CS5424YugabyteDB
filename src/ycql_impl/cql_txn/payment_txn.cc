@@ -32,82 +32,109 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
   std::cout << "\t(a).Customer information:" << std::endl;
   std::cout << format("\t\tIdentifier: (%d, %d, %d)", w_id_, d_id_, c_id_)
             << std::endl;
-  std::cout
-      << format(
-             "\t\tName: (%s, %s, %s)",
-             GetValueFromCassRow<std::string>(customer_it, "c_first").c_str(),
-             GetValueFromCassRow<std::string>(customer_it, "c_middle").c_str(),
-             GetValueFromCassRow<std::string>(customer_it, "c_last").c_str())
-      << std::endl;
-  std::cout
-      << format(
-             "\t\tAddress: (%s, %s, %s, %s, %s)",
-             GetValueFromCassRow<std::string>(customer_it, "c_street_1")
-                 .c_str(),
-             GetValueFromCassRow<std::string>(customer_it, "c_street_2")
-                 .c_str(),
-             GetValueFromCassRow<std::string>(customer_it, "c_city").c_str(),
-             GetValueFromCassRow<std::string>(customer_it, "c_state").c_str(),
-             GetValueFromCassRow<std::string>(customer_it, "c_zip").c_str())
-      << std::endl;
-  std::cout
-      << format(
-             "\t\tC_PHONE: %s",
-             GetValueFromCassRow<std::string>(customer_it, "c_phone").c_str())
-      << std::endl;
-  std::cout
-      << format(
-             "\t\tC_SINCE: %s",
-             GetValueFromCassRow<std::string>(customer_it, "c_since").c_str())
-      << std::endl;
-  std::cout
-      << format(
-             "\t\tC_CREDIT: %s",
-             GetValueFromCassRow<std::string>(customer_it, "c_credit").c_str())
-      << std::endl;
-  std::cout << format("\t\tC_CREDIT_LIM: %lf",
-                      GetValueFromCassRow<double>(customer_it, "c_credit_lim"))
+  std::cout << format("\t\tName: (%s, %s, %s)",
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_first"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_middle"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_last"))
+                          .c_str())
             << std::endl;
-  std::cout << format("\t\tC_DISCOUNT: %lf",
-                      GetValueFromCassRow<double>(customer_it, "c_discount"))
+  std::cout << format("\t\tAddress: (%s, %s, %s, %s, %s)",
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_street_1"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_street_2"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_city"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_state"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_zip"))
+                          .c_str())
             << std::endl;
-  std::cout << format("\t\tC_BALANCE: %lf",
-                      static_cast<double>(GetValueFromCassRow<int64_t>(
-                                              customer_it, "c_balance") /
-                                          100.0))
+  std::cout << format("\t\tC_PHONE: %s",
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_phone"))
+                          .c_str())
+            << std::endl;
+  std::cout << format("\t\tC_SINCE: %s",
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_since"))
+                          .c_str())
+            << std::endl;
+  std::cout << format("\t\tC_CREDIT: %s",
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_credit"))
+                          .c_str())
+            << std::endl;
+  std::cout << format("\t\tC_CREDIT_LIM: %s",
+                      GetStringValue(GetValueFromCassRow<double>(
+                                         customer_it, "c_credit_lim"))
+                          .c_str())
+            << std::endl;
+  std::cout << format("\t\tC_DISCOUNT: %s",
+                      GetStringValue(GetValueFromCassRow<double>(customer_it,
+                                                                 "c_discount"))
+                          .c_str())
+            << std::endl;
+  std::cout << format("\t\tC_BALANCE: %s",
+                      GetStringValue(GetValueFromCassRow<int64_t>(customer_it,
+                                                                  "c_balance"),
+                                     100)
+                          .c_str())
             << std::endl;
 
   std::tie(st, warehouse_it) = getWarehouse();
   if (!st.ok()) return st;
 
   std::cout << "\t(b).Warehouse information:" << std::endl;
-  std::cout
-      << format(
-             "\t\tAddress: (%s, %s, %s, %s, %s)",
-             GetValueFromCassRow<std::string>(warehouse_it, "w_street_1")
-                 .c_str(),
-             GetValueFromCassRow<std::string>(warehouse_it, "w_street_2")
-                 .c_str(),
-             GetValueFromCassRow<std::string>(warehouse_it, "w_city").c_str(),
-             GetValueFromCassRow<std::string>(warehouse_it, "w_state").c_str(),
-             GetValueFromCassRow<std::string>(warehouse_it, "w_zip").c_str())
-      << std::endl;
+  std::cout << format("\t\tAddress: (%s, %s, %s, %s, %s)",
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         warehouse_it, "w_street_1"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         warehouse_it, "w_street_2"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         warehouse_it, "w_city"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         warehouse_it, "w_state"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         warehouse_it, "w_zip"))
+                          .c_str())
+            << std::endl;
 
   std::tie(st, district_it) = getDistrict();
   if (!st.ok()) return st;
 
   std::cout << "\t(c).District information:" << std::endl;
-  std::cout
-      << format(
-             "\t\tAddress: (%s, %s, %s, %s, %s)",
-             GetValueFromCassRow<std::string>(district_it, "d_street_1")
-                 .c_str(),
-             GetValueFromCassRow<std::string>(district_it, "d_street_2")
-                 .c_str(),
-             GetValueFromCassRow<std::string>(district_it, "d_city").c_str(),
-             GetValueFromCassRow<std::string>(district_it, "d_state").c_str(),
-             GetValueFromCassRow<std::string>(district_it, "d_zip").c_str())
-      << std::endl;
+  std::cout << format("\t\tAddress: (%s, %s, %s, %s, %s)",
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         district_it, "d_street_1"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         district_it, "d_street_2"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         district_it, "d_city"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         district_it, "d_state"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         district_it, "d_zip"))
+                          .c_str())
+            << std::endl;
 
   if (customer_it) cass_iterator_free(customer_it);
   if (warehouse_it) cass_iterator_free(warehouse_it);

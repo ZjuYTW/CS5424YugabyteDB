@@ -20,7 +20,8 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
   CassIterator* next_order_it = nullptr;
   std::tie(st, next_order_it) = getNextOrder();
   if (!st.ok()) return st;
-  auto next_o_id = GetValueFromCassRow<int32_t>(next_order_it, "d_next_o_id");
+  auto next_o_id =
+      GetValueFromCassRow<int32_t>(next_order_it, "d_next_o_id").value();
   if (next_order_it) cass_iterator_free(next_order_it);
 
   CassIterator* order_it = nullptr;
@@ -30,10 +31,11 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
   std::unordered_map<std::string, int> popularItems;
   int order_size = 0;
   while (cass_iterator_next(order_it)) {
-    auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id");
-    auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id");
+    auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
+    auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id").value();
     // TODO(winston.yan): check type of o_entry_id
-    auto o_entry_d = GetValueFromCassRow<int64_t>(order_it, "o_entry_d");
+    auto o_entry_d =
+        GetValueFromCassRow<int64_t>(order_it, "o_entry_d").value();
     std::cout << format("\t1.Order number:(%d) & entry date and time (%lld)",
                         o_id, o_entry_d)
               << std::endl;
@@ -41,9 +43,12 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
     CassIterator* customer_it = nullptr;
     std::tie(st, customer_it) = getCustomerName(c_id);
     if (!st.ok()) return st;
-    auto c_fst = GetValueFromCassRow<std::string>(customer_it, "c_first");
-    auto c_mid = GetValueFromCassRow<std::string>(customer_it, "c_middle");
-    auto c_lst = GetValueFromCassRow<std::string>(customer_it, "c_last");
+    auto c_fst =
+        GetValueFromCassRow<std::string>(customer_it, "c_first").value();
+    auto c_mid =
+        GetValueFromCassRow<std::string>(customer_it, "c_middle").value();
+    auto c_lst =
+        GetValueFromCassRow<std::string>(customer_it, "c_last").value();
     if (customer_it) cass_iterator_free(customer_it);
     std::cout << format(
                      "\t2.Name of customer who placed this order (%s, %s, %s)",
@@ -58,11 +63,11 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
     while (cass_iterator_next(orderLine_it)) {
       auto ol_quantity =
           GetValueFromCassRow<int32_t>(orderLine_it, "max_ol_quantity");
-      auto i_id = GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id");
+      auto i_id = GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id").value();
       CassIterator* item_it = nullptr;
       std::tie(st, item_it) = getItemName(i_id);
       if (!st.ok()) return st;
-      auto i_name = GetValueFromCassRow<std::string>(item_it, "i_name");
+      auto i_name = GetValueFromCassRow<std::string>(item_it, "i_name").value();
       popularItems[i_name] += 1;
       std::cout << format("\t\t(i).Item name: %s", i_name.c_str()) << std::endl;
       std::cout << format("\t\t(i).Quantity ordered: %s", ol_quantity)

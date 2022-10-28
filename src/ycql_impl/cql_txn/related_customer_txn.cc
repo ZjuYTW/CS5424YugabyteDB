@@ -30,7 +30,7 @@ Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
 
   std::unordered_map<int32_t, std::string> customers;
   while (cass_iterator_next(order_it)) {
-    auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id");
+    auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
 
     CassIterator* orderLine_it = nullptr;
     std::tie(st, orderLine_it) = getOrderLines(o_id);
@@ -38,7 +38,8 @@ Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
 
     std::vector<int32_t> items;
     while (cass_iterator_next(orderLine_it)) {
-      items.push_back(GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id"));
+      items.push_back(
+          GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id").value());
     }
 
     st = addRelatedCustomers(items, customers);
@@ -69,15 +70,15 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(
     auto count = GetValueFromCassRow<int32_t>(order_it, "count");
     if (count < THRESHOLD) continue;
 
-    auto ol_w_id = GetValueFromCassRow<int32_t>(order_it, "ol_w_id");
-    auto ol_d_id = GetValueFromCassRow<int32_t>(order_it, "ol_d_id");
-    auto ol_o_id = GetValueFromCassRow<int32_t>(order_it, "ol_o_id");
+    auto ol_w_id = GetValueFromCassRow<int32_t>(order_it, "ol_w_id").value();
+    auto ol_d_id = GetValueFromCassRow<int32_t>(order_it, "ol_d_id").value();
+    auto ol_o_id = GetValueFromCassRow<int32_t>(order_it, "ol_o_id").value();
 
     CassIterator* customer_it = nullptr;
     std::tie(st, customer_it) = getCustomerId(ol_w_id, ol_d_id, ol_o_id);
     if (!st.ok()) return st;
 
-    auto c_id = GetValueFromCassRow<int32_t>(customer_it, "o_c_id");
+    auto c_id = GetValueFromCassRow<int32_t>(customer_it, "o_c_id").value();
     if (customers.find(c_id) != customers.end()) continue;
     customers[c_id] = format("(%d, %d, %d)", ol_w_id, ol_d_id, c_id);
 

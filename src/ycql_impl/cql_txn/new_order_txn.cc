@@ -52,7 +52,8 @@ Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
       // To get correct NextOID, here we need to handle the race condition in
       // CQL
       next_o_id =
-          ycql_impl::GetValueFromCassRow<int32_t>(district_it, "d_next_o_id");
+          ycql_impl::GetValueFromCassRow<int32_t>(district_it, "d_next_o_id")
+              .value();
       auto origin_o_id = next_o_id;
       do {
         st = updateNextOId(++next_o_id, origin_o_id);
@@ -107,7 +108,7 @@ std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
     auto [s, stock] = getStock(order_lines[i].i_id, order_lines[i].w_id);
     if (!s.ok()) continue;
     auto stock_quantity =
-        ycql_impl::GetValueFromCassRow<int32_t>(stock, "s_quantity");
+        ycql_impl::GetValueFromCassRow<int32_t>(stock, "s_quantity").value();
     std::string dist_col =
         "s_dist_" + ((d_id_ < 10 ? "0" : "") + std::to_string(d_id_));
     auto stock_info =
@@ -124,7 +125,8 @@ std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
       // Maybe timeout?
       continue;
     }
-    auto i_price = ycql_impl::GetValueFromCassRow<int32_t>(item, "i_price");
+    auto i_price =
+        ycql_impl::GetValueFromCassRow<int32_t>(item, "i_price").value();
     int32_t item_amount = order_lines[i].quantity * i_price;
     // create one order-line
     std::string stmt =

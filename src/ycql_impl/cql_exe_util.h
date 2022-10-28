@@ -2,6 +2,7 @@
 #define YCQL_IMPL_EXE_UTIL_H_
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -157,29 +158,45 @@ ydb_util::Status execute_write_cql(CassSession* session,
 }
 
 template <typename T>
-T GetValueFromCassRow(CassIterator* it, const char* col_name) noexcept {
+std::optional<T> GetValueFromCassRow(CassIterator* it,
+                                     const char* col_name) noexcept {
   T ret;
   auto rc = CASS_OK;
   auto row = cass_iterator_get_row(it);
   if constexpr (std::is_same_v<int64_t, T>) {
     rc = cass_value_get_int64(cass_row_get_column_by_name(row, col_name), &ret);
+    if (rc == CassError::CASS_ERROR_LIB_NULL_VALUE) {
+      return std::nullopt;
+    }
     assert(rc == CASS_OK);
   } else if constexpr (std::is_same_v<uint32_t, T>) {
     rc =
         cass_value_get_uint32(cass_row_get_column_by_name(row, col_name), &ret);
+    if (rc == CassError::CASS_ERROR_LIB_NULL_VALUE) {
+      return std::nullopt;
+    }
     assert(rc == CASS_OK);
   } else if constexpr (std::is_same_v<double, T>) {
     rc =
         cass_value_get_double(cass_row_get_column_by_name(row, col_name), &ret);
+    if (rc == CassError::CASS_ERROR_LIB_NULL_VALUE) {
+      return std::nullopt;
+    }
     assert(rc == CASS_OK);
   } else if constexpr (std::is_same_v<int32_t, T>) {
     rc = cass_value_get_int32(cass_row_get_column_by_name(row, col_name), &ret);
+    if (rc == CassError::CASS_ERROR_LIB_NULL_VALUE) {
+      return std::nullopt;
+    }
     assert(rc == CASS_OK);
   } else if constexpr (std::is_same_v<std::string, T>) {
     const char* buf;
     size_t sz = 0;
     rc = cass_value_get_string(cass_row_get_column_by_name(row, col_name), &buf,
                                &sz);
+    if (rc == CassError::CASS_ERROR_LIB_NULL_VALUE) {
+      return std::nullopt;
+    }
     assert(rc == CASS_OK);
     return std::string(buf);
   } else {
@@ -201,6 +218,25 @@ double GetDiscount(CassIterator* custom_it) noexcept;
 
 ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,
                               CassSession* conn) noexcept;
+
+// Note: @param base is to convert enlarged number back to origin value, if base
+// is 0 then we don't do the convert
+template <typename T>
+std::string GetStringValue(const std::optional<T>& opt_val,
+                           int base = 0) noexcept {
+  if (!opt_val.has_value()) {
+    return "null";
+  }
+  if constexpr (std::is_same_v<std::string, T>) {
+    return opt_val.value();
+  } else {
+    if (base == 0) {
+      return std::to_string(opt_val.value());
+    } else {
+      return std::to_string(static_cast<double>(opt_val.value()) / base);
+    }
+  }
+}
 
 }  // namespace ycql_impl
 

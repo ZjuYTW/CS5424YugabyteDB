@@ -23,24 +23,34 @@ Status YCQLOrderStatusTxn::executeLocal() noexcept {
   if (!st.ok()) return st;
 
   // TODO(winston.yan): check type of c_balance
-  std::cout
-      << format(
-             "\t1.C_NAME: (%s, %s, %s), C_BALANCE: %lf",
-             GetValueFromCassRow<std::string>(customer_it, "c_first").c_str(),
-             GetValueFromCassRow<std::string>(customer_it, "c_middle").c_str(),
-             GetValueFromCassRow<std::string>(customer_it, "c_last").c_str(),
-             GetValueFromCassRow<std::int64_t>(customer_it, "c_balance") /
-                 100.0)
-      << std::endl;
-
+  std::cout << format("\t1.C_NAME: (%s, %s, %s), C_BALANCE: %s",
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_first"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_middle"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::string>(
+                                         customer_it, "c_last"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<std::int64_t>(
+                                         customer_it, "c_balance"),
+                                     100)
+                          .c_str())
+            << std::endl;
+  LOG_DEBUG << "Get Last Order";
   std::tie(st, order_it) = getLastOrder();
   if (!st.ok()) return st;
 
-  auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id");
+  auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
   // TODO(winston.yan): check type of o_entry_d
-  std::cout << format("\t2.O_ID: %d, O_ENTRY_D: %lld, O_CARRIER_ID: %d", o_id,
-                      GetValueFromCassRow<int64_t>(order_it, "o_entry_d"),
-                      GetValueFromCassRow<int32_t>(order_it, "o_carrier_id"))
+  std::cout << format("\t2.O_ID: %d, O_ENTRY_D: %s, O_CARRIER_ID: %s", o_id,
+                      GetStringValue(
+                          GetValueFromCassRow<int64_t>(order_it, "o_entry_d"))
+                          .c_str(),
+                      GetStringValue(GetValueFromCassRow<int32_t>(
+                                         order_it, "o_carrier_id"))
+                          .c_str())
             << std::endl;
 
   std::tie(st, orderLine_it) = getOrderLines(o_id);
@@ -48,17 +58,26 @@ Status YCQLOrderStatusTxn::executeLocal() noexcept {
 
   std::cout << format("\t3.For each item in the order %d", o_id) << std::endl;
   while (cass_iterator_next(orderLine_it)) {
-    std::cout
-        << format(
-               "\t\tOL_I_ID: %d, OL_SUPPLY_W_ID: %d, OL_QUANTITY: %lf, "
-               "OL_AMOUNT: %d, OL_DELIVER_D: %lld",
-               GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id"),
-               GetValueFromCassRow<int32_t>(orderLine_it, "ol_supply_w_id"),
-               GetValueFromCassRow<int64_t>(orderLine_it, "ol_quantity") /
-                   100.0,
-               GetValueFromCassRow<int32_t>(orderLine_it, "ol_amount"),
-               GetValueFromCassRow<int64_t>(orderLine_it, "ol_delivery_d"))
-        << std::endl;
+    std::cout << format(
+                     "\t\tOL_I_ID: %s, OL_SUPPLY_W_ID: %s, OL_QUANTITY: %s, "
+                     "OL_AMOUNT: %s, OL_DELIVER_D: %s",
+                     GetStringValue(
+                         GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id"))
+                         .c_str(),
+                     GetStringValue(GetValueFromCassRow<int32_t>(
+                                        orderLine_it, "ol_supply_w_id"))
+                         .c_str(),
+                     GetStringValue(GetValueFromCassRow<int64_t>(orderLine_it,
+                                                                 "ol_quantity"),
+                                    100)
+                         .c_str(),
+                     GetStringValue(GetValueFromCassRow<int32_t>(orderLine_it,
+                                                                 "ol_amount"))
+                         .c_str(),
+                     GetStringValue(GetValueFromCassRow<int64_t>(
+                                        orderLine_it, "ol_delivery_d"))
+                         .c_str())
+              << std::endl;
   }
 
   if (customer_it) cass_iterator_free(customer_it);
