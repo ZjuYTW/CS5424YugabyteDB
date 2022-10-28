@@ -1,8 +1,8 @@
 #ifndef YCQL_TOP_BALANCE_TXN_H_
 #define YCQL_TOP_BALANCE_TXN_H_
-#include "common/txn/top_balance_txn.h"
-
 #include <queue>
+
+#include "common/txn/top_balance_txn.h"
 
 namespace ycql_impl {
 class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
@@ -27,16 +27,17 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
     int64_t c_bal;
     int32_t c_w_id, c_d_id;
     std::string c_name;
-    bool operator<(const CustomerInfo &oth) const {
+    bool operator<(const CustomerInfo& oth) const {
       return this->c_bal < oth.c_bal;
     }
-    bool operator>(const CustomerInfo &oth) const {
+    bool operator>(const CustomerInfo& oth) const {
       return this->c_bal > oth.c_bal;
     }
   };
 
   Status executeLocal() noexcept;
-  std::pair<Status, CassIterator*> getTopBalCustomersInDistrict(int32_t d_id) noexcept;
+  std::pair<Status, CassIterator*> getTopBalCustomersInDistrict(
+      int32_t d_id) noexcept;
   std::pair<Status, CassIterator*> getWarehouse(int32_t w_id) noexcept;
   std::pair<Status, CassIterator*> getDistrict(int32_t w_id,
                                                int32_t d_id) noexcept;

@@ -12,8 +12,9 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Delivery transaction started";
   Status st = Status::OK();
   for (d_id_ = 1; d_id_ <= 10; ++d_id_) {
+    LOG_INFO << "Delivery process on d_id[" << d_id_ << "]";
     st = Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this),
-               MAX_RETRY_ATTEMPTS);
+               1);
     if (!st.ok()) {
       LOG_FATAL << "Delivery transaction execution failed"
                 << ", " << st.ToString();
@@ -50,17 +51,20 @@ Status YCQLDeliveryTxn::executeLocal() noexcept {
   st = updateOrderLineDeliveryDate(o_id);
   if (!st.ok()) return st;
 
-  CassIterator* amount_it = nullptr;
   LOG_DEBUG << "Get OrderPaymentAmount";
+  CassIterator* amount_it = nullptr;
   std::tie(st, amount_it) = getOrderPaymentAmount(o_id);
   if (!st.ok()) return st;
-  auto total_amount = GetValueFromCassRow<int32_t>(amount_it, "sum_ol_amount");
+  auto total_amount = GetValueFromCassRow<int64_t>(amount_it, "sum_ol_amount");
   if (amount_it) cass_iterator_free(amount_it);
 
   LOG_DEBUG << "update Customer Bal And Delivery Cnt";
   st = updateCustomerBalAndDeliveryCnt(c_id, total_amount);
-  if (!st.ok()) return st;
-
+  if (!st.ok()){
+    LOG_DEBUG << "update Customer Bal failed, " << st.ToString();
+    return st;
+  }
+  LOG_DEBUG << "Success";
   return st;
 }
 
@@ -101,13 +105,33 @@ Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
 }
 
 Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
-  // TODO(ZjuYTW): Batch Update here
-  std::string stmt = "UPDATE " + YCQLKeyspace +
-                     ".orderline "
-                     "SET ol_delivery_d = currenttimestamp() "
-                     "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
-                     ";";
-  return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_, o_id);
+  int32_t item_num;
+  {
+    auto [st, it] = getAllOrderLineNumber(o_id);
+    if (!st.ok()) {
+      assert(!it);
+      LOG_DEBUG << "Get All Order Line Number failed, " << st.ToString();
+      return st;
+    }
+    item_num = GetValueFromCassRow<int64_t>(it, "count");
+    cass_iterator_free(it);
+  }
+
+  std::vector<CassStatement*> cass_stmts;
+  cass_stmts.reserve(item_num);
+  for (int32_t i = 1; i <= item_num; i++) {
+    std::string stmt =
+        "UPDATE " + YCQLKeyspace +
+        ".orderline "
+        "SET ol_delivery_d = currenttimestamp() "
+        "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_number = ?";
+    auto cass_stmt = cass_statement_new(stmt.c_str(), 4);
+    auto rc =
+        ycql_impl::cql_statement_fill_args(cass_stmt, w_id_, d_id_, o_id, i);
+    assert(rc == CASS_OK);
+    cass_stmts.push_back(cass_stmt);
+  }
+  return ycql_impl::BatchExecute(cass_stmts, conn_);
 }
 
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
@@ -127,8 +151,21 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
   return {st, it};
 }
 
+std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
+    int32_t o_id) noexcept {
+  std::string stmt =
+      "SELECT count(*) as count FROM " + YCQLKeyspace +
+      ".orderline where ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?";
+  CassIterator* it = nullptr;
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
+  if (!cass_iterator_next(it)) {
+    return {Status::ExecutionFailed("Get OrderLine Count failed"), it};
+  }
+  return {st, it};
+}
+
 Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(
-    int32_t c_id, int32_t total_amount) noexcept {
+    int32_t c_id, int64_t total_amount) noexcept {
   std::string stmt =
       "UPDATE " + YCQLKeyspace +
       ".customer "

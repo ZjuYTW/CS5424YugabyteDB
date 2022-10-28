@@ -41,4 +41,20 @@ double GetDiscount(CassIterator* custom_it) noexcept {
   return c_discount_d;
 }
 
+ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,
+                              CassSession* conn) noexcept {
+  auto* batch = cass_batch_new(CassBatchType::CASS_BATCH_TYPE_LOGGED);
+  for (auto stmt : stmts) {
+    cass_batch_add_statement(batch, stmt);
+  }
+  auto future = cass_session_execute_batch(conn, batch);
+  auto rc = cass_future_error_code(future);
+  cass_batch_free(batch);
+  cass_future_free(future);
+  if (rc != CASS_OK) {
+    return ydb_util::Status::ExecutionFailed(cass_error_desc(rc));
+  }
+  return ydb_util::Status::OK();
+}
+
 }  // namespace ycql_impl

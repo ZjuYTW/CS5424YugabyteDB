@@ -35,14 +35,12 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
       auto c_fst = GetValueFromCassRow<std::string>(customer_it, "c_first");
       auto c_mid = GetValueFromCassRow<std::string>(customer_it, "c_middle");
       auto c_lst = GetValueFromCassRow<std::string>(customer_it, "c_last");
-      top_customers.push(
-          CustomerInfo{
-              .c_bal = c_bal,
-              .c_w_id = w_id,
-              .c_d_id = d_id,
-              .c_name = c_fst.append(", ").append(c_mid).append(", ").append(c_lst)
-          }
-      );
+      top_customers.push(CustomerInfo{
+          .c_bal = c_bal,
+          .c_w_id = w_id,
+          .c_d_id = d_id,
+          .c_name =
+              c_fst.append(", ").append(c_mid).append(", ").append(c_lst)});
       if (top_customers.size() > TOP_K) top_customers.pop();
       assert(top_customers.size() <= 10);
     }
@@ -62,9 +60,15 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
     if (!st.ok()) return st;
     auto d_name = GetValueFromCassRow<std::string>(district_it, "d_name");
 
-    std::cout << format("\t%d. Customer name: (%s)", top_customers.size(), customer.c_name.c_str()) << std::endl;
-    std::cout << format("\t\tCustomer balance: %lf", static_cast<double>(customer.c_bal / 100.0)) << std::endl;
-    std::cout << format("\t\tWarehouse & district name: %s, %s", w_name.c_str(), d_name.c_str()) << std::endl;
+    std::cout << format("\t%d. Customer name: (%s)", top_customers.size(),
+                        customer.c_name.c_str())
+              << std::endl;
+    std::cout << format("\t\tCustomer balance: %lf",
+                        static_cast<double>(customer.c_bal / 100.0))
+              << std::endl;
+    std::cout << format("\t\tWarehouse & district name: %s, %s", w_name.c_str(),
+                        d_name.c_str())
+              << std::endl;
 
     if (warehouse_it) cass_iterator_free(warehouse_it);
     if (district_it) cass_iterator_free(district_it);
