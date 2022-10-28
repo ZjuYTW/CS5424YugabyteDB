@@ -28,21 +28,28 @@ class CQLDriver {
       return Status::ConnectionFailed();
     }
     std::unique_ptr<ydb_util::Parser> parser_p =
-        std::make_unique<ydb_util::YCQLParser>(filename, session);
+        std::make_unique<YCQLParser>(filename, session);
     auto s = parser_p->Init();
     if (!s.ok()) {
+      cass_session_free(session);
       return s;
     }
     while (true) {
-      Txn* t = nullptr;
-      if (parser_p->GetNextTxn(&t).isEndOfFile()) {
+      // here we use smart ptr to avoid delete manully
+      std::unique_ptr<Txn> t = nullptr;
+      s = parser_p->GetNextTxn(&t);
+      if (!s.ok()) {
+        // EndOfFile or Somethin Bad
         break;
       }
       double processTime;
-      t->Execute(&processTime);
+      s = t->Execute(&processTime);
+      if (!s.ok()) {
+        break;
+      }
     }
     cass_session_free(session);
-    return Status::OK();
+    return s.isEndOfFile() ? Status::OK() : s;
   }
 
   CassError connect_session(CassSession* session, const CassCluster* cluster) {

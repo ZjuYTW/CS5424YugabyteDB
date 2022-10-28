@@ -7,6 +7,7 @@
 namespace ydb_util {
 Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Delivery Transaction started";
+  auto DeliveryInput = format("D %d %d", w_id_, carrier_id_);
 
   time_t start_t, end_t;
   time(&start_t);
@@ -78,6 +79,10 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
         break;
       } catch (const std::exception& e) {
         retryCount++;
+        if (retryCount == MAX_RETRY_COUNT) {
+          err_out_ << DeliveryInput << std::endl;
+          err_out_ << e.what() << "\n";
+        }
         LOG_ERROR << e.what();
         LOG_INFO << "Retry time:" << retryCount;
         std::this_thread::sleep_for(

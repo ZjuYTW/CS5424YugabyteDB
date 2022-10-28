@@ -15,8 +15,11 @@
 namespace ydb_util {
 class YSQLParser : public Parser {
  public:
-  YSQLParser(const std::string& file_name,std::ofstream& txn_out,std::ofstream& out_err_fs, pqxx::connection* conn)
-      : Parser(file_name), conn_(conn),txn_out_(txn_out),
+  YSQLParser(const std::string& file_name, std::ofstream& txn_out,
+             std::ofstream& out_err_fs, pqxx::connection* conn)
+      : Parser(file_name),
+        conn_(conn),
+        txn_out_(txn_out),
         err_out_(out_err_fs) {}
   virtual ~YSQLParser() = default;
 
@@ -26,45 +29,45 @@ class YSQLParser : public Parser {
     switch (c) {
       case 'N': {
         // New Order
-        txn = new YSQLNewOrderTxn(conn_,txn_out_, err_out_);
+        txn = new YSQLNewOrderTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'P': {
         // Payment
         // Unimplemented yet
         LOG_INFO << "Payment";
-        txn = new YSQLPaymentTxn(conn_);
+        txn = new YSQLPaymentTxn(conn_,txn_out_,err_out_);
         break;
       }
       case 'D': {
         // Delivery
         LOG_INFO << "Delivery";
-        txn = new YSQLDeliveryTxn(conn_);
+        txn = new YSQLDeliveryTxn(conn_,txn_out_,err_out_);
         break;
       }
       case 'O': {
         // Order-Status
-        txn = new YSQLOrderStatusTxn(conn_);
+        txn = new YSQLOrderStatusTxn(conn_,txn_out_,err_out_);
         break;
       }
       case 'S': {
         // Stock-Level
-        txn = new YSQLStockLevelTxn(conn_);
+        txn = new YSQLStockLevelTxn(conn_,txn_out_,err_out_);
         break;
       }
       case 'I': {
         // Popular-Item
-        txn = new YSQLPopularItemTxn(conn_);
+        txn = new YSQLPopularItemTxn(conn_,txn_out_,err_out_);
         break;
       }
       case 'T': {
         // Top-Balance
-        txn = new YSQLTopBalanceTxn(conn_);
+        txn = new YSQLTopBalanceTxn(conn_,txn_out_,err_out_);
         break;
       }
       case 'R': {
         // Related-Customer
-        txn = new YSQLRelatedCustomerTxn(conn_);
+        txn = new YSQLRelatedCustomerTxn(conn_,txn_out_,err_out_);
         break;
       }
       default: {

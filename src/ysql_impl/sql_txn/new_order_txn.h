@@ -6,8 +6,9 @@
 namespace ydb_util {
 class YSQLNewOrderTxn : public NewOrderTxn {
  public:
-  explicit YSQLNewOrderTxn(pqxx::connection* conn,std::ofstream& txn_out,std::ofstream& err_out)
-      : NewOrderTxn(), conn_(conn),txn_out_(txn_out),err_out_(err_out) {}
+  explicit YSQLNewOrderTxn(pqxx::connection* conn, std::ofstream& txn_out,
+                           std::ofstream& err_out)
+      : NewOrderTxn(), conn_(conn), txn_out_(txn_out), err_out_(err_out) {}
 
   Status Execute(double* diff_t) noexcept;
 
@@ -26,13 +27,11 @@ class YSQLNewOrderTxn : public NewOrderTxn {
   float SQL_Get_W_Tax(int w_id, pqxx::work* txn);
   float SQL_Get_C_Discount(int w_id, int d_id, int id, pqxx::work* txn);
 
-
   pqxx::connection* conn_;
   static constexpr int MAX_RETRY_COUNT = 3;
   std::vector<std::string> outputs;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
-
 };
 }  // namespace ydb_util
 #endif

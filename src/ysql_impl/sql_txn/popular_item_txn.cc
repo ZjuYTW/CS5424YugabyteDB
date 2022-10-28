@@ -8,6 +8,7 @@
 namespace ydb_util {
 Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Popular items Transaction started";
+  auto InputString = format("I %d %d %d", w_id_, d_id_,l_);
 
   time_t start_t, end_t;
   time(&start_t);
@@ -24,7 +25,7 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
       std::string nxtOrderQuery = format(
           "SELECT d_next_o_id FROM district WHERE d_w_id = %d AND d_id = %d",
           w_id_, d_id_);
-      LOG_INFO<<nxtOrderQuery;
+      LOG_INFO << nxtOrderQuery;
       pqxx::result nxtOrders = txn.exec(nxtOrderQuery);
       if (nxtOrders.empty()) {
         throw std::runtime_error("[popular items error]: order not found");
@@ -35,9 +36,9 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
           "SELECT o_id, o_c_id, o_entry_d FROM orders WHERE o_w_id = %d AND "
           "o_d_id = %d AND o_id >= %s-%d AND o_id < %s",
           w_id_, d_id_, next_order_id, l_, next_order_id);
-      LOG_INFO<<lastOrderQuery;
+      LOG_INFO << lastOrderQuery;
       pqxx::result orders = txn.exec(lastOrderQuery);
-      LOG_INFO<<"Order's Size is "<<orders.size();
+      LOG_INFO << "Order's Size is " << orders.size();
       for (auto order : orders) {
         auto o_id = order["o_id"].c_str();
         auto c_id = order["o_c_id"].c_str();
@@ -49,7 +50,7 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
             "SELECT c_first, c_middle, c_last FROM customer WHERE c_w_id = %d "
             "AND c_d_id = %d AND c_id = %s",
             w_id_, d_id_, c_id);
-        LOG_INFO<<customQuery;
+        LOG_INFO << customQuery;
         pqxx::result customer = txn.exec(customQuery);
         if (customer.empty()) {
           throw std::runtime_error("[popular items error]: customer not found");
@@ -64,11 +65,12 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
             format("  (b).Name of customer who placed this order (%s, %s, %s)",
                    firstName, middleName, lastName));
         auto MaxOrderLinesQuery = format(
-            "SELECT ol_i_id, max(ol_quantity) as max_ol_quantity FROM orderline "
+            "SELECT ol_i_id, max(ol_quantity) as max_ol_quantity FROM "
+            "orderline "
             "WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %s group by "
             "ol_i_id",
             w_id_, d_id_, o_id);
-        LOG_INFO<<MaxOrderLinesQuery;
+        LOG_INFO << MaxOrderLinesQuery;
         pqxx::result orderLines = txn.exec(MaxOrderLinesQuery);
         if (!orderLines.empty()) {
           outputs.push_back(format("  (c).For each popular item in:"));
@@ -97,10 +99,14 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
                                  itemName, Percentage));
       }
       txn.commit();
-      break ;
+      break;
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << InputString << std::endl;
+        err_out_ << e.what() << "\n";
+      }
       LOG_INFO << "Retry time:" << retryCount;
       if (!outputs.empty()) {
         std::vector<std::string>().swap(outputs);  // clean the memory
@@ -111,8 +117,9 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   if (retryCount == MAX_RETRY_COUNT) {
     return Status::Invalid("retry times exceeded max retry count");
   }
+  txn_out_<<InputString<<std::endl;
   for (auto& output : outputs) {
-    std::cout << output << std::endl;
+    txn_out_ << output << std::endl;
   }
   time(&end_t);
   *diff_t = difftime(end_t, start_t);

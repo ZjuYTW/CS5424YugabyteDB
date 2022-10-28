@@ -14,7 +14,7 @@ Status YSQLNewOrderTxn::Execute(double* diff_t) noexcept {
   time_t start_t, end_t;
   time(&start_t);
   int retryCount = 0;
-
+  auto NewOrder = format("N %d %d %d", w_id_, d_id_, c_id_);
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       int allLocal = 1;
@@ -74,9 +74,12 @@ Status YSQLNewOrderTxn::Execute(double* diff_t) noexcept {
       //      std::cout
       //          << "Number of items=" << orders_.size() << ", "
       //          << "Total amount=" << total_amount << std::endl;
-
-      for (auto & output : outputs) {
-        txn_out_ << output+"\n";
+      txn_out_ << NewOrder << std::endl;
+      for (auto& orderInput : orders_) {
+        txn_out_ << orderInput << std::endl;
+      }
+      for (auto& output : outputs) {
+        txn_out_ << output + "\n";
       }
 
       time(&end_t);
@@ -86,11 +89,14 @@ Status YSQLNewOrderTxn::Execute(double* diff_t) noexcept {
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
-      if (retryCount==MAX_RETRY_COUNT){
-        err_out_<<e.what()<<"\n";
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << NewOrder << std::endl;
+        for (auto& orderInput : orders_) {
+          err_out_ << orderInput << std::endl;
+        }
+        err_out_ << e.what() << "\n";
       }
       // if Failed, Wait for 100 ms to try again
-      // TODO: check if there is a sleep_for
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
@@ -214,7 +220,7 @@ float YSQLNewOrderTxn::SQL_Get_I_Price(int i_id, pqxx::work* txn) {
 
   for (auto row : res) {
     outputs.push_back(
-        format("ITEM_NUMBER: %d, I_NAME: %d", i_id, row["I_NAME"].c_str()));
+        format("ITEM_NUMBER: %d, I_NAME: %s", i_id, row["I_NAME"].c_str()));
     //    std::cout
     //        << "I_NAME=" << row["I_NAME"].c_str() << ", "
     //        << "Item Number=" << i_id << std::endl;

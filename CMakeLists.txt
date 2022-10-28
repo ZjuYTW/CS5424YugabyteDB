@@ -50,4 +50,4 @@ include_directories("/opt/homebrew/opt/libpqxx/include" )
 
 add_subdirectory(third-party/googletest)
 add_subdirectory(src)
-#add_subdirectory(test)
+add_subdirectory(test)

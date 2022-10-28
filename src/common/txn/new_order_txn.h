@@ -51,17 +51,7 @@ class NewOrderTxn : public Txn {
 
   virtual Status Execute(double* diff_t) noexcept override = 0;
 
-  Status ExecuteCQL() noexcept {
-    CassError rc = CASS_OK;
-    for (int i = 0; i < orders_.size(); i++) {
-      uint32_t i_id, w_id, quantity;
-      ParseOneOrder(orders_[i], &i_id, &w_id, &quantity);
-      // Put your logic here, from Project New-Order Txn here
-    }
-    return Status::OK();
-  }
-
- private:
+ protected:
   // ParseOneOrder parses each line into 3 values: OL_I_ID, OL_W_ID, OL_QUALITY
   static Status ParseOneOrder(const std::string& order, uint32_t* i_id,
                               uint32_t* w_id, uint32_t* quantity) {
@@ -79,7 +69,6 @@ class NewOrderTxn : public Txn {
 
  protected:
   std::vector<std::string> orders_;
-  // Maybe change it into BigInt
   uint32_t c_id_, w_id_, d_id_;
   std::vector<int> i_ids, w_ids, quantities;
 

@@ -9,8 +9,9 @@
 namespace ydb_util {
 class YSQLRelatedCustomerTxn : public RelatedCustomerTxn {
  public:
-  explicit YSQLRelatedCustomerTxn(pqxx::connection* conn)
-      : RelatedCustomerTxn(), conn_(conn) {}
+  explicit YSQLRelatedCustomerTxn(pqxx::connection* conn, std::ofstream& txn_out,
+                                  std::ofstream& err_out)
+      : RelatedCustomerTxn(), conn_(conn), txn_out_(txn_out), err_out_(err_out) {}
 
   Status Execute(double* diff_t) noexcept;
 
@@ -28,6 +29,8 @@ class YSQLRelatedCustomerTxn : public RelatedCustomerTxn {
   std::vector<std::string> outputs;
 
   pqxx::connection* conn_;
+  std::ofstream& txn_out_;
+  std::ofstream& err_out_;
 };
 }  // namespace ydb_util
 #endif

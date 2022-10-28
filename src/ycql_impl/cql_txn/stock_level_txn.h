@@ -2,8 +2,10 @@
 #define YCQL_STOCK_LEVEL_TXN_H_
 #include "common/txn/stock_level_txn.h"
 
-namespace ydb_util {
-class YCQLStockLevelTxn : public StockLevelTxn {
+namespace ycql_impl {
+class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
+  using Status = ydb_util::Status;
+
  public:
   explicit YCQLStockLevelTxn(CassSession* session)
       : StockLevelTxn(), conn_(session) {}
@@ -11,7 +13,8 @@ class YCQLStockLevelTxn : public StockLevelTxn {
   Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
+  FRIEND_TEST(TxnArgsParserTest, stock_level);
   CassSession* conn_;
 };
-}  // namespace ydb_util
+}  // namespace ycql_impl
 #endif

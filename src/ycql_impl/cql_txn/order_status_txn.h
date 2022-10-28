@@ -2,8 +2,10 @@
 #define YCQL_ORDER_STATUS_TXN_H_
 #include "common/txn/order_status_txn.h"
 
-namespace ydb_util {
-class YCQLOrderStatusTxn : public OrderStatusTxn {
+namespace ycql_impl {
+class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
+  using Status = ydb_util::Status;
+
  public:
   explicit YCQLOrderStatusTxn(CassSession* session)
       : OrderStatusTxn(), conn_(session) {}
@@ -11,8 +13,9 @@ class YCQLOrderStatusTxn : public OrderStatusTxn {
   Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
+  FRIEND_TEST(TxnArgsParserTest, order_status);
   CassSession* conn_;
 };
-}  // namespace ydb_util
+}  // namespace ycql_impl
 
 #endif

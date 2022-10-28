@@ -7,7 +7,8 @@
 namespace ydb_util {
 class YSQLPaymentTxn : public PaymentTxn {
  public:
-  explicit YSQLPaymentTxn(pqxx::connection* conn) : PaymentTxn(), conn_(conn) {}
+  explicit YSQLPaymentTxn(pqxx::connection* conn, std::ofstream& txn_out,
+                          std::ofstream& err_out) : PaymentTxn(), conn_(conn), txn_out_(txn_out), err_out_(err_out) {}
 
   Status Execute(double* diff_t) noexcept;
 
@@ -25,6 +26,8 @@ class YSQLPaymentTxn : public PaymentTxn {
   static constexpr int MAX_RETRY_COUNT = 3;
   pqxx::connection* conn_;
   std::vector<std::string> outputs;
+  std::ofstream& txn_out_;
+  std::ofstream& err_out_;
 };
 }  // namespace ydb_util
 #endif

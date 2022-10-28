@@ -7,7 +7,7 @@
 namespace ydb_util {
 Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
-
+  auto InputString = format("P %d %d %d",w_id_,d_id_,c_id_);
   time_t start_t, end_t;
   time(&start_t);
   int retryCount = 0;
@@ -44,74 +44,110 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       txn.commit();
       outputs.push_back("Customer Information:");
       outputs.push_back(format("identifier (C_W_ID,C_D_ID,C_ID)=(%s, %s, %s)",
-                               customer["c_w_id"].c_str(), customer["c_d_id"].c_str(), customer["c_id"].c_str()));
+                               customer["c_w_id"].c_str(),
+                               customer["c_d_id"].c_str(),
+                               customer["c_id"].c_str()));
       outputs.push_back(format("name (C_FIRST,C_MIDDLE,C_LAST)=(%s, %s, %s)",
-                               customer["c_first"].c_str(), customer["c_middle"].c_str(), customer["c_last"].c_str()));
-      outputs.push_back(format("address (C_STREET_1,C_STREET_2,C_CITY,C_STATE,C_ZIP)=(%s, %s, %s, %s, %s)",
-                               customer["C_STREET_1"].c_str(), customer["C_STREET_2"].c_str(),
-                               customer["C_CITY"].c_str(), customer["C_STATE"].c_str(), customer["C_ZIP"].c_str()));
-      outputs.push_back(format("C_PHONE=%s, C_SINCE=%s, C_CREDIT=%s, C_CREDIT_LIM=%s, C_DISCOUNT=%s, C_BALANCE=%f",
-                               customer["C_PHONE"].c_str(), customer["C_SINCE"].c_str(), customer["C_CREDIT"].c_str(),
-                               customer["C_CREDIT_LIM"].c_str(), customer["C_DISCOUNT"].c_str(), customer["C_BALANCE"].as<float>()));
-//      std::cout << "Customer Information:\n "
-//                << "identifier (C_W_ID,C_D_ID,C_ID)=("
-//                << customer["c_w_id"].c_str() << ","
-//                << customer["c_d_id"].c_str() << "," << customer["c_id"].c_str()
-//                << "),\n "
-//                << "name (C_FIRST,C_MIDDLE,C_LAST)=("
-//                << customer["c_first"].c_str() << ","
-//                << customer["c_middle"].c_str() << ","
-//                << customer["c_last"].c_str() << "),\n "
-//                << "address (C_STREET_1,C_STREET_2,C_CITY,C_STATE,C_ZIP)=("
-//                << customer["C_STREET_1"].c_str() << ","
-//                << customer["C_STREET_2"].c_str() << ","
-//                << customer["C_CITY"].c_str() << ","
-//                << customer["C_STATE"].c_str() << ","
-//                << customer["C_ZIP"].c_str() << ")\n "
-//                << "C_PHONE=" << customer["C_PHONE"].c_str() << ", "
-//                << "C_SINCE=" << customer["C_SINCE"].c_str() << ", "
-//                << "C_CREDIT=" << customer["C_CREDIT"].c_str() << ", "
-//                << "C_CREDIT_LIM=" << customer["C_CREDIT_LIM"].c_str() << ", "
-//                << "C_DISCOUNT=" << customer["C_DISCOUNT"].c_str() << ", "
-//                << "C_BALANCE=" << customer["C_BALANCE"].as<float>() - payment_
-//                << std::endl;
+                               customer["c_first"].c_str(),
+                               customer["c_middle"].c_str(),
+                               customer["c_last"].c_str()));
+      outputs.push_back(
+          format("address (C_STREET_1,C_STREET_2,C_CITY,C_STATE,C_ZIP)=(%s, "
+                 "%s, %s, %s, %s)",
+                 customer["C_STREET_1"].c_str(), customer["C_STREET_2"].c_str(),
+                 customer["C_CITY"].c_str(), customer["C_STATE"].c_str(),
+                 customer["C_ZIP"].c_str()));
+      outputs.push_back(format(
+          "C_PHONE=%s, C_SINCE=%s, C_CREDIT=%s, C_CREDIT_LIM=%s, "
+          "C_DISCOUNT=%s, C_BALANCE=%f",
+          customer["C_PHONE"].c_str(), customer["C_SINCE"].c_str(),
+          customer["C_CREDIT"].c_str(), customer["C_CREDIT_LIM"].c_str(),
+          customer["C_DISCOUNT"].c_str(), customer["C_BALANCE"].as<float>()));
+      //      std::cout << "Customer Information:\n "
+      //                << "identifier (C_W_ID,C_D_ID,C_ID)=("
+      //                << customer["c_w_id"].c_str() << ","
+      //                << customer["c_d_id"].c_str() << "," <<
+      //                customer["c_id"].c_str()
+      //                << "),\n "
+      //                << "name (C_FIRST,C_MIDDLE,C_LAST)=("
+      //                << customer["c_first"].c_str() << ","
+      //                << customer["c_middle"].c_str() << ","
+      //                << customer["c_last"].c_str() << "),\n "
+      //                << "address
+      //                (C_STREET_1,C_STREET_2,C_CITY,C_STATE,C_ZIP)=("
+      //                << customer["C_STREET_1"].c_str() << ","
+      //                << customer["C_STREET_2"].c_str() << ","
+      //                << customer["C_CITY"].c_str() << ","
+      //                << customer["C_STATE"].c_str() << ","
+      //                << customer["C_ZIP"].c_str() << ")\n "
+      //                << "C_PHONE=" << customer["C_PHONE"].c_str() << ", "
+      //                << "C_SINCE=" << customer["C_SINCE"].c_str() << ", "
+      //                << "C_CREDIT=" << customer["C_CREDIT"].c_str() << ", "
+      //                << "C_CREDIT_LIM=" << customer["C_CREDIT_LIM"].c_str()
+      //                << ", "
+      //                << "C_DISCOUNT=" << customer["C_DISCOUNT"].c_str() << ",
+      //                "
+      //                << "C_BALANCE=" << customer["C_BALANCE"].as<float>() -
+      //                payment_
+      //                << std::endl;
       outputs.push_back("District Information:");
-      outputs.push_back(format("d_street_1=%s, d_street_2=%s, d_city=%s, d_state=%s, d_zip=%s, d_ytd=%f",
-                               district["d_street_1"].c_str(), district["d_street_2"].c_str(), district["d_city"].c_str(),
-                               district["d_state"].c_str(), district["d_zip"].c_str(), district["d_ytd"].as<float>()));
-//      std::cout << "District Information:\n "
-//                << "d_street_1=" << district["d_street_1"].c_str() << ", "
-//                << "d_street_2=" << district["d_street_2"].c_str() << ", "
-//                << "d_city=" << district["d_city"].c_str() << ", "
-//                << "d_state=" << district["d_state"].c_str() << ", "
-//                << "d_zip=" << district["d_zip"].c_str() << ", "
-//                << "d_ytd=" << district["d_ytd"].as<float>() << std::endl;
+      outputs.push_back(
+          format("d_street_1=%s, d_street_2=%s, d_city=%s, d_state=%s, "
+                 "d_zip=%s, d_ytd=%f",
+                 district["d_street_1"].c_str(), district["d_street_2"].c_str(),
+                 district["d_city"].c_str(), district["d_state"].c_str(),
+                 district["d_zip"].c_str(), district["d_ytd"].as<float>()));
+      //      std::cout << "District Information:\n "
+      //                << "d_street_1=" << district["d_street_1"].c_str() << ",
+      //                "
+      //                << "d_street_2=" << district["d_street_2"].c_str() << ",
+      //                "
+      //                << "d_city=" << district["d_city"].c_str() << ", "
+      //                << "d_state=" << district["d_state"].c_str() << ", "
+      //                << "d_zip=" << district["d_zip"].c_str() << ", "
+      //                << "d_ytd=" << district["d_ytd"].as<float>() <<
+      //                std::endl;
       outputs.push_back("Warehouse Information:");
-      outputs.push_back(format("w_street_1=%s, w_street_2=%s, w_city=%s, w_state=%s, w_zip=%s, w_ytd=%f",
-                               district["w_street_1"].c_str(), district["w_street_2"].c_str(), district["w_city"].c_str(),
-                               district["w_state"].c_str(), district["w_zip"].c_str(), district["w_ytd"].as<float>()));
-//      std::cout << "Warehouse Information:\n "
-//                << "w_street_1=" << warehouse["w_street_1"].c_str() << ", "
-//                << "w_street_2=" << warehouse["w_street_2"].c_str() << ", "
-//                << "w_city=" << warehouse["w_city"].c_str() << ", "
-//                << "w_state=" << warehouse["w_state"].c_str() << ", "
-//                << "w_zip=" << warehouse["w_zip"].c_str() << ", "
-//                << "w_ytd=" << warehouse["w_ytd"].as<float>() << std::endl;
+      outputs.push_back(
+          format("w_street_1=%s, w_street_2=%s, w_city=%s, w_state=%s, "
+                 "w_zip=%s, w_ytd=%f",
+                 warehouse["w_street_1"].c_str(), warehouse["w_street_2"].c_str(),
+                 warehouse["w_city"].c_str(), warehouse["w_state"].c_str(),
+                 warehouse["w_zip"].c_str(), warehouse["w_ytd"].as<float>()));
+      //      std::cout << "Warehouse Information:\n "
+      //                << "w_street_1=" << warehouse["w_street_1"].c_str() <<
+      //                ", "
+      //                << "w_street_2=" << warehouse["w_street_2"].c_str() <<
+      //                ", "
+      //                << "w_city=" << warehouse["w_city"].c_str() << ", "
+      //                << "w_state=" << warehouse["w_state"].c_str() << ", "
+      //                << "w_zip=" << warehouse["w_zip"].c_str() << ", "
+      //                << "w_ytd=" << warehouse["w_ytd"].as<float>() <<
+      //                std::endl;
       outputs.push_back(format("Payment: %f", payment_));
-//      std::cout << "Payment:" << payment_ << std::endl;
+      //      std::cout << "Payment:" << payment_ << std::endl;
 
       time(&end_t);
       *diff_t = difftime(end_t, start_t);
+      txn_out_<<InputString<<std::endl;
+      for (auto& output : outputs) {
+        txn_out_ << output << std::endl;
+      }
       return Status::OK();
 
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
+      if (retryCount == MAX_RETRY_COUNT) {
+        err_out_ << InputString << std::endl;
+        err_out_ << e.what() << "\n";
+      }
       LOG_INFO << "Retry time:" << retryCount;
       // if Failed, Wait for 100 ms to try again
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
+
   return Status::Invalid("retry times exceeded max retry count");
 }
 

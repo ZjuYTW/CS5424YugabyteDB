@@ -2,8 +2,10 @@
 #define YCQL_POPULAR_ITEM_TXN_H_
 #include "common/txn/popular_item_txn.h"
 
-namespace ydb_util {
-class YCQLPopularItemTxn : public PopularItemTxn {
+namespace ycql_impl {
+class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
+  using Status = ydb_util::Status;
+
  public:
   explicit YCQLPopularItemTxn(CassSession* session)
       : PopularItemTxn(), conn_(session) {}
@@ -11,8 +13,9 @@ class YCQLPopularItemTxn : public PopularItemTxn {
   Status Execute(double* diff_t) noexcept override { return Status::OK(); }
 
  private:
+  FRIEND_TEST(TxnArgsParserTest, popular_item);
   CassSession* conn_;
 };
-}  // namespace ydb_util
+}  // namespace ycql_impl
 
 #endif
