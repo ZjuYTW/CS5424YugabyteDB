@@ -26,6 +26,7 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
         }
         addCustomerSQL_(c_w_id_, orderLineIds, customers, &txn);
       }
+      txn.commit();
 
       if (customers.size() != 0) {
         outputs.push_back("(a) Customer Identifiers:");
@@ -35,9 +36,14 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
       } else {
         outputs.push_back("(a) No customer found");
       }
-
-      txn.commit();
-      break;
+      
+      txn_out_<<InputString<<std::endl;
+      for (auto& output : outputs) {
+        txn_out_ << output << std::endl;
+      }
+      time(&end_t);
+      *diff_t = difftime(end_t, start_t);
+      return Status::OK();
     } catch (const std::exception& e) {
       retryCount++;
       LOG_ERROR << e.what();
@@ -45,23 +51,11 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
         err_out_ << InputString << std::endl;
         err_out_ << e.what() << "\n";
       }
-      if (!outputs.empty()) {
-        std::vector<std::string>().swap(outputs);  // clean the memory
-      }
       // if Failed, Wait for 100 ms to try again
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  if (retryCount == MAX_RETRY_COUNT) {
-    return Status::Invalid("retry times exceeded max retry count");
-  }
-  txn_out_<<InputString<<std::endl;
-  for (auto& output : outputs) {
-    txn_out_ << output << std::endl;
-  }
-  time(&end_t);
-  *diff_t = difftime(end_t, start_t);
-  return Status::OK();
+  return Status::Invalid("retry times exceeded max retry count");
 }
 
 void YSQLRelatedCustomerTxn::addCustomerSQL_(
