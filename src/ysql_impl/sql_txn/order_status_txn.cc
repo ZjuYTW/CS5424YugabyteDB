@@ -59,7 +59,7 @@ void YSQLOrderStatusTxn::SQL_Output_Customer_Name(int c_w_id, int c_d_id,
   }
 
   for (auto row : res) {
-    outputs.push_back(format("C_FIRST: %s, C_MIDDLE: %s, C_LAST: %S",
+    outputs.push_back(format("C_FIRST: %s, C_MIDDLE: %s, C_LAST: %s",
                              row["C_FIRST"].c_str(), row["C_MIDDLE"].c_str(),
                              row["C_LAST"].c_str()));
     //    std::cout << "C_FIRST: " << row["C_FIRST"].c_str() << ", "
