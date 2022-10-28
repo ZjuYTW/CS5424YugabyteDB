@@ -1,6 +1,8 @@
 #include "ycql_impl/cql_txn/stock_level_txn.h"
-#include "ycql_impl/cql_exe_util.h"
+
 #include <unordered_set>
+
+#include "ycql_impl/cql_exe_util.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;

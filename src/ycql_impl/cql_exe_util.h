@@ -12,7 +12,7 @@
 #include "ycql_impl/defines.h"
 
 namespace ycql_impl {
-template <size_t idx>
+template <size_t idx = 0>
 CassError cql_statement_fill_args(CassStatement* statement) noexcept {
   return CassError::CASS_OK;
 }

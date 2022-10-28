@@ -13,8 +13,7 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   Status st = Status::OK();
   for (d_id_ = 1; d_id_ <= 10; ++d_id_) {
     LOG_INFO << "Delivery process on d_id[" << d_id_ << "]";
-    st = Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this),
-               1);
+    st = Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this), 1);
     if (!st.ok()) {
       LOG_FATAL << "Delivery transaction execution failed"
                 << ", " << st.ToString();
@@ -60,7 +59,7 @@ Status YCQLDeliveryTxn::executeLocal() noexcept {
 
   LOG_DEBUG << "update Customer Bal And Delivery Cnt";
   st = updateCustomerBalAndDeliveryCnt(c_id, total_amount);
-  if (!st.ok()){
+  if (!st.ok()) {
     LOG_DEBUG << "update Customer Bal failed, " << st.ToString();
     return st;
   }
@@ -166,13 +165,13 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
 
 Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(
     int32_t c_id, int64_t total_amount) noexcept {
-  std::string stmt =
-      "UPDATE " + YCQLKeyspace +
-      ".customer "
-      "SET c_balance = c_balance + ?, c_delivery_cnt = c_delivery_cnt + 1 "
-      "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;";
-  return ycql_impl::execute_write_cql(conn_, stmt, total_amount, w_id_, d_id_,
-                                      c_id);
+  std::string stmt = "UPDATE " + YCQLKeyspace +
+                     ".customer "
+                     "SET c_balance = c_balance + " +
+                     std::to_string(total_amount) +
+                     ", c_delivery_cnt = c_delivery_cnt + 1 "
+                     "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?";
+  return ycql_impl::execute_write_cql(conn_, stmt, (int32_t)w_id_, d_id_, c_id);
 }
 
 };  // namespace ycql_impl
