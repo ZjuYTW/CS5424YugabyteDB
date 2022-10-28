@@ -17,7 +17,7 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
       std::string getTopBalanceSQL = format(
           "SELECT c_w_id, c_d_id, c_balance, c_first, c_middle, c_last "
           "FROM customer "
-          "ORDER BY c_balance DESC "
+          "ORDER BY c_balance DESC NULLS LAST "
           "LIMIT %s;",
           std::to_string(TOP_K).c_str());
       pqxx::result customers = txn.exec(getTopBalanceSQL);
@@ -37,11 +37,19 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
         outputs.push_back(
             format("(d) Customer's District: %s", district["d_name"].c_str()));
       }
+      txn.commit();
+
       if (customers.empty()) {
         throw std::runtime_error("Top Balance Customers not found");
       }
-      txn.commit();
-      break;
+
+      time(&end_t);
+      *diff_t = difftime(end_t, start_t);
+      txn_out_<<InputString<<std::endl;
+      for (auto& output : outputs) {
+        txn_out_ << output << std::endl;
+      }
+      return Status::OK();
     } catch (const std::exception& e) {
       retryCount++;
       if (retryCount == MAX_RETRY_COUNT) {
@@ -49,23 +57,11 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
         err_out_ << e.what() << "\n";
       }
       LOG_ERROR << e.what();
-      if (!outputs.empty()) {
-        std::vector<std::string>().swap(outputs);  // clean the memory
-      }
       // if Failed, Wait for 100 ms to try again
       std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
     }
   }
-  if (retryCount == MAX_RETRY_COUNT) {
-    return Status::Invalid("retry times exceeded max retry count");
-  }
-  txn_out_<<InputString<<std::endl;
-  for (auto& output : outputs) {
-    txn_out_ << output << std::endl;
-  }
-  time(&end_t);
-  *diff_t = difftime(end_t, start_t);
-  return Status::OK();
+  return Status::Invalid("retry times exceeded max retry count");
 }
 
 pqxx::row YSQLTopBalanceTxn::getWarehouseSQL_(int w_id, pqxx::work* txn) {
