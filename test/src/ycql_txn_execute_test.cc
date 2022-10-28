@@ -84,7 +84,20 @@ TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {}
 
 TEST_F(CQLTxnExecuteTest, PopularItemTxnTest) {}
 
-TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {}
+TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {
+  ydb_util::Txn* txn = new YCQLRelatedCustomerTxn(conn);
+  auto related_customer_txn = dynamic_cast<YCQLRelatedCustomerTxn*>(txn);
+  ASSERT_NE(related_customer_txn, nullptr);
+
+  related_customer_txn->c_w_id_ = 1;
+  related_customer_txn->c_d_id_ = 1;
+  related_customer_txn->c_id_ = 1;
+
+  double elapsedTime;
+  auto st = related_customer_txn->Execute(&elapsedTime);
+  LOG_INFO << st.ToString();
+  ASSERT_TRUE(st.ok());
+}
 
 TEST_F(CQLTxnExecuteTest, StockLevelTxnTest) {
   ydb_util::Txn* txn = new YCQLStockLevelTxn(conn);

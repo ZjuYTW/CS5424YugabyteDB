@@ -18,9 +18,9 @@ Status YCQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
 }
 
 Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
-  std::cout << format("\t1. Customer identifier (%d, %d, %d)", c_w_id_, c_d_id_,
-                      c_id_)
-            << std::endl;
+  std::cout
+      << format("\t1. Customer identifier (%d, %d, %d)", c_w_id_, c_d_id_, c_id_)
+      << std::endl;
 
   Status st = Status::OK();
 
@@ -118,6 +118,7 @@ std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getCustomerId(
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Customer not found"), it};
   }
+  cass_iterator_next(it);
   return {st, it};
 }
 

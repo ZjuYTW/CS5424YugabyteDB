@@ -21,6 +21,7 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
 
  private:
   FRIEND_TEST(TxnArgsParserTest, related_customer);
+  FRIEND_TEST(CQLTxnExecuteTest, RelatedCustomerTxnTest);
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

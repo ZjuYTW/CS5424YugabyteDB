@@ -25,8 +25,7 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
 
   struct CustomerInfo {
     int64_t c_bal;
-    int32_t c_w_id, c_d_id;
-    std::string c_name;
+    int32_t c_w_id, c_d_id, c_id;
     bool operator<(const CustomerInfo& oth) const {
       return this->c_bal < oth.c_bal;
     }
@@ -36,8 +35,9 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
   };
 
   Status executeLocal() noexcept;
-  std::pair<Status, CassIterator*> getTopBalCustomersInDistrict(
-      int32_t d_id) noexcept;
+  std::pair<Status, CassIterator*> getAllCustomers() noexcept;
+  std::pair<Status, CassIterator*> getCustomerName(
+      const CustomerInfo &c_info) noexcept;
   std::pair<Status, CassIterator*> getWarehouse(int32_t w_id) noexcept;
   std::pair<Status, CassIterator*> getDistrict(int32_t w_id,
                                                int32_t d_id) noexcept;
