@@ -56,8 +56,6 @@ C_DATA VARCHAR,
 PRIMARY KEY (C_D_ID, C_W_ID, C_ID)
 ) WITH CLUSTERING ORDER BY (C_W_ID ASC, C_ID ASC);
 
-CREATE INDEX customer_idx ON ybtest.customer(C_D_ID, C_W_ID, C_ID);
-
 DROP TABLE IF EXISTS ybtest.orders;
 CREATE TABLE IF NOT EXISTS ybtest.orders (
 O_W_ID INT,
