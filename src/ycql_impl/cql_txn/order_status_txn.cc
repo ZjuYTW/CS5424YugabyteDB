@@ -67,11 +67,11 @@ Status YCQLOrderStatusTxn::executeLocal() noexcept {
                      GetStringValue(GetValueFromCassRow<int32_t>(
                                         orderLine_it, "ol_supply_w_id"))
                          .c_str(),
-                     GetStringValue(GetValueFromCassRow<int64_t>(orderLine_it,
+                     GetStringValue(GetValueFromCassRow<int32_t>(orderLine_it,
                                                                  "ol_quantity"),
                                     100)
                          .c_str(),
-                     GetStringValue(GetValueFromCassRow<int32_t>(orderLine_it,
+                     GetStringValue(GetValueFromCassRow<int64_t>(orderLine_it,
                                                                  "ol_amount"))
                          .c_str(),
                      GetStringValue(GetValueFromCassRow<int64_t>(
