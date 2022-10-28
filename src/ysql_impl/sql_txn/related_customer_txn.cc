@@ -60,7 +60,7 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
 }
 
 void YSQLRelatedCustomerTxn::addCustomerSQL_(
-    int w_id, std::vector<int> items, std::unordered_set<std::string> customers,
+    int w_id, std::vector<int> items, std::unordered_set<std::string>& customers,
     pqxx::work* txn) {
 
 
