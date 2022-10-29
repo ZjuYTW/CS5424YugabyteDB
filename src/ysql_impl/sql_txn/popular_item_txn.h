@@ -15,7 +15,7 @@ class YSQLPopularItemTxn : public PopularItemTxn {
 
  private:
   std::vector<std::string> outputs;
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   pqxx::connection* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

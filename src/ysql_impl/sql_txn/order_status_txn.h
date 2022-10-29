@@ -20,7 +20,7 @@ class YSQLOrderStatusTxn : public OrderStatusTxn {
   void SQL_Get_Item(int ol_w_id, int ol_d_id, int ol_o_id, pqxx::work* txn);
 
   pqxx::connection* conn_;
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   std::vector<std::string> outputs;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

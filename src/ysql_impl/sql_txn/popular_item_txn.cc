@@ -21,6 +21,7 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
                  "examined:%d",
                  w_id_, d_id_, l_));
       pqxx::work txn(*conn_);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       std::string nxtOrderQuery = format(
           "SELECT d_next_o_id FROM district WHERE d_w_id = %d AND d_id = %d",
           w_id_, d_id_);
@@ -110,7 +111,8 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
       if (!outputs.empty()) {
         std::vector<std::string>().swap(outputs);  // clean the memory
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
   if (retryCount == MAX_RETRY_COUNT) {

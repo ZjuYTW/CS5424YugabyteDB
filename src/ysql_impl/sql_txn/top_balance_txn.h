@@ -15,7 +15,7 @@ class YSQLTopBalanceTxn : public TopBalanceTxn {
 
  private:
   std::vector<std::string> outputs;
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   static constexpr int TOP_K = 10;
 
   pqxx::row getWarehouseSQL_(int w_id, pqxx::work* txn);

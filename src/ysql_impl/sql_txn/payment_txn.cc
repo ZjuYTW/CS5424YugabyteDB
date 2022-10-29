@@ -14,6 +14,7 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::work txn(*conn_);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       pqxx::row warehouse = getWarehouseSQL_(w_id_, &txn);
       double old_w_ytd = std::stod(warehouse["w_ytd"].c_str());
       double new_w_ytd = old_w_ytd + payment_;
@@ -143,7 +144,8 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       }
       LOG_INFO << "Retry time:" << retryCount;
       // if Failed, Wait for 100 ms to try again
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
 

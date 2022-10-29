@@ -35,7 +35,7 @@ class SQLDriver {
         outDir + "/txn_log/sql_" + std::to_string(idx_) + ".out";
     std::string outputErr =
         outDir + "/err_log/sql_" + std::to_string(idx_) + ".out";
-
+    srand(idx_);
     auto out_txn_fs = std::ofstream(outputTXN, std::ios::out);
     auto out_measure_fs = std::ofstream(outputMeasure, std::ios::out);
     auto out_err_fs = std::ofstream(outputErr, std::ios::out);

@@ -14,7 +14,7 @@ class YSQLDeliveryTxn : public DeliveryTxn {
   Status Execute(double* diff_t) noexcept;
 
  private:
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   pqxx::connection* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
