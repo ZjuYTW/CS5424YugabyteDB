@@ -60,18 +60,26 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
     if (!st.ok()) return st;
     std::cout << format("\t3.For each popular item in order %d:\n", o_id)
               << std::endl;
+    // Note: Here we expect iterate just once
     while (cass_iterator_next(orderLine_it)) {
       auto ol_quantity =
-          GetValueFromCassRow<int32_t>(orderLine_it, "max_ol_quantity");
-      auto i_id = GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id").value();
-      CassIterator* item_it = nullptr;
-      std::tie(st, item_it) = getItemName(i_id);
-      if (!st.ok()) return st;
-      auto i_name = GetValueFromCassRow<std::string>(item_it, "i_name").value();
-      popularItems[i_name] += 1;
-      std::cout << format("\t\t(i).Item name: %s", i_name.c_str()) << std::endl;
-      std::cout << format("\t\t(i).Quantity ordered: %s", ol_quantity)
-                << std::endl;
+          GetValueFromCassRow<int32_t>(orderLine_it, "max_quantity").value();
+      auto i_ids =
+          GetValueFromCassRow<std::vector<int32_t>>(orderLine_it, "item_ids")
+              .value();
+      for (auto i_id : i_ids) {
+        CassIterator* item_it;
+        std::tie(st, item_it) = getItemName(i_id);
+        if (!st.ok()) return st;
+        auto i_name =
+            GetValueFromCassRow<std::string>(item_it, "i_name").value();
+        cass_iterator_free(item_it);
+        popularItems[i_name] += 1;
+        std::cout << format("\t\t(i).Item name: %s", i_name.c_str())
+                  << std::endl;
+        std::cout << format("\t\t(i).Quantity ordered: %d", ol_quantity)
+                  << std::endl;
+      }
     }
     if (orderLine_it) cass_iterator_free(orderLine_it);
 
@@ -94,13 +102,16 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
 std::pair<Status, CassIterator*> YCQLPopularItemTxn::getMaxOrderLines(
     int32_t o_id) noexcept {
   std::string stmt =
-      "SELECT ol_i_id, MAX(ol_quantity) as max_ol_quantity "
-      "FROM " +
-      YCQLKeyspace +
-      ".orderline "
-      "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
-      "GROUP BY ol_i_id "
-      ";";
+      "SELECT max_quantity, item_ids FROM " + YCQLKeyspace +
+      ".order_max_quantity WHERE o_w_id = ? AND o_d_id = ? AND o_id = ?";
+
+  // std::string stmt =
+  // "SELECT ol_i_id, MAX(ol_quantity) as max_ol_quantity "
+  // "FROM " +
+  // YCQLKeyspace +
+  // ".orderline "
+  // "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
+  // "GROUP BY ol_i_id";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
   return {st, it};
@@ -116,6 +127,9 @@ std::pair<Status, CassIterator*> YCQLPopularItemTxn::getNextOrder() noexcept {
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
+  if (!st.ok()) {
+    return {st, it};
+  }
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("District not found"), it};
   }
@@ -144,11 +158,14 @@ std::pair<Status, CassIterator*> YCQLPopularItemTxn::getCustomerName(
       "SELECT c_first, c_middle, c_last "
       "FROM " +
       YCQLKeyspace +
-      ".customers "
+      ".customer "
       "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, c_id);
+  if (!st.ok()) {
+    return {st, it};
+  }
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Customer not found"), it};
   }
@@ -166,6 +183,9 @@ std::pair<Status, CassIterator*> YCQLPopularItemTxn::getItemName(
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, i_id);
+  if (!st.ok()) {
+    return {st, it};
+  }
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Item not found"), it};
   }

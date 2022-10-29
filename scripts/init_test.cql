@@ -69,6 +69,16 @@ O_ENTRY_D TIMESTAMP,
 PRIMARY KEY (O_W_ID, O_ID, O_D_ID)
 );
 
+DROP TABLE IF EXISTS ybtest.order_max_quantity;
+CREATE TABLE IF NOT EXISTS ybtest.order_max_quantity (
+  O_W_ID INT,
+  O_D_ID INT,
+  O_ID INT,
+  MAX_QUANTITY INT,
+  ITEM_IDS LIST<INT>,
+  PRIMARY KEY (O_W_ID, O_D_ID, O_ID)
+);
+
 DROP TABLE IF EXISTS ybtest.item;
 CREATE TABLE IF NOT EXISTS ybtest.item (
 I_ID INT,
@@ -144,4 +154,8 @@ WITH DELIMITER=',' AND NULL='null';
 
 COPY ybtest.stock (S_W_ID, S_I_ID, S_QUANTITY, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_01, S_DIST_02, S_DIST_03, S_DIST_04, S_DIST_05, S_DIST_06, S_DIST_07, S_DIST_08, S_DIST_09, S_DIST_10, S_DATA)
 FROM 'data/test_files/stock.csv'
+WITH DELIMITER=',' AND NULL='null';
+
+COPY ybtest.order_max_quantity (O_W_ID, O_D_ID, O_ID, MAX_QUANTITY, ITEM_IDS)
+FROM 'data/test_files/order_max_quantity.csv'
 WITH DELIMITER=',' AND NULL='null';

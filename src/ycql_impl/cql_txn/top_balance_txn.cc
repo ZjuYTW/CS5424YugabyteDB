@@ -27,16 +27,14 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
   if (!st.ok()) return st;
 
   while (cass_iterator_next(customer_it)) {
-    auto c_bal =
-        GetValueFromCassRow<int64_t>(customer_it, "c_balance").value();
+    auto c_bal = GetValueFromCassRow<int64_t>(customer_it, "c_balance").value();
     if (top_customers.size() == TOP_K && top_customers.top().c_bal >= c_bal)
       continue;
     auto w_id = GetValueFromCassRow<int32_t>(customer_it, "c_w_id").value();
     auto d_id = GetValueFromCassRow<int32_t>(customer_it, "c_d_id").value();
     auto c_id = GetValueFromCassRow<int32_t>(customer_it, "c_id").value();
     top_customers.push(CustomerInfo{
-        .c_bal = c_bal, .c_w_id = w_id, .c_d_id = d_id, .c_id = c_id
-    });
+        .c_bal = c_bal, .c_w_id = w_id, .c_d_id = d_id, .c_id = c_id});
     if (top_customers.size() > TOP_K) top_customers.pop();
     assert(top_customers.size() <= 10);
   }
@@ -46,7 +44,7 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
 
   while (!top_customers.empty()) {
     auto customer = top_customers.top();
-    CassIterator *customer_name_it = nullptr;
+    CassIterator* customer_name_it = nullptr;
     std::tie(st, customer_it) = getCustomerName(customer);
     if (!st.ok()) return st;
     auto c_fst =
@@ -64,8 +62,9 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
     if (!st.ok()) return st;
     auto d_name = GetValueFromCassRow<std::string>(district_it, "d_name");
 
-    std::cout << format("\t%d. Customer name: (%s, %s, %s)", top_customers.size(),
-                        c_fst.c_str(), c_mid.c_str(), c_lst.c_str())
+    std::cout << format("\t%d. Customer name: (%s, %s, %s)",
+                        top_customers.size(), c_fst.c_str(), c_mid.c_str(),
+                        c_lst.c_str())
               << std::endl;
     std::cout << format("\t\tCustomer balance: %lf",
                         static_cast<double>(customer.c_bal / 100.0))
@@ -94,7 +93,8 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getAllCustomers() noexcept {
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getCustomerName(const CustomerInfo &c_info) noexcept {
+std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getCustomerName(
+    const CustomerInfo& c_info) noexcept {
   std::string stmt =
       "SELECT c_first, c_middle, c_last "
       "FROM " +
@@ -103,7 +103,8 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getCustomerName(const Custom
       "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_info.c_w_id, c_info.c_d_id, c_info.c_id);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_info.c_w_id,
+                                        c_info.c_d_id, c_info.c_id);
   if (!st.ok()) return {st, it};
   if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("Customer not found"), it};

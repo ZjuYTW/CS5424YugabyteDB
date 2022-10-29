@@ -80,12 +80,14 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
             << std::endl;
   std::cout << format("\t\tC_CREDIT_LIM: %s",
                       GetStringValue(GetValueFromCassRow<int64_t>(
-                                         customer_it, "c_credit_lim"), 100)
+                                         customer_it, "c_credit_lim"),
+                                     100)
                           .c_str())
             << std::endl;
   std::cout << format("\t\tC_DISCOUNT: %s",
                       GetStringValue(GetValueFromCassRow<int64_t>(customer_it,
-                                                                 "c_discount"), 10000)
+                                                                  "c_discount"),
+                                     10000)
                           .c_str())
             << std::endl;
   std::cout << format("\t\tC_BALANCE: %s",
@@ -204,7 +206,7 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getWarehouse() noexcept {
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_);
-  if(!st.ok()){
+  if (!st.ok()) {
     assert(!it);
     return {st, it};
   }
@@ -222,7 +224,7 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getDistrict() noexcept {
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
-  if(!st.ok()){
+  if (!st.ok()) {
     assert(!it);
     return {st, it};
   }

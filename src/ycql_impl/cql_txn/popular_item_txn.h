@@ -20,6 +20,7 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
 
  private:
   FRIEND_TEST(TxnArgsParserTest, popular_item);
+  FRIEND_TEST(CQLTxnExecuteTest, PopularItemTxnTest);
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

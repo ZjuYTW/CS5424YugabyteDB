@@ -192,6 +192,17 @@ std::optional<T> GetValueFromCassRow(CassIterator* it,
     }
     assert(rc == CASS_OK);
     return std::string(buf, sz);
+  } else if constexpr (std::is_same_v<std::vector<int32_t>, T>) {
+    auto tmp_it = cass_iterator_from_collection(
+        cass_row_get_column_by_name(row, col_name));
+    assert(tmp_it != nullptr);
+    while (cass_iterator_next(tmp_it)) {
+      int32_t output;
+      rc = cass_value_get_int32(cass_iterator_get_value(tmp_it), &output);
+      assert(rc == CASS_OK);
+      ret.push_back(output);
+    }
+    cass_iterator_free(tmp_it);
   } else {
     assert(false);
   }

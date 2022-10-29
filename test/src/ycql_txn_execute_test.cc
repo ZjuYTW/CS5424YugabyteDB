@@ -90,7 +90,18 @@ TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {
   ASSERT_TRUE(st.ok());
 }
 
-TEST_F(CQLTxnExecuteTest, PopularItemTxnTest) {}
+TEST_F(CQLTxnExecuteTest, PopularItemTxnTest) {
+  auto popular_item_txn = YCQLPopularItemTxn(conn);
+  popular_item_txn.w_id_ = 1;
+  popular_item_txn.d_id_ = 1;
+  popular_item_txn.l_ = 2;
+  double elapsedTime;
+  auto st = popular_item_txn.Execute(&elapsedTime);
+  if (!st.ok()) {
+    LOG_DEBUG << st.ToString();
+  }
+  ASSERT_TRUE(st.ok());
+}
 
 TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {
   ydb_util::Txn* txn = new YCQLRelatedCustomerTxn(conn);
