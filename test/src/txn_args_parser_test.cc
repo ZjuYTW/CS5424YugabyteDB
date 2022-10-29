@@ -1,12 +1,11 @@
 #include "common/util/logger.h"
 #include "gtest/gtest.h"
+#include "ycql_impl/defines.h"
 #include "ycql_impl/ycql_parser.h"
 
 namespace ycql_impl {
 
 const std::string TEST_FILE_PATH = "data/xact_files/";
-const std::string TEST_TXN_OUT_PATH = "";
-const std::string TEST_ERR_OUT_PATH = "";
 
 using namespace ydb_util;
 

@@ -1,9 +1,8 @@
 #include "gtest/gtest.h"
 #include "ycql_impl/cql_driver.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
-const std::string TEST_TXN_OUT_PATH = "";
-const std::string TEST_ERR_OUT_PATH = "";
 
 CassError connect_session(CassSession* session, const CassCluster* cluster) {
   CassError rc = CASS_OK;
