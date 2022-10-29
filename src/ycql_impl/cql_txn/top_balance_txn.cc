@@ -104,10 +104,9 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getCustomerName(const Custom
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_info.c_w_id, c_info.c_d_id, c_info.c_id);
-  if (!cass_iterator_next(it)) {
+  if (!st.ok()) return {st, it};
+  if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("Customer not found"), it};
-  }
-  cass_iterator_next(it);
   return {st, it};
 }
 
@@ -122,10 +121,9 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id);
-  if (!cass_iterator_next(it)) {
+  if (!st.ok()) return {st, it};
+  if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("Warehouse not found"), it};
-  }
-  cass_iterator_next(it);
   return {st, it};
 }
 
@@ -140,10 +138,9 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, d_id);
-  if (!cass_iterator_next(it)) {
+  if (!st.ok()) return {st, it};
+  if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("District not found"), it};
-  }
-  cass_iterator_next(it);
   return {st, it};
 }
 
