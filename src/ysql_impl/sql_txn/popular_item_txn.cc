@@ -10,8 +10,7 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Popular items Transaction started";
   auto InputString = format("I %d %d %d", w_id_, d_id_,l_);
 
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
@@ -121,8 +120,8 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   for (auto& output : outputs) {
     txn_out_ << output << std::endl;
   }
-  time(&end_t);
-  *diff_t = difftime(end_t, start_t);
+  auto end = std::chrono::system_clock::now();
+  *diff_t = (end-start).count();
   return Status::OK();
 }
 }  // namespace ydb_util

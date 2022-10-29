@@ -9,8 +9,7 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Delivery Transaction started";
   auto DeliveryInput = format("D %d %d", w_id_, carrier_id_);
 
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
 
   for (int d_id = 1; d_id <= 10; d_id++) {
     int retryCount = 0;
@@ -93,8 +92,8 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
       return Status::Invalid("retry times exceeded max retry count");
     }
   }
-  time(&end_t);
-  *diff_t = difftime(end_t, start_t);
+  auto end = std::chrono::system_clock::now();
+  *diff_t = (end-start).count();
   return Status::OK();
 }
 };  // namespace ydb_util

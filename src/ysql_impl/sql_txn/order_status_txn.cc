@@ -9,8 +9,7 @@ namespace ydb_util {
 Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Order Status Transaction started";
 
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   int retryCount = 0;
   auto OrderStatusInput = format("O %d %d %d", c_w_id_, c_d_id_,c_id_);
 
@@ -21,8 +20,8 @@ Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
       int O_ID = SQL_Get_Last_O_ID(c_w_id_, c_d_id_, c_id_, &txn);
       SQL_Get_Item(c_w_id_, c_d_id_, O_ID, &txn);
 
-      time(&end_t);
-      *diff_t = difftime(end_t, start_t);
+      auto end = std::chrono::system_clock::now();
+      *diff_t = (end-start).count();
       txn.commit();
       txn_out_<<OrderStatusInput<<std::endl;
       for (auto& output : outputs) {

@@ -6,8 +6,7 @@ namespace ydb_util {
 Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Top-Balance Transaction started";
   auto InputString = format("T");
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   pqxx::work txn(*conn_);
   int retryCount = 0;
 
@@ -43,8 +42,8 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
         throw std::runtime_error("Top Balance Customers not found");
       }
 
-      time(&end_t);
-      *diff_t = difftime(end_t, start_t);
+      auto end = std::chrono::system_clock::now();
+      *diff_t = (end-start).count();
       txn_out_<<InputString<<std::endl;
       for (auto& output : outputs) {
         txn_out_ << output << std::endl;

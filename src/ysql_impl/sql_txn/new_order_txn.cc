@@ -11,8 +11,7 @@ namespace ydb_util {
 Status YSQLNewOrderTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "New Order Transaction started";
 
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   int retryCount = 0;
   auto NewOrder = format("N %d %d %d", w_id_, d_id_, c_id_);
   while (retryCount < MAX_RETRY_COUNT) {
@@ -82,8 +81,9 @@ Status YSQLNewOrderTxn::Execute(double* diff_t) noexcept {
         txn_out_ << output + "\n";
       }
 
-      time(&end_t);
-      *diff_t = difftime(end_t, start_t);
+      auto end = std::chrono::system_clock::now();
+      *diff_t = (end-start).count();
+      std::cout << *diff_t << std::endl;
       return Status::OK();
 
     } catch (const std::exception& e) {

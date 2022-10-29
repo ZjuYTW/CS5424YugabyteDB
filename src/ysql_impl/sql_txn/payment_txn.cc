@@ -8,8 +8,7 @@ namespace ydb_util {
 Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
   auto InputString = format("P %d %d %d",w_id_,d_id_,c_id_);
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
@@ -127,8 +126,8 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       outputs.push_back(format("Payment: %f", payment_));
       //      std::cout << "Payment:" << payment_ << std::endl;
 
-      time(&end_t);
-      *diff_t = difftime(end_t, start_t);
+      auto end = std::chrono::system_clock::now();
+      *diff_t = (end-start).count();
       txn_out_<<InputString<<std::endl;
       for (auto& output : outputs) {
         txn_out_ << output << std::endl;

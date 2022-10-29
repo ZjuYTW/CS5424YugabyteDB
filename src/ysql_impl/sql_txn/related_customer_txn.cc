@@ -6,8 +6,7 @@ namespace ydb_util {
 Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Related-Customer Transaction started";
   auto InputString = format("R %d %d %d",c_w_id_,c_d_id_,c_id_);
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   pqxx::work txn(*conn_);
   int retryCount = 0;
 
@@ -41,8 +40,8 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
       for (auto& output : outputs) {
         txn_out_ << output << std::endl;
       }
-      time(&end_t);
-      *diff_t = difftime(end_t, start_t);
+      auto end = std::chrono::system_clock::now();
+      *diff_t = (end-start).count();
       return Status::OK();
     } catch (const std::exception& e) {
       retryCount++;

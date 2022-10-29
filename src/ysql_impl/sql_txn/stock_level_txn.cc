@@ -9,8 +9,7 @@ namespace ydb_util {
 Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock Level Transaction started";
   auto StockLevelInput = format("S %d %d %d %d", w_id_, d_id_,t_,l_);
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
@@ -33,8 +32,8 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
                  "is below the threshold: %d",
                  items_below_threshold));
       txn.commit();
-      time(&end_t);
-      *diff_t = difftime(end_t, start_t);
+      auto end = std::chrono::system_clock::now();
+      *diff_t = (end-start).count();
       txn_out_<<StockLevelInput<<std::endl;
       for (auto& output : outputs) {
         txn_out_ << output << std::endl;
