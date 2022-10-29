@@ -126,6 +126,7 @@ TEST_F(CQLTxnExecuteTest, StockLevelTxnTest) {
   stock_level_txn->w_id_ = 1;
   stock_level_txn->d_id_ = 1;
   stock_level_txn->l_ = 2;
+  stock_level_txn->t_ = 60;
 
   double elapsedTime;
   auto st = stock_level_txn->Execute(&elapsedTime);

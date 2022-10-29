@@ -44,7 +44,6 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
 
   while (!top_customers.empty()) {
     auto customer = top_customers.top();
-    CassIterator* customer_name_it = nullptr;
     std::tie(st, customer_it) = getCustomerName(customer);
     if (!st.ok()) return st;
     auto c_fst =

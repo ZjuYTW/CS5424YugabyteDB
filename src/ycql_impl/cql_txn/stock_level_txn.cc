@@ -6,6 +6,7 @@
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
+using ydb_util::format;
 
 Status YCQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock-level Transaction started";
@@ -40,12 +41,12 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
     std::tie(st, quantity_it) = getItemQuantityFromStock(i_id);
     if (!st.ok()) return st;
     auto quantity = GetValueFromCassRow<int32_t>(quantity_it, "s_quantity");
-    if (quantity < t_) ++items_below_threshold;
-
+    if (quantity.value() < t_) ++items_below_threshold;
+    LOG_INFO << "i_id: " << i_id << ", quantity: " << quantity.value();
     if (quantity_it) cass_iterator_free(quantity_it);
   }
-  std::cout << "Total number of items in S where its stock quantity at W_ID is "
-               "below the threshold: "
+  std::cout << format("Total number of items in S where its stock quantity at "
+                 "(W_ID %d, D_ID %d) is below the threshold %d: ", w_id_, d_id_, t_)
             << items_below_threshold << std::endl;
 
   if (item_it) cass_iterator_free(item_it);
@@ -62,10 +63,9 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getNextOrder() noexcept {
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
-  if (!cass_iterator_next(it)) {
+  if (!st.ok()) return {st, it};
+  if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("NextOrder: District not found"), it};
-  }
-  cass_iterator_next(it);
   return {st, it};
 }
 
@@ -79,7 +79,6 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemsInLastOrders(
       "WHERE ol_w_id = ? AND ol_d_id = ? "
       "AND ol_o_id >= ? AND ol_o_id < ? "
       ";";
-  LOG_INFO << stmt;
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_,
                                         next_o_id - l_, next_o_id);
@@ -96,12 +95,10 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemQuantityFromStock(
       "WHERE s_w_id = ? AND s_i_id = ? "
       ";";
   CassIterator* it = nullptr;
-  LOG_INFO << stmt;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, i_id);
-  if (!cass_iterator_next(it)) {
+  if (!st.ok()) return {st, it};
+  if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("Item quantity not found"), it};
-  }
-  cass_iterator_next(it);
   return {st, it};
 }
 
