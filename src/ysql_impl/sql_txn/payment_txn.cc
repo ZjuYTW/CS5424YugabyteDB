@@ -7,7 +7,7 @@
 namespace ydb_util {
 Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
-  auto InputString = format("P %d %d %d",w_id_,d_id_,c_id_);
+  auto InputString = format("P %d %d %d", w_id_, d_id_, c_id_);
   time_t start_t, end_t;
   time(&start_t);
   int retryCount = 0;
@@ -108,12 +108,12 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       //                << "d_ytd=" << district["d_ytd"].as<float>() <<
       //                std::endl;
       outputs.push_back("Warehouse Information:");
-      outputs.push_back(
-          format("w_street_1=%s, w_street_2=%s, w_city=%s, w_state=%s, "
-                 "w_zip=%s, w_ytd=%f",
-                 warehouse["w_street_1"].c_str(), warehouse["w_street_2"].c_str(),
-                 warehouse["w_city"].c_str(), warehouse["w_state"].c_str(),
-                 warehouse["w_zip"].c_str(), warehouse["w_ytd"].as<float>()));
+      outputs.push_back(format(
+          "w_street_1=%s, w_street_2=%s, w_city=%s, w_state=%s, "
+          "w_zip=%s, w_ytd=%f",
+          warehouse["w_street_1"].c_str(), warehouse["w_street_2"].c_str(),
+          warehouse["w_city"].c_str(), warehouse["w_state"].c_str(),
+          warehouse["w_zip"].c_str(), warehouse["w_ytd"].as<float>()));
       //      std::cout << "Warehouse Information:\n "
       //                << "w_street_1=" << warehouse["w_street_1"].c_str() <<
       //                ", "
@@ -129,7 +129,7 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
 
       time(&end_t);
       *diff_t = difftime(end_t, start_t);
-      txn_out_<<InputString<<std::endl;
+      txn_out_ << InputString << std::endl;
       for (auto& output : outputs) {
         txn_out_ << output << std::endl;
       }

@@ -7,8 +7,9 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   using Status = ydb_util::Status;
 
  public:
-  explicit YCQLNewOrderTxn(CassSession* session)
-      : NewOrderTxn(), conn_(session) {}
+  explicit YCQLNewOrderTxn(CassSession* session, std::ofstream& txn_out,
+                           std::ofstream& err_out)
+      : NewOrderTxn(), conn_(session), txn_out_(txn_out), err_out_(err_out) {}
 
   virtual ~YCQLNewOrderTxn() = default;
 
@@ -45,6 +46,9 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
                       int64_t total_amount) noexcept;
 
   CassSession* conn_;
+
+  std::ofstream& txn_out_;
+  std::ofstream& err_out_;
 
   FRIEND_TEST(CQLNewOrderTxnTest, NewOrderTest1);
   FRIEND_TEST(TxnArgsParserTest, new_order);

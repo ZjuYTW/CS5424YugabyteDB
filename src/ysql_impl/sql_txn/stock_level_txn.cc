@@ -8,7 +8,7 @@
 namespace ydb_util {
 Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock Level Transaction started";
-  auto StockLevelInput = format("S %d %d %d %d", w_id_, d_id_,t_,l_);
+  auto StockLevelInput = format("S %d %d %d %d", w_id_, d_id_, t_, l_);
   time_t start_t, end_t;
   time(&start_t);
   int retryCount = 0;
@@ -35,7 +35,7 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
       txn.commit();
       time(&end_t);
       *diff_t = difftime(end_t, start_t);
-      txn_out_<<StockLevelInput<<std::endl;
+      txn_out_ << StockLevelInput << std::endl;
       for (auto& output : outputs) {
         txn_out_ << output << std::endl;
       }

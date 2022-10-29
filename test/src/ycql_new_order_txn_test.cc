@@ -2,6 +2,9 @@
 #include "ycql_impl/cql_driver.h"
 
 namespace ycql_impl {
+const std::string TEST_TXN_OUT_PATH = "";
+const std::string TEST_ERR_OUT_PATH = "";
+
 CassError connect_session(CassSession* session, const CassCluster* cluster) {
   CassError rc = CASS_OK;
   CassFuture* future = cass_session_connect(session, cluster);
@@ -16,6 +19,8 @@ CassError connect_session(CassSession* session, const CassCluster* cluster) {
 class CQLNewOrderTxnTest : public ::testing::Test {
  public:
   void SetUp() override {
+    txn_out_ = std::ofstream(TEST_TXN_OUT_PATH + "txn_out.out", std::ios::out);
+    err_out_ = std::ofstream(TEST_ERR_OUT_PATH + "err_out.out", std::ios::out);
     LOG_INFO << "connecting to server...";
     CassCluster* cluster = cass_cluster_new();
     cass_cluster_set_contact_points(cluster, hosts);
@@ -25,11 +30,13 @@ class CQLNewOrderTxnTest : public ::testing::Test {
 
  protected:
   CassSession* conn = nullptr;
+  std::ofstream txn_out_;
+  std::ofstream err_out_;
   static constexpr char hosts[] = "127.0.0.1";
 };
 
 TEST_F(CQLNewOrderTxnTest, NewOrderTest1) {
-  ydb_util::Txn* txn = new YCQLNewOrderTxn(conn);
+  ydb_util::Txn* txn = new YCQLNewOrderTxn(conn, txn_out_, err_out_);
   auto new_order_txn = dynamic_cast<YCQLNewOrderTxn*>(txn);
   // TODO(ZjuYTW): populate new_order_txn and test
   new_order_txn->c_id_ = 1;

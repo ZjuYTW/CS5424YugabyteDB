@@ -36,38 +36,38 @@ class YSQLParser : public Parser {
         // Payment
         // Unimplemented yet
         LOG_INFO << "Payment";
-        txn = new YSQLPaymentTxn(conn_,txn_out_,err_out_);
+        txn = new YSQLPaymentTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'D': {
         // Delivery
         LOG_INFO << "Delivery";
-        txn = new YSQLDeliveryTxn(conn_,txn_out_,err_out_);
+        txn = new YSQLDeliveryTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'O': {
         // Order-Status
-        txn = new YSQLOrderStatusTxn(conn_,txn_out_,err_out_);
+        txn = new YSQLOrderStatusTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'S': {
         // Stock-Level
-        txn = new YSQLStockLevelTxn(conn_,txn_out_,err_out_);
+        txn = new YSQLStockLevelTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'I': {
         // Popular-Item
-        txn = new YSQLPopularItemTxn(conn_,txn_out_,err_out_);
+        txn = new YSQLPopularItemTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'T': {
         // Top-Balance
-        txn = new YSQLTopBalanceTxn(conn_,txn_out_,err_out_);
+        txn = new YSQLTopBalanceTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'R': {
         // Related-Customer
-        txn = new YSQLRelatedCustomerTxn(conn_,txn_out_,err_out_);
+        txn = new YSQLRelatedCustomerTxn(conn_, txn_out_, err_out_);
         break;
       }
       default: {
