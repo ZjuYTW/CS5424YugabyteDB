@@ -16,14 +16,16 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
     while (retryCount < MAX_RETRY_COUNT) {
       try {
         pqxx::work txn(*conn_);
+        txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
         LOG_INFO << ">>>> Get Order:";
         std::string OrderQuery = format(
             "SELECT MIN(O_ID) as O_ID FROM orders WHERE O_W_ID = %d AND O_D_ID "
             "= %d AND O_CARRIER_ID is NULL",
             w_id_, d_id);
         pqxx::result orders = txn.exec(OrderQuery);
-        if (orders.empty()) {
-          throw std::runtime_error("delivery: order not found");
+        if (orders.empty()||orders[0]["O_ID"].is_null()) {
+          txn.abort();
+          break;
         }
         auto order = orders[0];
         auto order_id = order["O_ID"].c_str();

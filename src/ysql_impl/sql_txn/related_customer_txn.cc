@@ -7,11 +7,12 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Related-Customer Transaction started";
   auto InputString = format("R %d %d %d",c_w_id_,c_d_id_,c_id_);
   auto start = std::chrono::system_clock::now();
-  pqxx::work txn(*conn_);
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
     try {
+      pqxx::work txn(*conn_);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       pqxx::result orders = getOrdersSQL_(c_w_id_, c_d_id_, c_id_, &txn);
       std::unordered_set<std::string> customers;
       for (auto order : orders) {
@@ -51,7 +52,8 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
         err_out_ << e.what() << "\n";
       }
       // if Failed, Wait for 100 ms to try again
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
   return Status::Invalid("retry times exceeded max retry count");

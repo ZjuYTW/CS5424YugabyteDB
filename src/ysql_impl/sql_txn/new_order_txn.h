@@ -28,7 +28,7 @@ class YSQLNewOrderTxn : public NewOrderTxn {
   float SQL_Get_C_Discount(int w_id, int d_id, int id, pqxx::work* txn);
 
   pqxx::connection* conn_;
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   std::vector<std::string> outputs;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

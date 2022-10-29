@@ -7,12 +7,15 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Top-Balance Transaction started";
   auto InputString = format("T");
   auto start = std::chrono::system_clock::now();
-  pqxx::work txn(*conn_);
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
     try {
-      LOG_INFO << "Start Executing!";
+      pqxx::work txn(*conn_);
+      std::string isolationSQL="begin transaction isolation level serializable read only deferrable;";
+      txn.exec(isolationSQL);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
+
       std::string getTopBalanceSQL = format(
           "SELECT c_w_id, c_d_id, c_balance, c_first, c_middle, c_last "
           "FROM customer "
@@ -57,7 +60,8 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
       }
       LOG_ERROR << e.what();
       // if Failed, Wait for 100 ms to try again
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
   return Status::Invalid("retry times exceeded max retry count");

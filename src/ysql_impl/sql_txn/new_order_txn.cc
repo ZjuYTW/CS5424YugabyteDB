@@ -25,6 +25,7 @@ Status YSQLNewOrderTxn::Execute(double* diff_t) noexcept {
       }
 
       pqxx::work txn(*conn_);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       int d_next_o_id = SQL_Get_D_Next_O_ID(w_id_, d_id_, &txn);
       SQL_Update_D_Next_O_ID(1, w_id_, d_id_, &txn);
       SQL_InsertNewOrder(d_next_o_id, allLocal, &txn);
@@ -97,7 +98,8 @@ Status YSQLNewOrderTxn::Execute(double* diff_t) noexcept {
         err_out_ << e.what() << "\n";
       }
       // if Failed, Wait for 100 ms to try again
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
   return Status::Invalid("retry times exceeded max retry count");

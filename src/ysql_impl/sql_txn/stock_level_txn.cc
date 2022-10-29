@@ -15,6 +15,7 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::work txn(*conn_);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       int d_next_o_id = SQL_Get_D_Next_O_ID(w_id_, d_id_, &txn);
 
       auto items = SQL_Get_OL_I_ID(w_id_, d_id_, d_next_o_id, &txn);
@@ -47,7 +48,8 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
         err_out_ << StockLevelInput << std::endl;
         err_out_ << e.what() << "\n";
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
   return Status::Invalid("retry times exceeded max retry count");

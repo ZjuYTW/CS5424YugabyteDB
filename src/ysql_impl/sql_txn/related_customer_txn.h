@@ -24,7 +24,7 @@ class YSQLRelatedCustomerTxn : public RelatedCustomerTxn {
                                 pqxx::work* txn);
   int getCustomerIdSQL_(int w_id, int d_id, int o_id, pqxx::work* txn);
 
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   static constexpr int INCOMMON_THRESHOLD = 2;
   std::vector<std::string> outputs;
 

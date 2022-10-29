@@ -23,7 +23,7 @@ class YSQLPaymentTxn : public PaymentTxn {
 
   pqxx::row getWarehouseSQL_(int w_id, pqxx::work* txn);
 
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   pqxx::connection* conn_;
   std::vector<std::string> outputs;
   std::ofstream& txn_out_;
