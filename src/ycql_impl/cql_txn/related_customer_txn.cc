@@ -100,6 +100,7 @@ std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getRelatedOrders(
       "GROUP BY ol_w_id, ol_d_id, ol_o_id "
       "ALLOW FILTERING;";
   CassIterator* it = nullptr;
+  LOG_INFO << stmt;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, i_ids);
   return {st, it};
 }
@@ -115,10 +116,9 @@ std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getCustomerId(
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, d_id, o_id);
-  if (!cass_iterator_next(it)) {
+  if (!st.ok()) return {st, it};
+  if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("Customer not found"), it};
-  }
-  cass_iterator_next(it);
   return {st, it};
 }
 
@@ -131,6 +131,7 @@ std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getOrders() noexcept {
       "WHERE o_w_id = ? AND o_d_id = ? AND o_c_id = ? "
       ";";
   CassIterator* it = nullptr;
+  LOG_INFO << stmt;
   auto st =
       ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, c_id_);
   return {st, it};
@@ -146,6 +147,7 @@ std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getOrderLines(
       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
       ";";
   CassIterator* it = nullptr;
+  LOG_INFO << stmt;
   auto st =
       ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, o_id);
   return {st, it};
