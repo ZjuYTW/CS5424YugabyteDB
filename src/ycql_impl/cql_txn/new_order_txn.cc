@@ -10,68 +10,71 @@
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
+
 Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
+  LOG_INFO << "New-Order Transaction started";
   std::vector<OrderLine> order_lines;
   order_lines.reserve(orders_.size());
   int all_local = 1;
-  // Preprocess order lines
+
   for (auto& str : orders_) {
-    uint32_t i_id, w_id, quantity;
+    int32_t i_id, w_id, quantity;
     auto st = ParseOneOrder(str, &i_id, &w_id, &quantity);
-    if (!st.ok()) {
-      return st;
-    }
-    // If current orderlines's warehouse id != local warehouse id
+    assert(st.ok());
     if (w_id != w_id_) {
       all_local = 0;
     }
     order_lines.push_back(
         OrderLine{.i_id = i_id, .w_id = w_id, .quantity = quantity});
   }
+  auto st = Retry(
+      std::bind(&YCQLNewOrderTxn::executeLocal, this, order_lines, all_local),
+      MaxRetryTime);
+  if (st.ok()) {
+    LOG_INFO << "New-Order Transaction end";
+  }
+  return st;
+}
 
-  int retry_time = 0;
+Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
+                                     int all_local) noexcept {
   Status st;
   CassIterator *district_it = nullptr, *custom_it = nullptr,
                *warehouse_it = nullptr;
-  bool done = false;
-  do {
-    if (!district_it) {
-      std::tie(st, district_it) = getDistrict();
-      if (!st.ok()) continue;
-    }
-    if (!custom_it) {
-      std::tie(st, custom_it) = getCustomer();
-      if (!st.ok()) continue;
-    }
-    if (!warehouse_it) {
-      std::tie(st, warehouse_it) = getWarehouse();
-      if (!st.ok()) continue;
-    }
-    uint32_t next_o_id = -1;
-    {
-      // To get correct NextOID, here we need to handle the race condition in
-      // CQL
-      next_o_id =
-          ycql_impl::GetValueFromCassRow<int32_t>(district_it, "d_next_o_id")
-              .value();
-      auto origin_o_id = next_o_id;
-      do {
-        st = updateNextOId(++next_o_id, origin_o_id);
-      } while (!st.ok());
-      next_o_id--;
-    }
-
-    auto [_, total_amount] = processOrderLines(order_lines, next_o_id);
-    auto d_tax = GetDTax(district_it);
-    auto w_tax = GetWTax(warehouse_it);
-    auto c_discount = GetDiscount(custom_it);
-    total_amount = total_amount * (1 + d_tax + w_tax) * (1 - c_discount);
-    st = processOrder(next_o_id, order_lines.size(), all_local, total_amount);
-    if (!st.ok()) {
-      continue;
-    }
-    done = true;
-  } while (retry_time++ < MaxRetryTime && !ValidOrSleep(done));
+  std::tie(st, district_it) = getDistrict();
+  if (!st.ok()) {
+    return st;
+  }
+  std::tie(st, custom_it) = getCustomer();
+  if (!st.ok()) {
+    cass_iterator_free(district_it);
+    return st;
+  }
+  std::tie(st, warehouse_it) = getWarehouse();
+  if (!st.ok()) {
+    cass_iterator_free(district_it);
+    cass_iterator_free(custom_it);
+    return st;
+  }
+  uint32_t next_o_id = -1;
+  {
+    // To get correct NextOID, here we need to handle the race condition in
+    // CQL
+    next_o_id =
+        ycql_impl::GetValueFromCassRow<int32_t>(district_it, "d_next_o_id")
+            .value();
+    auto origin_o_id = next_o_id;
+    do {
+      st = updateNextOId(++next_o_id, origin_o_id);
+    } while (!st.ok());
+    next_o_id--;
+  }
+  auto [_, total_amount] = processOrderLines(order_lines, next_o_id);
+  auto d_tax = GetDTax(district_it);
+  auto w_tax = GetWTax(warehouse_it);
+  auto c_discount = GetDiscount(custom_it);
+  total_amount = total_amount * (1 + d_tax + w_tax) * (1 - c_discount);
+  st = processOrder(next_o_id, order_lines.size(), all_local, total_amount);
   if (district_it) {
     cass_iterator_free(district_it);
   }
@@ -81,7 +84,9 @@ Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
   if (warehouse_it) {
     cass_iterator_free(warehouse_it);
   }
-  return st;
+  if (!st.ok()) {
+    return st;
+  }
 }
 
 Status YCQLNewOrderTxn::processOrder(uint32_t next_o_id, uint32_t order_num,

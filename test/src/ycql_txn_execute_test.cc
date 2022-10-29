@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "ycql_impl/cql_driver.h"
-#include "ycql_impl/defines.h"
 #include "ycql_impl/cql_txn/delivery_txn.h"
 #include "ycql_impl/cql_txn/new_order_txn.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 
@@ -62,7 +62,7 @@ TEST_F(CQLTxnExecuteTest, NewOrderTest1) {
 }
 
 TEST_F(CQLTxnExecuteTest, DeliveryTxnTest) {
-  auto delivery_txn = YCQLDeliveryTxn(conn);
+  auto delivery_txn = YCQLDeliveryTxn(conn, txn_out_, err_out_);
   delivery_txn.carrier_id_ = 1;
   delivery_txn.w_id_ = 1;
   double elapsedTime;
@@ -71,7 +71,7 @@ TEST_F(CQLTxnExecuteTest, DeliveryTxnTest) {
 }
 
 TEST_F(CQLTxnExecuteTest, OrderStatusTxnTest) {
-  auto order_status_txn = YCQLOrderStatusTxn(conn);
+  auto order_status_txn = YCQLOrderStatusTxn(conn, txn_out_, err_out_);
   order_status_txn.c_d_id_ = 1;
   order_status_txn.c_w_id_ = 1;
   order_status_txn.c_id_ = 1;
@@ -81,7 +81,7 @@ TEST_F(CQLTxnExecuteTest, OrderStatusTxnTest) {
 }
 
 TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {
-  auto payment_txn = YCQLPaymentTxn(conn);
+  auto payment_txn = YCQLPaymentTxn(conn, txn_out_, err_out_);
   payment_txn.c_id_ = 1;
   payment_txn.d_id_ = 1;
   payment_txn.w_id_ = 1;
@@ -91,7 +91,7 @@ TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {
 }
 
 TEST_F(CQLTxnExecuteTest, PopularItemTxnTest) {
-  auto popular_item_txn = YCQLPopularItemTxn(conn);
+  auto popular_item_txn = YCQLPopularItemTxn(conn, txn_out_, err_out_);
   popular_item_txn.w_id_ = 1;
   popular_item_txn.d_id_ = 1;
   popular_item_txn.l_ = 2;
@@ -104,7 +104,7 @@ TEST_F(CQLTxnExecuteTest, PopularItemTxnTest) {
 }
 
 TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {
-  ydb_util::Txn* txn = new YCQLRelatedCustomerTxn(conn);
+  ydb_util::Txn* txn = new YCQLRelatedCustomerTxn(conn, txn_out_, err_out_);
   auto related_customer_txn = dynamic_cast<YCQLRelatedCustomerTxn*>(txn);
   ASSERT_NE(related_customer_txn, nullptr);
 
@@ -119,7 +119,7 @@ TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {
 }
 
 TEST_F(CQLTxnExecuteTest, StockLevelTxnTest) {
-  ydb_util::Txn* txn = new YCQLStockLevelTxn(conn);
+  ydb_util::Txn* txn = new YCQLStockLevelTxn(conn, txn_out_, err_out_);
   auto stock_level_txn = dynamic_cast<YCQLStockLevelTxn*>(txn);
   ASSERT_NE(stock_level_txn, nullptr);
 
@@ -135,7 +135,7 @@ TEST_F(CQLTxnExecuteTest, StockLevelTxnTest) {
 }
 
 TEST_F(CQLTxnExecuteTest, TopBalanceTxnTest) {
-  ydb_util::Txn* txn = new YCQLTopBalanceTxn(conn);
+  ydb_util::Txn* txn = new YCQLTopBalanceTxn(conn, txn_out_, err_out_);
   auto top_balance_txn = dynamic_cast<YCQLTopBalanceTxn*>(txn);
   ASSERT_NE(top_balance_txn, nullptr);
   double elapsedTime;

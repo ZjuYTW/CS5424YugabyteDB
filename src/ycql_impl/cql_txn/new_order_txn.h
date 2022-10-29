@@ -17,10 +17,14 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
 
  private:
   struct OrderLine {
-    uint32_t i_id;  // OL_I_ID
-    uint32_t w_id;  // OL_W_ID
-    uint32_t quantity;
+    int32_t i_id;  // OL_I_ID
+    int32_t w_id;  // OL_W_ID
+    int32_t quantity;
   };
+
+  Status executeLocal(std::vector<OrderLine>& order_lines,
+                      int all_local) noexcept;
+
   std::pair<Status, CassIterator*> getStock(uint32_t item_id,
                                             uint32_t w_id) noexcept;
 

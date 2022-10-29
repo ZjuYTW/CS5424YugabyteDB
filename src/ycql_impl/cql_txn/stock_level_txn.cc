@@ -45,8 +45,10 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
     LOG_INFO << "i_id: " << i_id << ", quantity: " << quantity.value();
     if (quantity_it) cass_iterator_free(quantity_it);
   }
-  std::cout << format("Total number of items in S where its stock quantity at "
-                 "(W_ID %d, D_ID %d) is below the threshold %d: ", w_id_, d_id_, t_)
+  std::cout << format(
+                   "Total number of items in S where its stock quantity at "
+                   "(W_ID %d, D_ID %d) is below the threshold %d: ",
+                   w_id_, d_id_, t_)
             << items_below_threshold << std::endl;
 
   if (item_it) cass_iterator_free(item_it);
