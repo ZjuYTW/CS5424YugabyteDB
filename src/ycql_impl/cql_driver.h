@@ -22,18 +22,31 @@ class CQLDriver {
 
   Status operator()() {
     std::string filename = xactDir + std::to_string(idx_) + ".txt";
+    std::string outputMeasure =
+        outDir + "/measure_log/cql_" + std::to_string(idx_) + ".out";
+    std::string outputTxn =
+        outDir + "/txn_log/sql_" + std::to_string(idx_) + ".out";
+    std::string outputErr =
+        outDir + "/err_log/sql_" + std::to_string(idx_) + ".out";
+
+    auto out_txn_fs = std::ofstream(outputTxn, std::ios::out);
+    auto out_measure_fs = std::ofstream(outputMeasure, std::ios::out);
+    auto out_err_fs = std::ofstream(outputErr, std::ios::out);
+
     CassSession* session = cass_session_new();
     if (connect_session(session, cluster_) != CASS_OK) {
       cass_session_free(session);
       return Status::ConnectionFailed();
     }
     std::unique_ptr<ydb_util::Parser> parser_p =
-        std::make_unique<YCQLParser>(filename, session);
+        std::make_unique<YCQLParser>(filename, session, out_txn_fs, out_err_fs);
+
     auto s = parser_p->Init();
     if (!s.ok()) {
       cass_session_free(session);
       return s;
     }
+    std::vector<double> elapsedTime;
     while (true) {
       // here we use smart ptr to avoid delete manully
       std::unique_ptr<Txn> t = nullptr;
@@ -45,9 +58,34 @@ class CQLDriver {
       double processTime;
       s = t->Execute(&processTime);
       if (!s.ok()) {
+        LOG_ERROR << "CQL Transaction failed";
         break;
+      } else {
+        elapsedTime.push_back(processTime);
       }
     }
+
+    sort(elapsedTime.begin(), elapsedTime.end());
+    double totalTime = 0;
+    for (auto i : elapsedTime) {
+      totalTime += i;
+    }
+
+    out_measure_fs << "Total number of transactions processed: "
+                   << elapsedTime.size() << "\n"
+                   << "Total elapsed time for processing the transactions: "
+                   << totalTime << "\n"
+                   << "Transaction throughput: "
+                   << elapsedTime.size() / totalTime << "\n"
+                   << "Average transaction latency: "
+                   << totalTime * 60 / elapsedTime.size() << "\n"
+                   << "Median transaction latency: "
+                   << elapsedTime[elapsedTime.size() * 0.5] * 60 << "\n"
+                   << "95th percentile transaction latency: "
+                   << elapsedTime[elapsedTime.size() * 0.95] * 60 << "\n"
+                   << "99th percentile transaction latency: "
+                   << elapsedTime[elapsedTime.size() * 0.99] * 60 << std::endl;
+
     cass_session_free(session);
     return s.isEndOfFile() ? Status::OK() : s;
   }
@@ -76,10 +114,12 @@ class CQLDriver {
   const CassCluster* cluster_;
   std::string ip_add_;
   static std::string xactDir;
+  static std::string outDir;
   int idx_;
 };
 
 std::string CQLDriver::xactDir = "data/xact_files/";
+std::string CQLDriver::outDir = "data/output/";
 };  // namespace ycql_impl
 
 #endif

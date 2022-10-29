@@ -16,8 +16,14 @@ class YCQLParser : public ydb_util::Parser {
   using Txn = ydb_util::Txn;
 
  public:
-  YCQLParser(const std::string& file_name, CassSession* session)
-      : Parser(file_name), conn_(session) {}
+  YCQLParser(const std::string& file_name, CassSession* session,
+             std::ofstream& txn_out, std::ofstream& out_err_fs)
+      : Parser(file_name),
+        conn_(session),
+        txn_out_(txn_out),
+        err_out_(out_err_fs) {}
+
+  virtual ~YCQLParser() = default;
 
  protected:
   Txn* GetTxnPtr_(char c) noexcept override {
@@ -25,44 +31,44 @@ class YCQLParser : public ydb_util::Parser {
     switch (c) {
       case 'N': {
         // New Order
-        txn = new YCQLNewOrderTxn(conn_);
+        txn = new YCQLNewOrderTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'P': {
         // Payment
         // Unimplemented yet
         LOG_INFO << "Payment";
-        txn = new YCQLPaymentTxn(conn_);
+        txn = new YCQLPaymentTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'D': {
         // Delivery
-        txn = new YCQLDeliveryTxn(conn_);
+        txn = new YCQLDeliveryTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'O': {
         // Order-Status
-        txn = new YCQLOrderStatusTxn(conn_);
+        txn = new YCQLOrderStatusTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'S': {
         // Stock-Level
-        txn = new YCQLStockLevelTxn(conn_);
+        txn = new YCQLStockLevelTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'I': {
         // Popular-Item
-        txn = new YCQLPopularItemTxn(conn_);
+        txn = new YCQLPopularItemTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'T': {
         // Top-Balance
-        txn = new YCQLTopBalanceTxn(conn_);
+        txn = new YCQLTopBalanceTxn(conn_, txn_out_, err_out_);
         break;
       }
       case 'R': {
         // Related-Customer
-        txn = new YCQLRelatedCustomerTxn(conn_);
+        txn = new YCQLRelatedCustomerTxn(conn_, txn_out_, err_out_);
         break;
       }
       default: {
@@ -75,6 +81,8 @@ class YCQLParser : public ydb_util::Parser {
 
  private:
   CassSession* conn_;
+  std::ofstream& txn_out_;
+  std::ofstream& err_out_;
 };
 }  // namespace ycql_impl
 #endif

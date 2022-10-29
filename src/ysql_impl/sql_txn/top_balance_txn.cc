@@ -59,7 +59,7 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   if (retryCount == MAX_RETRY_COUNT) {
     return Status::Invalid("retry times exceeded max retry count");
   }
-  txn_out_<<InputString<<std::endl;
+  txn_out_ << InputString << std::endl;
   for (auto& output : outputs) {
     txn_out_ << output << std::endl;
   }
