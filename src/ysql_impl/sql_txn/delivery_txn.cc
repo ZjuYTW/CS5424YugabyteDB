@@ -14,8 +14,8 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
   for (int d_id = 1; d_id <= 10; d_id++) {
     int retryCount = 0;
     while (retryCount < MAX_RETRY_COUNT) {
+      pqxx::work txn(*conn_);
       try {
-        pqxx::work txn(*conn_);
         txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
         LOG_INFO << ">>>> Get Order:";
         std::string OrderQuery = format(
@@ -79,6 +79,7 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
         txn.commit();
         break;
       } catch (const std::exception& e) {
+        txn.abort();
         retryCount++;
         if (retryCount == MAX_RETRY_COUNT) {
           err_out_ << DeliveryInput << std::endl;

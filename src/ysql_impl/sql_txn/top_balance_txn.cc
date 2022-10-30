@@ -10,8 +10,8 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
+    pqxx::work txn(*conn_);
     try {
-      pqxx::work txn(*conn_);
       std::string isolationSQL="begin transaction isolation level serializable read only deferrable;";
       txn.exec(isolationSQL);
       txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
@@ -53,12 +53,14 @@ Status YSQLTopBalanceTxn::Execute(double* diff_t) noexcept {
       }
       return Status::OK();
     } catch (const std::exception& e) {
+      txn.abort();
       retryCount++;
       if (retryCount == MAX_RETRY_COUNT) {
         err_out_ << InputString << std::endl;
         err_out_ << e.what() << "\n";
       }
       LOG_ERROR << e.what();
+      LOG_INFO << "Retry time:" << retryCount;
       // if Failed, Wait for 100 ms to try again
       int randRetryTime = rand() % 100 + 1;
       std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));

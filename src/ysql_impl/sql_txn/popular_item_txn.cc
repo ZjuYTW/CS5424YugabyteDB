@@ -14,13 +14,13 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
+    pqxx::work txn(*conn_);
     try {
       std::map<std::string, int> popularItems;
       outputs.push_back(
           format("District identifier:(%d,%d)\nNumber of last orders to be "
                  "examined:%d",
                  w_id_, d_id_, l_));
-      pqxx::work txn(*conn_);
       txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       std::string nxtOrderQuery = format(
           "SELECT d_next_o_id FROM district WHERE d_w_id = %d AND d_id = %d",
@@ -101,6 +101,7 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
       txn.commit();
       break;
     } catch (const std::exception& e) {
+      txn.abort();
       retryCount++;
       LOG_ERROR << e.what();
       if (retryCount == MAX_RETRY_COUNT) {

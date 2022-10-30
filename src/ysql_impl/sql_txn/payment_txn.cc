@@ -12,8 +12,8 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
+    pqxx::work txn(*conn_);
     try {
-      pqxx::work txn(*conn_);
       txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       pqxx::row warehouse = getWarehouseSQL_(w_id_, &txn);
       double old_w_ytd = std::stod(warehouse["w_ytd"].c_str());
@@ -136,6 +136,7 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       return Status::OK();
 
     } catch (const std::exception& e) {
+      txn.abort();
       retryCount++;
       LOG_ERROR << e.what();
       if (retryCount == MAX_RETRY_COUNT) {

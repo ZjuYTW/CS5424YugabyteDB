@@ -13,8 +13,8 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
+    pqxx::work txn(*conn_);
     try {
-      pqxx::work txn(*conn_);
       txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       int d_next_o_id = SQL_Get_D_Next_O_ID(w_id_, d_id_, &txn);
 
@@ -42,12 +42,15 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
       return Status::OK();
 
     } catch (const std::exception& e) {
+      txn.abort();
       retryCount++;
       LOG_ERROR << e.what();
       if (retryCount == MAX_RETRY_COUNT) {
         err_out_ << StockLevelInput << std::endl;
         err_out_ << e.what() << "\n";
       }
+      LOG_ERROR << e.what();
+      LOG_INFO << "Retry time:" << retryCount;
       int randRetryTime = rand() % 100 + 1;
       std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }

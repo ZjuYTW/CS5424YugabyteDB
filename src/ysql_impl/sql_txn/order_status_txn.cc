@@ -14,8 +14,8 @@ Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
   auto OrderStatusInput = format("O %d %d %d", c_w_id_, c_d_id_,c_id_);
 
   while (retryCount < MAX_RETRY_COUNT) {
+    pqxx::work txn(*conn_);
     try {
-      pqxx::work txn(*conn_);
       txn.exec(format("set yb_transaction_priority_lower_bound = %f",retryCount*0.2));
       SQL_Output_Customer_Name(c_w_id_, c_d_id_, c_id_, &txn);
       int O_ID = SQL_Get_Last_O_ID(c_w_id_, c_d_id_, c_id_, &txn);
@@ -31,12 +31,15 @@ Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
       return Status::OK();
 
     } catch (const std::exception& e) {
+      txn.abort();
       retryCount++;
       LOG_ERROR << e.what();
       if (retryCount == MAX_RETRY_COUNT) {
         err_out_ << OrderStatusInput << std::endl;
         err_out_ << e.what() << "\n";
       }
+      LOG_ERROR << e.what();
+      LOG_INFO << "Retry time:" << retryCount;
       int randRetryTime = rand() % 100 + 1;
       std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
