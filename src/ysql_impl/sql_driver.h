@@ -83,25 +83,25 @@ class SQLDriver {
     }
     sort(elapsedTime.begin(), elapsedTime.end());
 
-    float totalTime = 0;
-    for (float i : elapsedTime) {
+    double totalTime = 0;
+    for (auto i : elapsedTime) {
       totalTime += i;
     }
 
     out_measure_fs << "Total number of transactions processed: "
                    << elapsedTime.size() << "\n"
                    << "Total elapsed time for processing the transactions: "
-                   << totalTime << "\n"
+                   << totalTime/1e9 << " seconds\n"
                    << "Transaction throughput: "
-                   << elapsedTime.size() / totalTime << "\n"
+                   << elapsedTime.size() / totalTime * 1e9 << " transactions/second\n"
                    << "Average transaction latency: "
-                   << totalTime * 60 / elapsedTime.size() << "\n"
+                   << totalTime / 1e9 / elapsedTime.size() << " seconds\n"
                    << "Median transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.5] * 60 << "\n"
+                   << elapsedTime[elapsedTime.size() * 0.5] / 1e9 << " seconds\n"
                    << "95th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.95] * 60 << "\n"
+                   << elapsedTime[elapsedTime.size() * 0.95] / 1e9 << " seconds\n"
                    << "99th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.99] * 60 << std::endl;
+                   << elapsedTime[elapsedTime.size() * 0.99] / 1e9 << " seconds" << std::endl;
 
     return Status::OK();
   }
@@ -131,7 +131,7 @@ class SQLDriver {
   std::string HOST, PORT, DB_NAME, USER, PASSWORD, SSL_MODE, SSL_ROOT_CERT;
   static std::string xactDir, outDir;
   int idx_;
-  std::vector<float> elapsedTime;
+  std::vector<double> elapsedTime;
 };
 std::string SQLDriver::xactDir = "data/test_xact_files/";
 std::string SQLDriver::outDir = "data/output/";
