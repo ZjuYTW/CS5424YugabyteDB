@@ -87,6 +87,7 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
   if (!st.ok()) {
     return st;
   }
+  return st;
 }
 
 Status YCQLNewOrderTxn::processOrder(uint32_t next_o_id, uint32_t order_num,

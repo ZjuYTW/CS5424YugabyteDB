@@ -110,7 +110,7 @@ TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {
 
   related_customer_txn->c_w_id_ = 1;
   related_customer_txn->c_d_id_ = 1;
-  related_customer_txn->c_id_ = 1;
+  related_customer_txn->c_id_ = 4;
 
   double elapsedTime;
   auto st = related_customer_txn->Execute(&elapsedTime);

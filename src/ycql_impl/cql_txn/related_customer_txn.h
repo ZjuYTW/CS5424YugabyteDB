@@ -28,6 +28,11 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
   constexpr static int THRESHOLD = 2;
 
+  typedef std::tuple<int32_t, int32_t, int32_t> order_key_t;
+  struct order_key_hash : public std::unary_function<order_key_t, std::size_t> {
+    std::size_t operator()(const order_key_t& k) const;
+  };
+
   Status executeLocal() noexcept;
   std::pair<Status, CassIterator*> getOrders() noexcept;
   std::pair<Status, CassIterator*> getOrderLines(int32_t o_id) noexcept;
@@ -35,6 +40,7 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
       const std::vector<int32_t>& i_ids) noexcept;
   std::pair<Status, CassIterator*> getCustomerId(int32_t w_id, int32_t d_id,
                                                  int32_t o_id) noexcept;
+  std::string idSetToString(const std::vector<int32_t>& i_ids) noexcept;
   Status addRelatedCustomers(
       const std::vector<int32_t>& i_ids,
       std::unordered_map<int32_t, std::string>& customers) noexcept;
