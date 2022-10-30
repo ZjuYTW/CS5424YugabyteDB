@@ -53,13 +53,21 @@ class SQLDriver {
       return s;
     }
     while (true) {
-      // here we use smart ptr to avoid delete manually
-      // retry operation in sql layer
-      int retryCount = 0;
+      // here we use smart ptr to avoid delete manully
       std::unique_ptr<Txn> t = nullptr;
+      s = parser_p->GetNextTxn(&t);
+      if (!s.ok()) {
+        // EndOfFile or Something Bad
+        break;
+      }
+      // retry in execute level
+      double processTime;
+
+      int retryCount = 0;
       while (retryCount<5){
-        s = parser_p->GetNextTxn(&t);
-        if (s.ok()) {
+        auto status = t->Execute(&processTime);
+        if (status.ok()) {
+          elapsedTime.push_back(processTime);
           break;
         }else{
           std::this_thread::sleep_for(
@@ -67,18 +75,9 @@ class SQLDriver {
           retryCount++;
         }
       }
-
       if (retryCount==5){
+        // todo: if still not work, change to continue here
         return Status::Invalid("sql layer retry still failed");
-      }
-
-      double processTime;
-      auto status = t->Execute(&processTime);
-      if (!status.ok()) {
-        LOG_ERROR << "Transaction failed";
-        return status;
-      } else {
-        elapsedTime.push_back(processTime);
       }
     }
     sort(elapsedTime.begin(), elapsedTime.end());
