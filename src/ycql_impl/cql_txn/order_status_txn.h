@@ -14,13 +14,20 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
         txn_out_(txn_out),
         err_out_(err_out) {}
 
-  Status Execute(double* diff_t) noexcept override { return Status::OK(); }
+  Status Execute(double* diff_t) noexcept override;
 
  private:
   FRIEND_TEST(TxnArgsParserTest, order_status);
+  FRIEND_TEST(CQLTxnExecuteTest, OrderStatusTxnTest);
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  constexpr static int MAX_RETRY_ATTEMPTS = 3;
+
+  Status executeLocal() noexcept;
+  std::pair<Status, CassIterator*> getCustomerInfo() noexcept;
+  std::pair<Status, CassIterator*> getLastOrder() noexcept;
+  std::pair<Status, CassIterator*> getOrderLines(int32_t o_id) noexcept;
 };
 }  // namespace ycql_impl
 
