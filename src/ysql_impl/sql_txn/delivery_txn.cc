@@ -10,7 +10,6 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
   auto DeliveryInput = format("D %d %d", w_id_, carrier_id_);
 
   auto start = std::chrono::system_clock::now();
-
   for (int d_id = 1; d_id <= 10; d_id++) {
     int retryCount = 0;
     while (retryCount < MAX_RETRY_COUNT) {
@@ -26,6 +25,7 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
         pqxx::result orders = l_work.exec(OrderQuery);
         if (orders.empty()||orders[0]["O_ID"].is_null()) {
           l_work.exec("ROLLBACK;");
+          l_work.exec(format("set yb_transaction_priority_lower_bound = 0;"));
           l_work.abort();
           break;
         }
@@ -83,6 +83,7 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
         break;
       } catch (const std::exception& e) {
         l_work.exec("ROLLBACK;");
+        l_work.abort();
         retryCount++;
         if (retryCount == MAX_RETRY_COUNT) {
           err_out_ << DeliveryInput << std::endl;
@@ -90,8 +91,9 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
         }
         LOG_ERROR << e.what();
         LOG_INFO << "Retry time:" << retryCount;
+        int randRetryTime = rand() % 100 + 1;
         std::this_thread::sleep_for(
-            std::chrono::milliseconds(100 * retryCount));
+            std::chrono::milliseconds((100+randRetryTime) * retryCount));
       }
     }
     if (retryCount == MAX_RETRY_COUNT) {
