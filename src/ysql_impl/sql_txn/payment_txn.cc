@@ -14,9 +14,8 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   while (retryCount < MAX_RETRY_COUNT) {
     pqxx::nontransaction l_work(*conn_);
     try {
-      l_work.exec("begin TRANSACTION;");
-      l_work.exec("savepoint f_savepoint;");
       l_work.exec(format("set yb_transaction_priority_lower_bound = %f;", retryCount * 0.2));
+      l_work.exec("begin TRANSACTION;");
       pqxx::row warehouse = getWarehouseSQL_(w_id_, &l_work);
       double old_w_ytd = std::stod(warehouse["w_ytd"].c_str());
       double new_w_ytd = old_w_ytd + payment_;
@@ -44,6 +43,7 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       }
       pqxx::row customer = customers[0];
       l_work.exec("commit;");
+      l_work.exec(format("set yb_transaction_priority_lower_bound = 0;"));
       outputs.push_back("Customer Information:");
       outputs.push_back(format("identifier (C_W_ID,C_D_ID,C_ID)=(%s, %s, %s)",
                                customer["c_w_id"].c_str(),
@@ -91,7 +91,7 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       return Status::OK();
 
     } catch (const std::exception& e) {
-      l_work.exec("rollback to savepoint f_savepoint;");
+      l_work.exec("ROLLBACK;");
       retryCount++;
       LOG_ERROR << e.what();
       if (retryCount == MAX_RETRY_COUNT) {

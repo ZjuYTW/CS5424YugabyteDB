@@ -16,9 +16,8 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
     while (retryCount < MAX_RETRY_COUNT) {
       pqxx::nontransaction l_work(*conn_);
       try {
-        l_work.exec("begin TRANSACTION;");
-        l_work.exec("savepoint f_savepoint;");
         l_work.exec(format("set yb_transaction_priority_lower_bound = %f;", retryCount * 0.2));
+        l_work.exec("begin TRANSACTION;");
         LOG_INFO << ">>>> Get Order:";
         std::string OrderQuery = format(
             "SELECT MIN(O_ID) as O_ID FROM orders WHERE O_W_ID = %d AND O_D_ID "
@@ -26,6 +25,7 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
             w_id_, d_id);
         pqxx::result orders = l_work.exec(OrderQuery);
         if (orders.empty()||orders[0]["O_ID"].is_null()) {
+          l_work.exec("ROLLBACK;");
           l_work.abort();
           break;
         }
@@ -79,9 +79,10 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
         LOG_INFO << UpdateCustomer;
         l_work.exec(UpdateCustomer);
         l_work.exec("commit;");
+        l_work.exec(format("set yb_transaction_priority_lower_bound = 0;"));
         break;
       } catch (const std::exception& e) {
-        l_work.exec("rollback to savepoint f_savepoint;");
+        l_work.exec("ROLLBACK;");
         retryCount++;
         if (retryCount == MAX_RETRY_COUNT) {
           err_out_ << DeliveryInput << std::endl;
