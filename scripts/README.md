@@ -1,7 +1,7 @@
 # CS5424YugabyteDB
 
 ## Usage
-
+#### Local Side
 * Pack the toolbox
 ```
 make build
@@ -13,7 +13,7 @@ sh pack.sh
 scp package.zip cs4224k@xcnd25.comp.nus.edu.sg:~
 ```
 
-* On the server side
+#### Server Side
 ```
 unzip package.zip
 ```
