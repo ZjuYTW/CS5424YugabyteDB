@@ -202,8 +202,11 @@ std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
     }
     auto i_price =
         ycql_impl::GetValueFromCassRow<int32_t>(item_it, "i_price").value();
+
     auto i_name =
         ycql_impl::GetValueFromCassRow<std::string>(item_it, "i_name").value();
+    // Note: this item_amount is enlarged by 100, when output we need to convert
+    // back
     int64_t item_amount = order_lines[i].quantity * i_price;
     // create one order-line
     std::string stmt =
@@ -303,8 +306,9 @@ void YCQLNewOrderTxn::processItemOutput(size_t start_idx, const OrderLine& ol,
   assert(start_idx + 4 < outputs_.size());
   outputs_[start_idx + 4] = ydb_util::format(
       "ITEM_NUMBER: %d, I_NAME: %s, SUPPLIER_WAREHOUSE: %d, QUANTITY: %d, "
-      "OL_AMOUNT: %d, S_QUANTITY: %d",
-      ol.i_id, i_name.c_str(), ol.w_id, ol.quantity, item_amount, s_quantity);
+      "OL_AMOUNT: %.2f, S_QUANTITY: %d",
+      ol.i_id, i_name.c_str(), ol.w_id, ol.quantity, (double)item_amount / 100,
+      s_quantity);
 }
 
 void YCQLNewOrderTxn::processOutput(
@@ -316,15 +320,16 @@ void YCQLNewOrderTxn::processOutput(
   auto c_last = GetValueFromCassRow<std::string>(customer_it, "c_last");
   outputs_[0] = ydb_util::format(
       "Customer identifier (W_ID: %d, D_ID: %d, C_ID: %d), C_LAST: %s, "
-      "C_CREDIT: %s, C_DISCOUNT: %f",
+      "C_CREDIT: %s, C_DISCOUNT: %.4f",
       w_id_, d_id_, c_id_, c_last->c_str(), c_credit->c_str(), discount);
   // Warehouse Info & District Info
-  outputs_[1] = ydb_util::format("W_TAX: %f, D_TAX: %f", w_tax, d_tax);
+  outputs_[1] = ydb_util::format("W_TAX: %.4f, D_TAX: %.4f", w_tax, d_tax);
   // Order Info
   outputs_[2] =
       ydb_util::format("O_ID: %d, O_ENTRY_D: %s", o_id, current_time.c_str());
   // number Info
-  outputs_[3] = ydb_util::format("NUM_ITEMS: %d, TOTAL_AMOUNT: %ld",
-                                 this->orders_.size(), total_amount);
+  outputs_[3] =
+      ydb_util::format("NUM_ITEMS: %d, TOTAL_AMOUNT: %.2f",
+                       this->orders_.size(), (double)total_amount / 100);
 }
 }  // namespace ycql_impl

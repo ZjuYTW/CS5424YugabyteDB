@@ -220,6 +220,8 @@ double GetWTax(CassIterator* warehouse_it) noexcept;
 
 double GetDiscount(CassIterator* custom_it) noexcept;
 
+double GetPrice(CassIterator* item_it) noexcept;
+
 ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,
                               CassSession* conn) noexcept;
 
