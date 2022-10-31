@@ -1,0 +1,41 @@
+# CS5424YugabyteDB
+
+## Usage
+
+* Pack the toolbox
+```
+make build
+sh setup.sh
+```
+
+* upload the thing to server
+```
+scp package.zip cs4224k@xcnd25.comp.nus.edu.sg:~
+```
+
+* On the server side
+```
+unzip package.zip
+```
+
+* Start YDB
+```
+cd package
+sh start_ydb.sh
+```
+
+* Start testing
+```
+sh start_txn.sh
+```
+
+* Useful commands
+```
+# check if server is alive
+pgrep yb-master
+pgrep yb-server
+
+# check if perf process is alive
+pgrep perf
+```
+
