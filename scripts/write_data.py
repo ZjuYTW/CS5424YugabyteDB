@@ -30,7 +30,8 @@ data_cfg = [
         'name': 'customer',
         'file': 'data/data_files/customer.csv',
         'table': 'data/table_files/customer.csv',
-        'foreign_keys': ["FOREIGN KEY (C_W_ID, C_D_ID) REFERENCES district(D_W_ID, D_ID)"]
+        'foreign_keys': ["FOREIGN KEY (C_W_ID, C_D_ID) REFERENCES district(D_W_ID, D_ID)"],
+        'index': ["CREATE INDEX desc_index_c_balance ON customer (c_balance DESC NULLS LAST);"]
     },{
         'name': 'orders',
         'file': 'data/data_files/order.csv',
@@ -56,6 +57,16 @@ data_cfg = [
                          "FOREIGN KEY (S_I_ID) REFERENCES item(I_ID)"]
     }]
 
+def execute_command(yb, commands):
+    try:
+        with yb.cursor() as yb_cursor:
+            for command in commands:
+                yb_cursor.execute(command)
+        yb.commit()
+    except Exception as e:
+        print("Exception while executing command")
+        print(e)
+        exit(1)
 
 def parse_table(file, name):
     """
@@ -205,6 +216,10 @@ def main(conf):
         write_data_multi(yb, cfg)
         print(f">>>> Altering table for {cfg['name']}")
         alter_table(yb, cfg['foreign_keys'], cfg['name'])
+
+        if 'index' in cfg:
+            print(f">>>> Creating index for {cfg['name']}")
+            execute_command(yb, cfg['index'])
 
     yb.close()
 

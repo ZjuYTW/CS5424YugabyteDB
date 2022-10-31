@@ -21,14 +21,15 @@ class YSQLRelatedCustomerTxn : public RelatedCustomerTxn {
 
  private:
   void addCustomerSQL_(int w_id, std::vector<int> items,
-                       std::unordered_set<std::string> customers,
+                       std::unordered_set<std::string>& customers,
                        pqxx::work* txn);
   pqxx::result getOrdersSQL_(int c_w_id, int c_d_id, int c_id, pqxx::work* txn);
-  pqxx::result getOrderLineSQL_(int o_w_id, int o_d_id, int o_id,
-                                pqxx::work* txn);
-  int getCustomerIdSQL_(int w_id, int d_id, int o_id, pqxx::work* txn);
+  pqxx::result getOrderLineSQL_(std::string o_id, std::string o_d_id,
+                                std::string o_w_id, pqxx::work* txn);
+  int getCustomerIdSQL_(std::string w_id, std::string d_id, std::string o_id,
+                        pqxx::work* txn);
 
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   static constexpr int INCOMMON_THRESHOLD = 2;
   std::vector<std::string> outputs;
 

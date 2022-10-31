@@ -35,7 +35,7 @@ class SQLDriver {
         outDir + "/txn_log/sql_" + std::to_string(idx_) + ".out";
     std::string outputErr =
         outDir + "/err_log/sql_" + std::to_string(idx_) + ".out";
-
+    srand(idx_);
     auto out_txn_fs = std::ofstream(outputTXN, std::ios::out);
     auto out_measure_fs = std::ofstream(outputMeasure, std::ios::out);
     auto out_err_fs = std::ofstream(outputErr, std::ios::out);
@@ -60,36 +60,53 @@ class SQLDriver {
         // EndOfFile or Something Bad
         break;
       }
+      // retry in execute level
       double processTime;
-      auto status = t->Execute(&processTime);
-      if (!status.ok()) {
-        LOG_ERROR << "Transaction failed";
-        return status;
-      } else {
-        elapsedTime.push_back(processTime);
+
+      int retryCount = 0;
+      while (retryCount < 5) {
+        auto status = t->Execute(&processTime);
+        if (status.ok()) {
+          elapsedTime.push_back(processTime);
+          break;
+        } else {
+          LOG_INFO << "retry on sql driver " << retryCount << " times";
+          std::this_thread::sleep_for(
+              std::chrono::milliseconds((1000) * retryCount));
+          retryCount++;
+        }
+      }
+      if (retryCount == 5) {
+        // todo: if still not work, change to continue here
+        LOG_INFO << "sql layer retry still failed";
+        return Status::Invalid("sql layer retry still failed");
       }
     }
     sort(elapsedTime.begin(), elapsedTime.end());
 
-    float totalTime = 0;
-    for (float i : elapsedTime) {
+    double totalTime = 0;
+    for (auto i : elapsedTime) {
       totalTime += i;
     }
 
     out_measure_fs << "Total number of transactions processed: "
                    << elapsedTime.size() << "\n"
                    << "Total elapsed time for processing the transactions: "
-                   << totalTime << "\n"
+                   << totalTime / 1e9 << " seconds\n"
                    << "Transaction throughput: "
-                   << elapsedTime.size() / totalTime << "\n"
+                   << elapsedTime.size() / totalTime * 1e9
+                   << " transactions/second\n"
                    << "Average transaction latency: "
-                   << totalTime * 60 / elapsedTime.size() << "\n"
+                   << totalTime / 1e9 / elapsedTime.size() << " seconds\n"
                    << "Median transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.5] * 60 << "\n"
+                   << elapsedTime[elapsedTime.size() * 0.5] / 1e9
+                   << " seconds\n"
                    << "95th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.95] * 60 << "\n"
+                   << elapsedTime[elapsedTime.size() * 0.95] / 1e9
+                   << " seconds\n"
                    << "99th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.99] * 60 << std::endl;
+                   << elapsedTime[elapsedTime.size() * 0.99] / 1e9 << " seconds"
+                   << std::endl;
 
     return Status::OK();
   }
@@ -119,7 +136,7 @@ class SQLDriver {
   std::string HOST, PORT, DB_NAME, USER, PASSWORD, SSL_MODE, SSL_ROOT_CERT;
   static std::string xactDir, outDir;
   int idx_;
-  std::vector<float> elapsedTime;
+  std::vector<double> elapsedTime;
 };
 std::string SQLDriver::xactDir = "data/test_xact_files/";
 std::string SQLDriver::outDir = "data/output/";

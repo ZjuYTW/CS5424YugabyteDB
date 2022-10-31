@@ -15,16 +15,16 @@ class YSQLPaymentTxn : public PaymentTxn {
 
  private:
   void updateWareHouseSQL_(int w_id, double old_w_ytd, double w_ytd,
-                           pqxx::work* txn);
+                           pqxx::nontransaction* l_work);
 
   void updateDistrictSQL_(int w_id, int d_id, double old_d_ytd, double d_ytd,
-                          pqxx::work* txn);
+                          pqxx::nontransaction* l_work);
 
-  pqxx::row getDistrictSQL_(int w_id, int d_id, pqxx::work* txn);
+  pqxx::row getDistrictSQL_(int w_id, int d_id, pqxx::nontransaction* l_work);
 
-  pqxx::row getWarehouseSQL_(int w_id, pqxx::work* txn);
+  pqxx::row getWarehouseSQL_(int w_id, pqxx::nontransaction* l_work);
 
-  static constexpr int MAX_RETRY_COUNT = 3;
+  static constexpr int MAX_RETRY_COUNT = 6;
   pqxx::connection* conn_;
   std::vector<std::string> outputs;
   std::ofstream& txn_out_;

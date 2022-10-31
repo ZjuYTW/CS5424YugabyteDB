@@ -9,13 +9,14 @@ namespace ydb_util {
 Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock Level Transaction started";
   auto StockLevelInput = format("S %d %d %d %d", w_id_, d_id_, t_, l_);
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::work txn(*conn_);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",
+                      retryCount * 0.2));
       int d_next_o_id = SQL_Get_D_Next_O_ID(w_id_, d_id_, &txn);
 
       auto items = SQL_Get_OL_I_ID(w_id_, d_id_, d_next_o_id, &txn);
@@ -33,8 +34,8 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
                  "is below the threshold: %d",
                  items_below_threshold));
       txn.commit();
-      time(&end_t);
-      *diff_t = difftime(end_t, start_t);
+      auto end = std::chrono::system_clock::now();
+      *diff_t = (end - start).count();
       txn_out_ << StockLevelInput << std::endl;
       for (auto& output : outputs) {
         txn_out_ << output << std::endl;
@@ -48,7 +49,9 @@ Status YSQLStockLevelTxn::Execute(double* diff_t) noexcept {
         err_out_ << StockLevelInput << std::endl;
         err_out_ << e.what() << "\n";
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(
+          std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
   return Status::Invalid("retry times exceeded max retry count");

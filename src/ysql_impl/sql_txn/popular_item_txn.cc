@@ -10,8 +10,7 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Popular items Transaction started";
   auto InputString = format("I %d %d %d", w_id_, d_id_, l_);
 
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
@@ -22,6 +21,8 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
                  "examined:%d",
                  w_id_, d_id_, l_));
       pqxx::work txn(*conn_);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",
+                      retryCount * 0.2));
       std::string nxtOrderQuery = format(
           "SELECT d_next_o_id FROM district WHERE d_w_id = %d AND d_id = %d",
           w_id_, d_id_);
@@ -111,7 +112,9 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
       if (!outputs.empty()) {
         std::vector<std::string>().swap(outputs);  // clean the memory
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(
+          std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
   if (retryCount == MAX_RETRY_COUNT) {
@@ -121,8 +124,8 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
   for (auto& output : outputs) {
     txn_out_ << output << std::endl;
   }
-  time(&end_t);
-  *diff_t = difftime(end_t, start_t);
+  auto end = std::chrono::system_clock::now();
+  *diff_t = (end - start).count();
   return Status::OK();
 }
 }  // namespace ydb_util

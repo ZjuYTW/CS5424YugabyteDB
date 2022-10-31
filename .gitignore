@@ -46,3 +46,4 @@ data/project_files
 .vscode/*
 .idea/*
 cmake-build-debug
+cmake-build-debug-wsl

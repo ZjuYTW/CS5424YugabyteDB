@@ -9,20 +9,21 @@ namespace ydb_util {
 Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Order Status Transaction started";
 
-  time_t start_t, end_t;
-  time(&start_t);
+  auto start = std::chrono::system_clock::now();
   int retryCount = 0;
   auto OrderStatusInput = format("O %d %d %d", c_w_id_, c_d_id_, c_id_);
 
   while (retryCount < MAX_RETRY_COUNT) {
     try {
       pqxx::work txn(*conn_);
+      txn.exec(format("set yb_transaction_priority_lower_bound = %f",
+                      retryCount * 0.2));
       SQL_Output_Customer_Name(c_w_id_, c_d_id_, c_id_, &txn);
       int O_ID = SQL_Get_Last_O_ID(c_w_id_, c_d_id_, c_id_, &txn);
       SQL_Get_Item(c_w_id_, c_d_id_, O_ID, &txn);
 
-      time(&end_t);
-      *diff_t = difftime(end_t, start_t);
+      auto end = std::chrono::system_clock::now();
+      *diff_t = (end - start).count();
       txn.commit();
       txn_out_ << OrderStatusInput << std::endl;
       for (auto& output : outputs) {
@@ -37,7 +38,9 @@ Status YSQLOrderStatusTxn::Execute(double* diff_t) noexcept {
         err_out_ << OrderStatusInput << std::endl;
         err_out_ << e.what() << "\n";
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100 * retryCount));
+      int randRetryTime = rand() % 100 + 1;
+      std::this_thread::sleep_for(
+          std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
   return Status::Invalid("retry times exceeded max retry count");
@@ -80,9 +83,9 @@ int YSQLOrderStatusTxn::SQL_Get_Last_O_ID(int o_w_id, int o_d_id, int o_c_id,
   res = txn->exec(query);
 
   for (auto row : res) {
-    outputs.push_back(format("O_ID: %d, O_ENTRY_D: %s, O_CARRIER_ID: %d",
+    outputs.push_back(format("O_ID: %d, O_ENTRY_D: %s, O_CARRIER_ID: %s",
                              row["O_ID"].as<int>(), row["O_ENTRY_D"].c_str(),
-                             row["O_CARRIER_ID"].as<int>()));
+                             row["O_CARRIER_ID"].c_str()));
     //    std::cout << "O_ID: " << row["O_ID"].as<int>() << ", "
     //              << "O_ENTRY_D: " << row["O_ENTRY_D"].c_str() << ", "
     //              << "O_CARRIER_ID: " << row["O_CARRIER_ID"].as<int>() <<

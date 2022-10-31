@@ -20,11 +20,20 @@ int main(int argc, char* argv[]) {
   ThreadPool pool(10);
   int idx = std::stoi(SERVER_IDX);
   int totalTxn = std::stoi(TXN_NUM);
-  for (; idx <= totalTxn; idx += 5) {
+  int serverNum = std::stoi(SERVER_NUM);
+  std::vector<std::future<ydb_util::Status>> results;
+  for (; idx <= totalTxn; idx += serverNum) {
     auto ret_feature = pool.enqueue(ysql_impl::SQLDriver(
         HOST, PORT, USER, PASSWORD, DB_NAME, SSL_MODE, SSL_ROOT_CERT, idx));
-    std::cout << ret_feature.get().ToString() << std::endl;
+    results.push_back(std::move(ret_feature));
   }
   pool.JoinAll();
+  int txnIdx = std::stoi(SERVER_IDX);
+  for (auto& res : results) {
+    std::cout << ydb_util::format("transaction %d's Status:%s", txnIdx,
+                                  res.get().ToString().c_str())
+              << std::endl;
+    txnIdx += 5;
+  }
   return 0;
 }
