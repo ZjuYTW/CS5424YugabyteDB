@@ -20,8 +20,9 @@ int main(int argc, char* argv[]) {
   ThreadPool pool(10);
   int idx = std::stoi(SERVER_IDX);
   int totalTxn = std::stoi(TXN_NUM);
+  int serverNum = std::stoi(SERVER_NUM);
   std::vector<std::future<ydb_util::Status>> results;
-  for (; idx <= totalTxn; idx += 5) {
+  for (; idx <= totalTxn; idx += serverNum) {
     auto ret_feature = pool.enqueue(ysql_impl::SQLDriver(
         HOST, PORT, USER, PASSWORD, DB_NAME, SSL_MODE, SSL_ROOT_CERT, idx));
     results.push_back(std::move(ret_feature));

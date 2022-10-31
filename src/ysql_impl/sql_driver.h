@@ -70,6 +70,7 @@ class SQLDriver {
           elapsedTime.push_back(processTime);
           break;
         }else{
+          LOG_INFO << "retry on sql driver " << retryCount << " times";
           std::this_thread::sleep_for(
             std::chrono::milliseconds((1000) * retryCount));
           retryCount++;
@@ -77,6 +78,7 @@ class SQLDriver {
       }
       if (retryCount==5){
         // todo: if still not work, change to continue here
+        LOG_INFO << "sql layer retry still failed";
         return Status::Invalid("sql layer retry still failed");
       }
     }

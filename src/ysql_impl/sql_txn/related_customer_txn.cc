@@ -57,6 +57,7 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
         err_out_ << e.what() << "\n";
       }
       // if Failed, Wait for 100 ms to try again
+      LOG_INFO << "Related Customers Retry time:" << retryCount << "ERROR MESSAGE: " << e.what();
       int randRetryTime = rand() % 100 + 1;
       std::this_thread::sleep_for(
           std::chrono::milliseconds((100 + randRetryTime) * retryCount));
