@@ -7,8 +7,9 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   using Status = ydb_util::Status;
 
  public:
-  explicit YCQLNewOrderTxn(CassSession* session)
-      : NewOrderTxn(), conn_(session) {}
+  explicit YCQLNewOrderTxn(CassSession* session, std::ofstream& txn_out,
+                           std::ofstream& err_out)
+      : NewOrderTxn(), conn_(session), txn_out_(txn_out), err_out_(err_out) {}
 
   virtual ~YCQLNewOrderTxn() = default;
 
@@ -16,10 +17,14 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
 
  private:
   struct OrderLine {
-    uint32_t i_id;  // OL_I_ID
-    uint32_t w_id;  // OL_W_ID
-    uint32_t quantity;
+    int32_t i_id;  // OL_I_ID
+    int32_t w_id;  // OL_W_ID
+    int32_t quantity;
   };
+
+  Status executeLocal(std::vector<OrderLine>& order_lines,
+                      int all_local) noexcept;
+
   std::pair<Status, CassIterator*> getStock(uint32_t item_id,
                                             uint32_t w_id) noexcept;
 
@@ -46,7 +51,10 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
 
   CassSession* conn_;
 
-  FRIEND_TEST(CQLNewOrderTxnTest, NewOrderTest1);
+  std::ofstream& txn_out_;
+  std::ofstream& err_out_;
+
+  FRIEND_TEST(CQLTxnExecuteTest, NewOrderTest1);
   FRIEND_TEST(TxnArgsParserTest, new_order);
   constexpr static int MaxRetryTime = 3;
 };

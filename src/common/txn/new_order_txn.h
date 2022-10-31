@@ -53,8 +53,8 @@ class NewOrderTxn : public Txn {
 
  protected:
   // ParseOneOrder parses each line into 3 values: OL_I_ID, OL_W_ID, OL_QUALITY
-  static Status ParseOneOrder(const std::string& order, uint32_t* i_id,
-                              uint32_t* w_id, uint32_t* quantity) {
+  static Status ParseOneOrder(const std::string& order, int32_t* i_id,
+                              int32_t* w_id, int32_t* quantity) {
     auto ret = str_split(order, ',');
     if (ret.size() != 3) {
       return Status::AssertionFailed(

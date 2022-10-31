@@ -7,21 +7,26 @@ class YCQLPaymentTxn : public ydb_util::PaymentTxn {
   using Status = ydb_util::Status;
 
  public:
-  explicit YCQLPaymentTxn(CassSession* session)
-      : PaymentTxn(), conn_(session) {}
+  explicit YCQLPaymentTxn(CassSession* session, std::ofstream& txn_out,
+                          std::ofstream& err_out)
+      : PaymentTxn(), conn_(session), txn_out_(txn_out), err_out_(err_out) {}
   Status Execute(double* diff_t) noexcept override;
 
  private:
-  std::pair<Status, CassRow> GetWarehouse_(uint32_t) noexcept;
-  Status UpdateWarehouse_(uint32_t) noexcept;
-
-  std::pair<Status, CassRow> GetCustomer_(uint32_t) noexcept;
-
-  std::pair<Status, CassRow> GetDistrict_(uint32_t) noexcept;
-
   CassSession* conn_;
+  std::ofstream& txn_out_;
+  std::ofstream& err_out_;
   FRIEND_TEST(TxnArgsParserTest, payment);
-  static constexpr int MaxRetryCnt = 3;
+  FRIEND_TEST(CQLTxnExecuteTest, PaymentTxnTest);
+  static constexpr int MAX_RETRY_ATTEMPTS = 3;
+
+  Status executeLocal() noexcept;
+  Status updateWarehouseYTD() noexcept;
+  Status updateDistrictYTD() noexcept;
+  Status updateCustomerPayment() noexcept;
+  std::pair<Status, CassIterator*> getCustomer() noexcept;
+  std::pair<Status, CassIterator*> getWarehouse() noexcept;
+  std::pair<Status, CassIterator*> getDistrict() noexcept;
 };
 }  // namespace ycql_impl
 

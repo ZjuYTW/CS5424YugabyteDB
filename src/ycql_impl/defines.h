@@ -3,7 +3,8 @@
 #include <string>
 namespace ycql_impl {
 extern std::string YCQLKeyspace;
-
-}
+extern std::string TEST_TXN_OUT_PATH;
+extern std::string TEST_ERR_OUT_PATH;
+}  // namespace ycql_impl
 
 #endif

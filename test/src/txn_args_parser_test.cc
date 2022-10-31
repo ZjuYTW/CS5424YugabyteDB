@@ -1,5 +1,6 @@
 #include "common/util/logger.h"
 #include "gtest/gtest.h"
+#include "ycql_impl/defines.h"
 #include "ycql_impl/ycql_parser.h"
 
 namespace ycql_impl {
@@ -8,9 +9,21 @@ const std::string TEST_FILE_PATH = "data/xact_files/";
 
 using namespace ydb_util;
 
-TEST(TxnArgsParserTest, new_order) {
+class TxnArgsParserTest : public ::testing::Test {
+ public:
+  void SetUp() override {
+    txn_out_ = std::ofstream(TEST_TXN_OUT_PATH + "txn_out.out", std::ios::out);
+    err_out_ = std::ofstream(TEST_ERR_OUT_PATH + "err_out.out", std::ios::out);
+  }
+
+ protected:
+  std::ofstream txn_out_;
+  std::ofstream err_out_;
+};
+
+TEST_F(TxnArgsParserTest, new_order) {
   std::unique_ptr<Parser> parser = std::make_unique<YCQLParser>(
-      TEST_FILE_PATH + "new_order_txn.txt", nullptr);
+      TEST_FILE_PATH + "new_order_txn.txt", nullptr, txn_out_, err_out_);
   auto s = parser->Init();
   LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
@@ -27,9 +40,9 @@ TEST(TxnArgsParserTest, new_order) {
   }
 }
 
-TEST(TxnArgsParserTest, payment) {
-  std::unique_ptr<Parser> parser =
-      std::make_unique<YCQLParser>(TEST_FILE_PATH + "payment_txn.txt", nullptr);
+TEST_F(TxnArgsParserTest, payment) {
+  std::unique_ptr<Parser> parser = std::make_unique<YCQLParser>(
+      TEST_FILE_PATH + "payment_txn.txt", nullptr, txn_out_, err_out_);
   auto s = parser->Init();
   LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
@@ -46,9 +59,9 @@ TEST(TxnArgsParserTest, payment) {
   }
 }
 
-TEST(TxnArgsParserTest, delivery) {
+TEST_F(TxnArgsParserTest, delivery) {
   std::unique_ptr<Parser> parser = std::make_unique<YCQLParser>(
-      TEST_FILE_PATH + "delivery_txn.txt", nullptr);
+      TEST_FILE_PATH + "delivery_txn.txt", nullptr, txn_out_, err_out_);
   auto s = parser->Init();
   LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
@@ -63,9 +76,9 @@ TEST(TxnArgsParserTest, delivery) {
   }
 }
 
-TEST(TxnArgsParserTest, order_status) {
+TEST_F(TxnArgsParserTest, order_status) {
   std::unique_ptr<Parser> parser = std::make_unique<YCQLParser>(
-      TEST_FILE_PATH + "order_status.txt", nullptr);
+      TEST_FILE_PATH + "order_status.txt", nullptr, txn_out_, err_out_);
   auto s = parser->Init();
   LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
@@ -81,9 +94,9 @@ TEST(TxnArgsParserTest, order_status) {
   }
 }
 
-TEST(TxnArgsParserTest, stock_level) {
-  std::unique_ptr<Parser> parser =
-      std::make_unique<YCQLParser>(TEST_FILE_PATH + "stock_level.txt", nullptr);
+TEST_F(TxnArgsParserTest, stock_level) {
+  std::unique_ptr<Parser> parser = std::make_unique<YCQLParser>(
+      TEST_FILE_PATH + "stock_level.txt", nullptr, txn_out_, err_out_);
   auto s = parser->Init();
   LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
@@ -100,9 +113,9 @@ TEST(TxnArgsParserTest, stock_level) {
   }
 }
 
-TEST(TxnArgsParserTest, popular_item) {
+TEST_F(TxnArgsParserTest, popular_item) {
   std::unique_ptr<Parser> parser = std::make_unique<YCQLParser>(
-      TEST_FILE_PATH + "popular_item_txn.txt", nullptr);
+      TEST_FILE_PATH + "popular_item_txn.txt", nullptr, txn_out_, err_out_);
   auto s = parser->Init();
   LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
@@ -118,9 +131,9 @@ TEST(TxnArgsParserTest, popular_item) {
   }
 }
 
-TEST(TxnArgsParserTest, top_balance) {
+TEST_F(TxnArgsParserTest, top_balance) {
   std::unique_ptr<Parser> parser = std::make_unique<YCQLParser>(
-      TEST_FILE_PATH + "top_balance_txn.txt", nullptr);
+      TEST_FILE_PATH + "top_balance_txn.txt", nullptr, txn_out_, err_out_);
   auto s = parser->Init();
   LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
@@ -133,9 +146,9 @@ TEST(TxnArgsParserTest, top_balance) {
   }
 }
 
-TEST(TxnArgsParserTest, related_customer) {
+TEST_F(TxnArgsParserTest, related_customer) {
   std::unique_ptr<Parser> parser = std::make_unique<YCQLParser>(
-      "data/xact_files/related_customer_txn.txt", nullptr);
+      "data/xact_files/related_customer_txn.txt", nullptr, txn_out_, err_out_);
   auto s = parser->Init();
   LOG_INFO << s.ToString();
   EXPECT_EQ(s.ok(), true);
