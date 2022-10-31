@@ -18,6 +18,8 @@ Status YSQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
       txn.exec(isolationSQL);
       txn.exec(format("set yb_transaction_priority_lower_bound = %f",
                       retryCount * 0.2));
+      outputs.push_back(format("Customer identifier: (%d, %d, %d)", c_w_id_,
+                               c_d_id_, c_id_));
       pqxx::result orders = getOrdersSQL_(c_w_id_, c_d_id_, c_id_, &txn);
       std::unordered_set<std::string> customers;
       for (auto order : orders) {
