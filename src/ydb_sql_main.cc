@@ -30,7 +30,9 @@ int main(int argc, char* argv[]) {
   pool.JoinAll();
   int txnIdx = std::stoi(SERVER_IDX);
   for (auto& res : results) {
-    std::cout<<ydb_util::format("transaction %d's Status:%s",txnIdx,res.get().ToString().c_str())<<std::endl;
+    std::cout << ydb_util::format("transaction %d's Status:%s", txnIdx,
+                                  res.get().ToString().c_str())
+              << std::endl;
     txnIdx += 5;
   }
   return 0;

@@ -7,14 +7,15 @@
 namespace ydb_util {
 Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
-  auto InputString = format("P %d %d %d",w_id_,d_id_,c_id_);
+  auto InputString = format("P %d %d %d", w_id_, d_id_, c_id_);
   auto start = std::chrono::system_clock::now();
   int retryCount = 0;
 
   while (retryCount < MAX_RETRY_COUNT) {
     pqxx::nontransaction l_work(*conn_);
     try {
-      l_work.exec(format("set yb_transaction_priority_lower_bound = %f;", retryCount * 0.2));
+      l_work.exec(format("set yb_transaction_priority_lower_bound = %f;",
+                         retryCount * 0.2));
       l_work.exec("begin TRANSACTION;");
       pqxx::row warehouse = getWarehouseSQL_(w_id_, &l_work);
       double old_w_ytd = std::stod(warehouse["w_ytd"].c_str());
@@ -64,7 +65,8 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
           "C_DISCOUNT=%s, C_BALANCE=%f",
           customer["C_PHONE"].c_str(), customer["C_SINCE"].c_str(),
           customer["C_CREDIT"].c_str(), customer["C_CREDIT_LIM"].c_str(),
-          customer["C_DISCOUNT"].c_str(), customer["C_BALANCE"].as<float>()));;
+          customer["C_DISCOUNT"].c_str(), customer["C_BALANCE"].as<float>()));
+      ;
       outputs.push_back("District Information:");
       outputs.push_back(
           format("d_street_1=%s, d_street_2=%s, d_city=%s, d_state=%s, "
@@ -73,18 +75,18 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
                  district["d_city"].c_str(), district["d_state"].c_str(),
                  district["d_zip"].c_str(), district["d_ytd"].as<float>()));
       outputs.push_back("Warehouse Information:");
-      outputs.push_back(
-          format("w_street_1=%s, w_street_2=%s, w_city=%s, w_state=%s, "
-                 "w_zip=%s, w_ytd=%f",
-                 warehouse["w_street_1"].c_str(), warehouse["w_street_2"].c_str(),
-                 warehouse["w_city"].c_str(), warehouse["w_state"].c_str(),
-                 warehouse["w_zip"].c_str(), warehouse["w_ytd"].as<float>()));
+      outputs.push_back(format(
+          "w_street_1=%s, w_street_2=%s, w_city=%s, w_state=%s, "
+          "w_zip=%s, w_ytd=%f",
+          warehouse["w_street_1"].c_str(), warehouse["w_street_2"].c_str(),
+          warehouse["w_city"].c_str(), warehouse["w_state"].c_str(),
+          warehouse["w_zip"].c_str(), warehouse["w_ytd"].as<float>()));
       outputs.push_back(format("Payment: %f", payment_));
       //      std::cout << "Payment:" << payment_ << std::endl;
 
       auto end = std::chrono::system_clock::now();
-      *diff_t = (end-start).count();
-      txn_out_<<InputString<<std::endl;
+      *diff_t = (end - start).count();
+      txn_out_ << InputString << std::endl;
       for (auto& output : outputs) {
         txn_out_ << output << std::endl;
       }
@@ -101,7 +103,8 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
       LOG_INFO << "Retry time:" << retryCount;
       // if Failed, Wait for 100 ms to try again
       int randRetryTime = rand() % 100 + 1;
-      std::this_thread::sleep_for(std::chrono::milliseconds((100 + randRetryTime) * retryCount));
+      std::this_thread::sleep_for(
+          std::chrono::milliseconds((100 + randRetryTime) * retryCount));
     }
   }
 
@@ -109,7 +112,8 @@ Status YSQLPaymentTxn::Execute(double* diff_t) noexcept {
 }
 
 void YSQLPaymentTxn::updateWareHouseSQL_(int w_id, double old_w_ytd,
-                                         double w_ytd, pqxx::nontransaction* l_work) {
+                                         double w_ytd,
+                                         pqxx::nontransaction* l_work) {
   std::string query = format(
       "UPDATE warehouse set w_ytd = %.2f  where w_id = %d and w_ytd = %.2f ;",
       w_ytd, w_id, old_w_ytd);
@@ -117,7 +121,8 @@ void YSQLPaymentTxn::updateWareHouseSQL_(int w_id, double old_w_ytd,
 }
 
 void YSQLPaymentTxn::updateDistrictSQL_(int w_id, int d_id, double old_d_ytd,
-                                        double d_ytd, pqxx::nontransaction* l_work) {
+                                        double d_ytd,
+                                        pqxx::nontransaction* l_work) {
   std::string query = format(
       "UPDATE district set d_ytd = %.2f  where d_w_id = %d and d_id = %d and "
       "d_ytd = %.2f;",
@@ -125,7 +130,8 @@ void YSQLPaymentTxn::updateDistrictSQL_(int w_id, int d_id, double old_d_ytd,
   l_work->exec(query);
 }
 
-pqxx::row YSQLPaymentTxn::getDistrictSQL_(int w_id, int d_id, pqxx::nontransaction* l_work) {
+pqxx::row YSQLPaymentTxn::getDistrictSQL_(int w_id, int d_id,
+                                          pqxx::nontransaction* l_work) {
   pqxx::result res;
   LOG_INFO << ">>>> Get District:";
   std::string query = format(
@@ -140,7 +146,8 @@ pqxx::row YSQLPaymentTxn::getDistrictSQL_(int w_id, int d_id, pqxx::nontransacti
   return res[0];
 }
 
-pqxx::row YSQLPaymentTxn::getWarehouseSQL_(int w_id, pqxx::nontransaction* l_work) {
+pqxx::row YSQLPaymentTxn::getWarehouseSQL_(int w_id,
+                                           pqxx::nontransaction* l_work) {
   pqxx::result res;
   LOG_INFO << ">>>> Get Warehouse:";
   std::string query = format(

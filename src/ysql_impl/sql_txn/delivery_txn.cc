@@ -15,7 +15,8 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
     while (retryCount < MAX_RETRY_COUNT) {
       pqxx::nontransaction l_work(*conn_);
       try {
-        l_work.exec(format("set yb_transaction_priority_lower_bound = %f;", retryCount * 0.2));
+        l_work.exec(format("set yb_transaction_priority_lower_bound = %f;",
+                           retryCount * 0.2));
         l_work.exec("begin TRANSACTION;");
         LOG_INFO << ">>>> Get Order:";
         std::string OrderQuery = format(
@@ -23,7 +24,7 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
             "= %d AND O_CARRIER_ID is NULL;",
             w_id_, d_id);
         pqxx::result orders = l_work.exec(OrderQuery);
-        if (orders.empty()||orders[0]["O_ID"].is_null()) {
+        if (orders.empty() || orders[0]["O_ID"].is_null()) {
           l_work.exec("ROLLBACK;");
           l_work.exec(format("set yb_transaction_priority_lower_bound = 0;"));
           l_work.abort();
@@ -93,7 +94,7 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
         LOG_INFO << "Retry time:" << retryCount;
         int randRetryTime = rand() % 100 + 1;
         std::this_thread::sleep_for(
-            std::chrono::milliseconds((100+randRetryTime) * retryCount));
+            std::chrono::milliseconds((100 + randRetryTime) * retryCount));
       }
     }
     if (retryCount == MAX_RETRY_COUNT) {
@@ -101,7 +102,7 @@ Status YSQLDeliveryTxn::Execute(double* diff_t) noexcept {
     }
   }
   auto end = std::chrono::system_clock::now();
-  *diff_t = (end-start).count();
+  *diff_t = (end - start).count();
   return Status::OK();
 }
 };  // namespace ydb_util

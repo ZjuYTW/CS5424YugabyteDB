@@ -8,7 +8,8 @@ namespace ydb_util {
 class YSQLPaymentTxn : public PaymentTxn {
  public:
   explicit YSQLPaymentTxn(pqxx::connection* conn, std::ofstream& txn_out,
-                          std::ofstream& err_out) : PaymentTxn(), conn_(conn), txn_out_(txn_out), err_out_(err_out) {}
+                          std::ofstream& err_out)
+      : PaymentTxn(), conn_(conn), txn_out_(txn_out), err_out_(err_out) {}
 
   Status Execute(double* diff_t) noexcept;
 

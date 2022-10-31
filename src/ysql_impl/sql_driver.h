@@ -64,19 +64,19 @@ class SQLDriver {
       double processTime;
 
       int retryCount = 0;
-      while (retryCount<5){
+      while (retryCount < 5) {
         auto status = t->Execute(&processTime);
         if (status.ok()) {
           elapsedTime.push_back(processTime);
           break;
-        }else{
+        } else {
           LOG_INFO << "retry on sql driver " << retryCount << " times";
           std::this_thread::sleep_for(
-            std::chrono::milliseconds((1000) * retryCount));
+              std::chrono::milliseconds((1000) * retryCount));
           retryCount++;
         }
       }
-      if (retryCount==5){
+      if (retryCount == 5) {
         // todo: if still not work, change to continue here
         LOG_INFO << "sql layer retry still failed";
         return Status::Invalid("sql layer retry still failed");
@@ -92,17 +92,21 @@ class SQLDriver {
     out_measure_fs << "Total number of transactions processed: "
                    << elapsedTime.size() << "\n"
                    << "Total elapsed time for processing the transactions: "
-                   << totalTime/1e9 << " seconds\n"
+                   << totalTime / 1e9 << " seconds\n"
                    << "Transaction throughput: "
-                   << elapsedTime.size() / totalTime * 1e9 << " transactions/second\n"
+                   << elapsedTime.size() / totalTime * 1e9
+                   << " transactions/second\n"
                    << "Average transaction latency: "
                    << totalTime / 1e9 / elapsedTime.size() << " seconds\n"
                    << "Median transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.5] / 1e9 << " seconds\n"
+                   << elapsedTime[elapsedTime.size() * 0.5] / 1e9
+                   << " seconds\n"
                    << "95th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.95] / 1e9 << " seconds\n"
+                   << elapsedTime[elapsedTime.size() * 0.95] / 1e9
+                   << " seconds\n"
                    << "99th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.99] / 1e9 << " seconds" << std::endl;
+                   << elapsedTime[elapsedTime.size() * 0.99] / 1e9 << " seconds"
+                   << std::endl;
 
     return Status::OK();
   }
