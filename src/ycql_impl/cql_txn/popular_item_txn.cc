@@ -8,14 +8,31 @@ using ydb_util::format;
 
 Status YCQLPopularItemTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Popular-item Transaction started";
+  const auto InputString = format("I %d %d %d", w_id_, d_id_, l_);
+  auto start_time = std::chrono::system_clock::now();
   auto st = Retry(std::bind(&YCQLPopularItemTxn::executeLocal, this),
                   MAX_RETRY_ATTEMPTS);
-  if (st.ok()) LOG_INFO << "Popular-item Transaction completed";
+  auto end_time = std::chrono::system_clock::now();
+  *diff_t = (end_time - start_time).count();
+  if (st.ok()) {
+    LOG_INFO << "Popular-item Transaction completed";
+    // Txn output
+    txn_out_ << InputString << std::endl;
+    for (const auto& ostr : outputs_) {
+      txn_out_ << "\t" << ostr << std::endl;
+    }
+  } else {
+    err_out_ << InputString << std::endl;
+    err_out_ << st.ToString() << std::endl;
+  }
   return st;
 }
 
 Status YCQLPopularItemTxn::executeLocal() noexcept {
   Status st = Status::OK();
+  outputs_.push_back(format("District identifier: (%d, %d)", w_id_, d_id_));
+  outputs_.push_back(
+      format("Number of last orders to be examined: %d", l_));
 
   CassIterator* next_order_it = nullptr;
   std::tie(st, next_order_it) = getNextOrder();
@@ -33,12 +50,11 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
   while (cass_iterator_next(order_it)) {
     auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
     auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id").value();
-    // TODO(winston.yan): check type of o_entry_id
-    auto o_entry_d =
-        GetValueFromCassRow<int64_t>(order_it, "o_entry_d").value();
-    std::cout << format("\t1.Order number:(%d) & entry date and time (%lld)",
-                        o_id, o_entry_d)
-              << std::endl;
+    auto o_entry_d = GetTimeFromTS(
+        GetValueFromCassRow<int64_t>(order_it, "o_entry_d").value());
+    outputs_.push_back(
+        format("(a) Order number:(%d) & entry date and time (%s)", o_id,
+               o_entry_d.c_str()));
 
     CassIterator* customer_it = nullptr;
     std::tie(st, customer_it) = getCustomerName(c_id);
@@ -50,16 +66,15 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
     auto c_lst =
         GetValueFromCassRow<std::string>(customer_it, "c_last").value();
     if (customer_it) cass_iterator_free(customer_it);
-    std::cout << format(
-                     "\t2.Name of customer who placed this order (%s, %s, %s)",
-                     c_fst.c_str(), c_mid.c_str(), c_lst.c_str())
-              << std::endl;
+    outputs_.push_back(
+        format("(b) Name of customer who placed this order (%s, %s, %s)",
+               c_fst.c_str(), c_mid.c_str(), c_lst.c_str()));
 
     CassIterator* orderLine_it = nullptr;
     std::tie(st, orderLine_it) = getMaxOrderLines(o_id);
     if (!st.ok()) return st;
-    std::cout << format("\t3.For each popular item in order %d:\n", o_id)
-              << std::endl;
+    outputs_.push_back(
+        format("(c) For each popular item in order %d:\n", o_id));
     // Note: Here we expect iterate just once
     while (cass_iterator_next(orderLine_it)) {
       auto ol_quantity =
@@ -75,10 +90,8 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
             GetValueFromCassRow<std::string>(item_it, "i_name").value();
         cass_iterator_free(item_it);
         popularItems[i_name] += 1;
-        std::cout << format("\t\t(i).Item name: %s", i_name.c_str())
-                  << std::endl;
-        std::cout << format("\t\t(i).Quantity ordered: %d", ol_quantity)
-                  << std::endl;
+        outputs_.push_back(format("\tItem name: %s, Quantity ordered: %d",
+                                      i_name.c_str(), ol_quantity));
       }
     }
     if (orderLine_it) cass_iterator_free(orderLine_it);
@@ -87,12 +100,12 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
   }
 
   // print the percentage of examined orders that contain each popular item
-  std::cout << "\t4.For each distinct popular item:" << std::endl;
+  outputs_.emplace_back("(d) For each distinct popular item:");
   for (const auto& [i_name, cnt] : popularItems) {
     auto percentage = 1.0 * cnt / order_size;
-    std::cout << format("\t\t(i).Item name: %s", i_name.c_str()) << std::endl;
-    std::cout << format("\t\t(ii).Percentage in orders: %lf", percentage)
-              << std::endl;
+    outputs_.push_back(
+        format("\tItem name: %s, Occurring percentage: %.2f%%", i_name.c_str(),
+               percentage * 100));
   }
 
   if (order_it) cass_iterator_free(order_it);

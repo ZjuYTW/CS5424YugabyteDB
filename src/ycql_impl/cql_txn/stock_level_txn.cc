@@ -10,9 +10,25 @@ using ydb_util::format;
 
 Status YCQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock-level Transaction started";
+  const auto InputString =
+      format("S %d %d %d %d", this->w_id_, this->d_id_, this->l_, this->t_);
+  outputs_.resize(1);
+  auto start_time = std::chrono::system_clock::now();
   auto st = Retry(std::bind(&YCQLStockLevelTxn::executeLocal, this),
                   MAX_RETRY_ATTEMPTS);
-  if (st.ok()) LOG_INFO << "Stock-level transaction completed";
+  auto end_time = std::chrono::system_clock::now();
+  *diff_t = (end_time - start_time).count();
+  if (st.ok()) {
+    LOG_INFO << "Stock-level transaction completed";
+    // Txn output
+    txn_out_ << InputString << std::endl;
+    for (const auto& ostr : outputs_) {
+      txn_out_ << "\t" << ostr << std::endl;
+    }
+  } else {
+    err_out_ << InputString << std::endl;
+    err_out_ << st.ToString() << std::endl;
+  }
   return st;
 }
 
@@ -45,11 +61,11 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
     LOG_INFO << "i_id: " << i_id << ", quantity: " << quantity.value();
     if (quantity_it) cass_iterator_free(quantity_it);
   }
-  std::cout << format(
-                   "Total number of items in S where its stock quantity at "
-                   "(W_ID %d, D_ID %d) is below the threshold %d: ",
-                   w_id_, d_id_, t_)
-            << items_below_threshold << std::endl;
+
+  outputs_.push_back(
+      format("Total number of items in S where its stock quantity at W_ID "
+             "is below the threshold: %d",
+             items_below_threshold));
 
   if (item_it) cass_iterator_free(item_it);
   return st;

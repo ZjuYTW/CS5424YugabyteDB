@@ -1,5 +1,6 @@
 #include "ycql_impl/cql_exe_util.h"
 
+#include <ctime>
 #include <thread>
 
 namespace ycql_impl {
@@ -19,7 +20,7 @@ ydb_util::Status Retry(const std::function<ydb_util::Status()>& func,
     if (st.ok()) return st;
     ycql_impl::ValidOrSleep(false);
   } while (attempt++ < max_attempts);
-  return st;
+  return ydb_util::Status::Invalid("Exceeded max number of retry attempts");
 }
 
 double GetDTax(CassIterator* district_it) noexcept {
@@ -45,6 +46,19 @@ double GetPrice(CassIterator* item_it) noexcept {
   auto i_price = ycql_impl::GetValueFromCassRow<int32_t>(item_it, "i_price");
   double i_price_d = static_cast<double>(i_price.value() / 100);
   return i_price_d;
+}
+
+std::string GetTimeFromTS(int64_t longDate) noexcept {
+  char buff[128];
+
+  std::chrono::duration<int64_t, std::milli> dur(longDate);
+  auto tp = std::chrono::system_clock::time_point(
+      std::chrono::duration_cast<std::chrono::system_clock::duration>(dur));
+  std::time_t in_time_t = std::chrono::system_clock::to_time_t(tp);
+  strftime(buff, 128, "%Y-%m-%d %H:%M:%S", gmtime(&in_time_t));
+  std::string resDate(buff);
+
+  return resDate;
 }
 
 ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,

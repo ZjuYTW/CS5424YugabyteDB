@@ -2,6 +2,7 @@
 #define YCQL_IMPL_EXE_UTIL_H_
 
 #include <functional>
+#include <iomanip>
 #include <optional>
 #include <string>
 #include <vector>
@@ -222,6 +223,8 @@ double GetDiscount(CassIterator* custom_it) noexcept;
 
 double GetPrice(CassIterator* item_it) noexcept;
 
+std::string GetTimeFromTS(int64_t ts) noexcept;
+
 ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,
                               CassSession* conn) noexcept;
 
@@ -229,18 +232,18 @@ ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,
 // is 0 then we don't do the convert
 template <typename T>
 std::string GetStringValue(const std::optional<T>& opt_val,
-                           int base = 0) noexcept {
+                           int base = 1) noexcept {
   if (!opt_val.has_value()) {
     return "null";
   }
   if constexpr (std::is_same_v<std::string, T>) {
     return opt_val.value();
   } else {
-    if (base == 0) {
-      return std::to_string(opt_val.value());
-    } else {
-      return std::to_string(static_cast<double>(opt_val.value()) / base);
-    }
+    std::ostringstream oss;
+    oss << std::fixed;
+    oss << std::setprecision(2);
+    oss << static_cast<double>(opt_val.value()) / base;
+    return oss.str();
   }
 }
 

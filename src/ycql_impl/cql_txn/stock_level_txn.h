@@ -19,6 +19,7 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  std::vector<std::string> outputs_;
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
   Status executeLocal() noexcept;

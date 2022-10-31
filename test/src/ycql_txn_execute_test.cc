@@ -88,6 +88,7 @@ TEST_F(CQLTxnExecuteTest, PaymentTxnTest) {
   payment_txn.c_id_ = 1;
   payment_txn.d_id_ = 1;
   payment_txn.w_id_ = 1;
+  payment_txn.payment_ = 50000.0;
   double elapsedTime;
   auto st = payment_txn.Execute(&elapsedTime);
   ASSERT_TRUE(st.ok());
@@ -113,7 +114,7 @@ TEST_F(CQLTxnExecuteTest, RelatedCustomerTxnTest) {
 
   related_customer_txn->c_w_id_ = 1;
   related_customer_txn->c_d_id_ = 1;
-  related_customer_txn->c_id_ = 4;
+  related_customer_txn->c_id_ = 1;
 
   double elapsedTime;
   auto st = related_customer_txn->Execute(&elapsedTime);

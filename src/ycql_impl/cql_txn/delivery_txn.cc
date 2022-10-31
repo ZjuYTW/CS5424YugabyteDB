@@ -8,9 +8,12 @@
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
+using ydb_util::format;
 
 Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Delivery transaction started";
+  const auto InputString = format("D %d %d", w_id_, carrier_id_);
+  auto start_time = std::chrono::system_clock::now();
   Status st = Status::OK();
   auto DeliveryInput = ydb_util::format("D %d %d", w_id_, carrier_id_);
 
@@ -22,16 +25,17 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
     if (!st.ok()) {
       LOG_FATAL << "Delivery transaction execution failed"
                 << ", " << st.ToString();
-      if (st.isEndOfFile()) {
-        // If just can't find an availiable order, skip
-        continue;
-      }
-      return st;
+      break;
     }
   }
+  auto end_time = std::chrono::system_clock::now();
+  *diff_t = (end_time - start_time).count();
   if (st.ok() || st.isEndOfFile()) {
     LOG_INFO << "Delivery transaction completed";
-    return Status::OK();
+    txn_out_ << InputString << std::endl;
+  } else {
+    err_out_ << InputString << std::endl;
+    err_out_ << st.ToString() << std::endl;
   }
   return st;
 }

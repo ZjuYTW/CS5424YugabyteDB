@@ -25,6 +25,7 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  std::vector<std::string> outputs_;
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
   constexpr static int THRESHOLD = 2;
 
@@ -40,7 +41,7 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
       const std::vector<int32_t>& i_ids) noexcept;
   std::pair<Status, CassIterator*> getCustomerId(int32_t w_id, int32_t d_id,
                                                  int32_t o_id) noexcept;
-  std::string idSetToString(const std::vector<int32_t>& i_ids) noexcept;
+  static std::string idSetToString(const std::vector<int32_t>& i_ids) noexcept;
   Status addRelatedCustomers(
       const std::vector<int32_t>& i_ids,
       std::unordered_map<int32_t, std::string>& customers) noexcept;

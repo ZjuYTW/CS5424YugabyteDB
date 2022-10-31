@@ -20,6 +20,7 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+  std::vector<std::string> outputs_;
   constexpr static int TOP_K = 10;
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
