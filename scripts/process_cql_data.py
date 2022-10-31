@@ -11,17 +11,44 @@ item_header = ["I_ID", "I_NAME", "I_PRICE", "I_IM_ID", "I_DATA"]
 
 def process_customer_data(path, output_path):
     df = pd.read_csv(path, header=None)
-    df[15] = df[15].apply(lambda x: x * 100) # C_BALANCE
+    df[14] = df[14].apply(lambda x: int(x * 100)) # C_CREDIT_LIM
+    df[15] = df[15].apply(lambda x: int(x * 10000)) # C_DISCOUNT
+    df[16] = df[16].apply(lambda x: int(x * 100)) # C_BALANCE
+    df[17] = df[17].apply(lambda x: int(x * 100)) # C_YTD_PAYMENT
+    # save result
+    df.to_csv(output_path, index=False)
 
+def process_warehouse_data(path, output_path):
+    df = pd.read_csv(path, header=None)
+    df[7] = df[7].apply(lambda x: int(x * 10000)) # W_TAX
+    df[8] = df[8].apply(lambda x: int(x * 100)) # W_YTD
+    # save result
+    df.to_csv(output_path, index=False)
+
+def process_district_data(path, output_path):
+    df = pd.read_csv(path, header=None)
+    df[8] = df[8].apply(lambda x: int(x * 10000)) # D_TAX
+    df[9] = df[9].apply(lambda x: int(x * 100)) # D_YTD
     # save result
     df.to_csv(output_path, index=False)
 
 def process_orderline_data(path, output_path):
     df = pd.read_csv(path, header=None)
-    # df[6] = df[6].apply(lambda x: x * 100) # OL_AMOUNT
+    df[6] = df[6].apply(lambda x: int(x * 100)) # OL_AMOUNT
+    # save result
+    df.to_csv(output_path, index=False)
 
-    # # save result
-    # df.to_csv(output_path, index=False)
+def process_item_data(path, output_path):
+    df = pd.read_csv(path, header=None)
+    df[2] = df[2].apply(lambda x: int(x * 100)) # I_PRICE
+    # save result
+    df.to_csv(output_path, index=False)
+
+def process_stock_data(path, output_path):
+    df = pd.read_csv(path, header=None)
+    df[3] = df[3].apply(lambda x: int(x * 100)) # S_YTD
+    # save result
+    df.to_csv(output_path, index=False)
 
 
 def join_customer_district(path_customer, path_district, output_path):
@@ -58,8 +85,13 @@ def main():
     join_stock_item(data_path + "stock.csv", data_path + "item.csv", data_path + "stock_item.csv")
 
 if __name__ == '__main__':
-    # process_customer_data('./data/data_files/customer.csv', './data/data_files/customer_cql.csv')
-    # process_orderline_data('./data/data_files/order-line.csv', './data/data_files/order-line_cql.csv')
+    process_warehouse_data('./data/data_files/warehouse.csv', './data/data_files/warehouse_cql.csv')
+    process_district_data('./data/data_files/district.csv', './data/data_files/district_cql.csv')
+    process_customer_data('./data/data_files/customer.csv', './data/data_files/customer_cql.csv')
+    process_orderline_data('./data/data_files/order-line.csv', './data/data_files/order-line_cql.csv')
+    process_item_data('./data/data_files/item.csv', './data/data_files/item_cql.csv')
+    process_stock_data('./data/data_files/stock.csv', './data/data_files/stock_cql.csv')
+
     # join_stock_item('./data/data_files/stock.csv', './data/data_files/item.csv', './data/data_files/stock_item.csv')
 
-    main()
+    # main()
