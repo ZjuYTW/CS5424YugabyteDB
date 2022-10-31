@@ -75,15 +75,12 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(
   }
   cass_iterator_free(order_it);
 
-  for (const auto &[order_key, count] : order_counter) {
-    LOG_INFO << "(" << std::get<0>(order_key)
-        << ", " << std::get<1>(order_key)
-        << ", " << std::get<2>(order_key)
-        << ") -> " << count;
+  for (const auto& [order_key, count] : order_counter) {
+    LOG_INFO << "(" << std::get<0>(order_key) << ", " << std::get<1>(order_key)
+             << ", " << std::get<2>(order_key) << ") -> " << count;
     if (count < THRESHOLD) continue;
 
-    int32_t ol_w_id = std::get<0>(order_key),
-            ol_d_id = std::get<1>(order_key),
+    int32_t ol_w_id = std::get<0>(order_key), ol_d_id = std::get<1>(order_key),
             ol_o_id = std::get<2>(order_key);
     CassIterator* customer_it = nullptr;
     std::tie(st, customer_it) = getCustomerId(ol_w_id, ol_d_id, ol_o_id);
@@ -165,7 +162,8 @@ std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getOrderLines(
   return {st, it};
 }
 
-std::string YCQLRelatedCustomerTxn::idSetToString(const std::vector<int32_t>& i_ids) noexcept {
+std::string YCQLRelatedCustomerTxn::idSetToString(
+    const std::vector<int32_t>& i_ids) noexcept {
   auto n = i_ids.size();
   assert(n >= 2);
   std::string ret = std::to_string(i_ids[0]);
@@ -173,8 +171,8 @@ std::string YCQLRelatedCustomerTxn::idSetToString(const std::vector<int32_t>& i_
   return ret;
 }
 
-
-std::size_t YCQLRelatedCustomerTxn::order_key_hash::operator()(const ycql_impl::YCQLRelatedCustomerTxn::order_key_t& k) const {
+std::size_t YCQLRelatedCustomerTxn::order_key_hash::operator()(
+    const ycql_impl::YCQLRelatedCustomerTxn::order_key_t& k) const {
   return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k);
 }
 

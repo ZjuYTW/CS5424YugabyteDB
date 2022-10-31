@@ -20,8 +20,11 @@ CassError connect_session(CassSession* session, const CassCluster* cluster) {
 class CQLTxnExecuteTest : public ::testing::Test {
  public:
   void SetUp() override {
+    std::cout << TEST_TXN_OUT_PATH << ", " << TEST_ERR_OUT_PATH << std::endl;
     txn_out_ = std::ofstream(TEST_TXN_OUT_PATH + "txn_out.out", std::ios::out);
     err_out_ = std::ofstream(TEST_ERR_OUT_PATH + "err_out.out", std::ios::out);
+    EXPECT_TRUE(txn_out_.is_open());
+    EXPECT_TRUE(err_out_.is_open());
     LOG_INFO << "connecting to server...";
     CassCluster* cluster = cass_cluster_new();
     cass_cluster_set_contact_points(cluster, hosts);

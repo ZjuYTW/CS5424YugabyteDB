@@ -25,8 +25,8 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   Status executeLocal(std::vector<OrderLine>& order_lines,
                       int all_local) noexcept;
 
-  std::pair<Status, CassIterator*> getStock(uint32_t item_id,
-                                            uint32_t w_id) noexcept;
+  std::pair<Status, CassIterator*> getStock(int32_t item_id,
+                                            int32_t w_id) noexcept;
 
   std::pair<Status, CassIterator*> getWarehouse() noexcept;
 
@@ -34,25 +34,39 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
 
   std::pair<Status, CassIterator*> getCustomer() noexcept;
 
-  std::pair<Status, CassIterator*> getItem(uint32_t item_id) noexcept;
+  std::pair<Status, CassIterator*> getItem(int32_t item_id) noexcept;
 
-  Status updateNextOId(uint32_t next_o_id, uint32_t prev_next_o_id) noexcept;
+  Status updateNextOId(int32_t next_o_id, int32_t prev_next_o_id) noexcept;
 
-  Status updateStock(uint32_t adjusted_qty, uint32_t prev_qty,
-                     uint32_t ordered_qty, int remote_cnt, uint32_t w_id,
-                     uint32_t item_id) noexcept;
+  Status updateStock(int32_t adjusted_qty, int32_t prev_qty,
+                     int32_t ordered_qty, int remote_cnt, int32_t w_id,
+                     int32_t item_id) noexcept;
 
   // Return status and total_amount
   std::pair<Status, int64_t> processOrderLines(
-      std::vector<OrderLine>& order_lines, uint32_t next_o_id) noexcept;
+      std::vector<OrderLine>& order_lines, int32_t next_o_id) noexcept;
 
-  Status processOrder(uint32_t next_o_id, uint32_t order_num, int all_local,
-                      int64_t total_amount) noexcept;
+  Status processOrder(int32_t next_o_id, int32_t order_num, int all_local,
+                      int64_t total_amount, std::string& current_time) noexcept;
+
+  Status processOrderMaxQuantity(const std::vector<OrderLine>& order_lines,
+                                 int32_t next_o_id) noexcept;
+
+  void processItemOutput(size_t start_idx, const OrderLine& ol,
+                         int64_t item_amount, int32_t s_quantity,
+                         const std::string& i_name) noexcept;
+
+  void processOutput(CassIterator* customer_it, CassIterator* district_it,
+                     CassIterator* warehouse_it, int64_t total_amount,
+                     std::string& current_time, double discount, double w_tax,
+                     double d_tax, int32_t o_id) noexcept;
 
   CassSession* conn_;
 
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+
+  std::vector<std::string> outputs_;
 
   FRIEND_TEST(CQLTxnExecuteTest, NewOrderTest1);
   FRIEND_TEST(TxnArgsParserTest, new_order);
