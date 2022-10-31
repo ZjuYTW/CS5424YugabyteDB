@@ -5,10 +5,10 @@
 * Pack the toolbox
 ```
 make build
-sh setup.sh
+sh pack.sh
 ```
 
-* upload the thing to server
+* upload the package to server
 ```
 scp package.zip cs4224k@xcnd25.comp.nus.edu.sg:~
 ```
