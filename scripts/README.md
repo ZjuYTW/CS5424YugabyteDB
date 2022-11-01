@@ -5,7 +5,7 @@
 * Pack the toolbox
 ```
 make build
-sh pack.sh
+sh scripts/pack.sh
 ```
 
 * upload the package to server
