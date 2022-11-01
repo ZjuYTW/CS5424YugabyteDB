@@ -1,5 +1,6 @@
 #include "ycql_impl/cql_txn/top_balance_txn.h"
 
+#include <future>
 #include <thread>
 
 #include "ycql_impl/cql_exe_util.h"
@@ -39,28 +40,70 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
   Status st = Status::OK();
   CassIterator* customer_it = nullptr;
 
-  std::priority_queue<CustomerInfo, std::vector<CustomerInfo>, std::greater<>>
-      top_customers;
+  std::vector<std::future<std::vector<CustomerInfo>>> fts(10);
 
-  std::tie(st, customer_it) = getAllCustomers();
-  if (!st.ok()) return st;
-
-  while (cass_iterator_next(customer_it)) {
-    auto c_bal = GetValueFromCassRow<int64_t>(customer_it, "c_balance").value();
-    if (top_customers.size() == TOP_K && top_customers.top().c_bal >= c_bal)
-      continue;
-    auto w_id = GetValueFromCassRow<int32_t>(customer_it, "c_w_id").value();
-    auto d_id = GetValueFromCassRow<int32_t>(customer_it, "c_d_id").value();
-    auto c_id = GetValueFromCassRow<int32_t>(customer_it, "c_id").value();
-    top_customers.push(CustomerInfo{
-        .c_bal = c_bal, .c_w_id = w_id, .c_d_id = d_id, .c_id = c_id});
-    if (top_customers.size() > TOP_K) top_customers.pop();
-    assert(top_customers.size() <= 10);
+  for (size_t i = 1; i <= 10; i++) {
+    auto exec_one_distrcit = [this](size_t i) {
+      while (true) {
+        auto [st, customer_it] = this->getCustomers(i);
+        if (!st.ok()) continue;
+        std::priority_queue<CustomerInfo, std::vector<CustomerInfo>,
+                            std::greater<>>
+            top_customers;
+        while (cass_iterator_next(customer_it)) {
+          auto c_bal =
+              GetValueFromCassRow<int64_t>(customer_it, "c_balance").value();
+          if (top_customers.size() == TOP_K &&
+              top_customers.top().c_bal >= c_bal)
+            continue;
+          auto w_id =
+              GetValueFromCassRow<int32_t>(customer_it, "c_w_id").value();
+          auto d_id =
+              GetValueFromCassRow<int32_t>(customer_it, "c_d_id").value();
+          auto c_id = GetValueFromCassRow<int32_t>(customer_it, "c_id").value();
+          top_customers.push(CustomerInfo{
+              .c_bal = c_bal, .c_w_id = w_id, .c_d_id = d_id, .c_id = c_id});
+          if (top_customers.size() > TOP_K) top_customers.pop();
+          assert(top_customers.size() <= 10);
+        }
+        if (customer_it) {
+          cass_iterator_free(customer_it);
+        }
+        std::vector<CustomerInfo> res;
+        while (!top_customers.empty()) {
+          res.push_back(std::move(top_customers.top()));
+          top_customers.pop();
+        }
+        return res;
+      }
+    };
+    fts.push_back(std::async(std::launch::async, exec_one_distrcit, i));
   }
-  if (customer_it) cass_iterator_free(customer_it);
+  std::priority_queue<CustomerInfo, std::vector<CustomerInfo>, std::greater<>>
+      pq;
+  for (size_t i = 1; i <= 10; i++) {
+    auto part_customers = fts[i].get();
+    for (auto& part_cstomer : part_customers) {
+      pq.push(std::move(part_cstomer));
+    }
+  }
 
-  while (!top_customers.empty()) {
-    auto customer = top_customers.top();
+  //   while (cass_iterator_next(customer_it)) {
+  // auto c_bal = GetValueFromCassRow<int64_t>(customer_it,
+  // "c_balance").value(); if (top_customers.size() == TOP_K &&
+  // top_customers.top().c_bal >= c_bal) continue;
+  // auto w_id = GetValueFromCassRow<int32_t>(customer_it, "c_w_id").value();
+  // auto d_id = GetValueFromCassRow<int32_t>(customer_it, "c_d_id").value();
+  // auto c_id = GetValueFromCassRow<int32_t>(customer_it, "c_id").value();
+  // top_customers.push(CustomerInfo{
+  // .c_bal = c_bal, .c_w_id = w_id, .c_d_id = d_id, .c_id = c_id});
+  // if (top_customers.size() > TOP_K) top_customers.pop();
+  // assert(top_customers.size() <= 10);
+  // }
+  // if (customer_it) cass_iterator_free(customer_it);
+
+  while (!pq.empty()) {
+    auto customer = pq.top();
     std::tie(st, customer_it) = getCustomerName(customer);
     if (!st.ok()) return st;
     auto c_fst =
@@ -79,31 +122,30 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
     auto d_name = GetValueFromCassRow<std::string>(district_it, "d_name");
 
     outputs_.push_back(format("(a) Name of Customer: (%s, %s, %s)",
-                                  c_fst.c_str(), c_mid.c_str(), c_lst.c_str()));
+                              c_fst.c_str(), c_mid.c_str(), c_lst.c_str()));
     outputs_.push_back(format("(b) Customer's Balance: %lf",
-                                  static_cast<double>(customer.c_bal / 100.0)));
-    outputs_.push_back(
-        format("(c) Customer's Warehouse: %s", w_name->c_str()));
-    outputs_.push_back(
-        format("(d) Customer's District: %s", d_name->c_str()));
+                              static_cast<double>(customer.c_bal / 100.0)));
+    outputs_.push_back(format("(c) Customer's Warehouse: %s", w_name->c_str()));
+    outputs_.push_back(format("(d) Customer's District: %s", d_name->c_str()));
 
     if (warehouse_it) cass_iterator_free(warehouse_it);
     if (district_it) cass_iterator_free(district_it);
-    top_customers.pop();
+    pq.pop();
   }
 
   return st;
 }
 
-std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getAllCustomers() noexcept {
+std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getCustomers(
+    int32_t d_id) noexcept {
   std::string stmt =
       "SELECT c_w_id, c_d_id, c_id, c_balance "
       "FROM " +
       YCQLKeyspace +
-      ".customer "
+      ".customer WHERE c_d_id = ?"
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, d_id);
   return {st, it};
 }
 

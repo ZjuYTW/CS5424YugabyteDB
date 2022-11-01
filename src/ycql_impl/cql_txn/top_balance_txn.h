@@ -36,7 +36,7 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
   };
 
   Status executeLocal() noexcept;
-  std::pair<Status, CassIterator*> getAllCustomers() noexcept;
+  std::pair<Status, CassIterator*> getCustomers(int32_t d_id) noexcept;
   std::pair<Status, CassIterator*> getCustomerName(
       const CustomerInfo& c_info) noexcept;
   std::pair<Status, CassIterator*> getWarehouse(int32_t w_id) noexcept;

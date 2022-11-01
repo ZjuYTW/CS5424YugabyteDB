@@ -51,7 +51,8 @@ void YSQLOrderStatusTxn::SQL_Output_Customer_Name(int c_w_id, int c_d_id,
   pqxx::result res;
   LOG_INFO << ">>>> Get Customer Name:";
   std::string query = format(
-      "SELECT C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM Customer WHERE C_W_ID = %d AND "
+      "SELECT C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM Customer WHERE C_W_ID "
+      "= %d AND "
       "C_D_ID = %d AND C_ID = %d",
       c_w_id, c_d_id, c_id);
   LOG_INFO << query;
