@@ -13,11 +13,12 @@ class YCQLPaymentTxn : public ydb_util::PaymentTxn {
   Status Execute(double* diff_t) noexcept override;
 
  private:
+  FRIEND_TEST(TxnArgsParserTest, payment);
+  FRIEND_TEST(CQLTxnExecuteTest, PaymentTxnTest);
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
-  FRIEND_TEST(TxnArgsParserTest, payment);
-  FRIEND_TEST(CQLTxnExecuteTest, PaymentTxnTest);
+  std::vector<std::string> outputs_;
   static constexpr int MAX_RETRY_ATTEMPTS = 3;
 
   Status executeLocal() noexcept;

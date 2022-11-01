@@ -11,16 +11,29 @@ using ydb_util::format;
 
 Status YCQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Related-customer transaction started";
+  const auto InputString = format("R %d %d %d", c_w_id_, c_d_id_, c_id_);
+  auto start_time = std::chrono::system_clock::now();
   auto st = Retry(std::bind(&YCQLRelatedCustomerTxn::executeLocal, this),
                   MAX_RETRY_ATTEMPTS);
-  if (st.ok()) LOG_INFO << "Related-customer transaction completed";
+  auto end_time = std::chrono::system_clock::now();
+  *diff_t = (end_time - start_time).count();
+  if (st.ok()) {
+    LOG_INFO << "Related-customer transaction completed";
+    // Txn output
+    txn_out_ << InputString << std::endl;
+    for (const auto& ostr : outputs_) {
+      txn_out_ << "\t" << ostr << std::endl;
+    }
+  } else {
+    err_out_ << InputString << std::endl;
+    err_out_ << st.ToString() << std::endl;
+  }
   return st;
 }
 
 Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
-  std::cout << format("\t1. Customer identifier (%d, %d, %d)", c_w_id_, c_d_id_,
-                      c_id_)
-            << std::endl;
+  outputs_.push_back(
+      format("(a) Customer identifier (%d, %d, %d)", c_w_id_, c_d_id_, c_id_));
 
   Status st = Status::OK();
 
@@ -48,9 +61,13 @@ Status YCQLRelatedCustomerTxn::executeLocal() noexcept {
     if (orderLine_it) cass_iterator_free(orderLine_it);
   }
 
-  std::cout << "\t2. For each related customer:" << std::endl;
-  for (const auto& [c_id, customer_info] : customers) {
-    std::cout << "\t\t" << customer_info << std::endl;
+  if (customers.empty()) {
+    outputs_.emplace_back("(b) No related customer found");
+  } else {
+    outputs_.emplace_back("(b) Related customer identifiers:");
+    for (const auto& [c_id, customer_info] : customers) {
+      outputs_.push_back(customer_info);
+    }
   }
 
   if (order_it) cass_iterator_free(order_it);
@@ -76,8 +93,6 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(
   cass_iterator_free(order_it);
 
   for (const auto& [order_key, count] : order_counter) {
-    LOG_INFO << "(" << std::get<0>(order_key) << ", " << std::get<1>(order_key)
-             << ", " << std::get<2>(order_key) << ") -> " << count;
     if (count < THRESHOLD) continue;
 
     int32_t ol_w_id = std::get<0>(order_key), ol_d_id = std::get<1>(order_key),

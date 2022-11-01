@@ -10,9 +10,28 @@ using ydb_util::format;
 
 Status YCQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Top-Balance Transaction started";
+  outputs_.resize(TOP_K * 4);
+  auto start_time = std::chrono::system_clock::now();
   auto st = Retry(std::bind(&YCQLTopBalanceTxn::executeLocal, this),
                   MAX_RETRY_ATTEMPTS);
-  if (st.ok()) LOG_INFO << "Top-Balance Transaction completed";
+  auto end_time = std::chrono::system_clock::now();
+  *diff_t = (end_time - start_time).count();
+  if (st.ok()) {
+    LOG_INFO << "Top-Balance Transaction completed";
+    // Txn output: reverse top balance customer output order
+    auto n = outputs_.size();
+    assert(n % 4 == 0);
+    n /= 4;
+    txn_out_ << "T" << std::endl;
+    for (int i = n - 1; i >= 0; --i) {
+      for (int j = i * 4; j < (i + 1) * 4; ++j) {
+        txn_out_ << "\t" << outputs_[j] << std::endl;
+      }
+    }
+  } else {
+    err_out_ << "T" << std::endl;
+    err_out_ << st.ToString() << std::endl;
+  }
   return st;
 }
 
@@ -40,8 +59,6 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
   }
   if (customer_it) cass_iterator_free(customer_it);
 
-  std::cout << "Top-balanced customers in ascending order:" << std::endl;
-
   while (!top_customers.empty()) {
     auto customer = top_customers.top();
     std::tie(st, customer_it) = getCustomerName(customer);
@@ -61,16 +78,14 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
     if (!st.ok()) return st;
     auto d_name = GetValueFromCassRow<std::string>(district_it, "d_name");
 
-    std::cout << format("\t%d. Customer name: (%s, %s, %s)",
-                        top_customers.size(), c_fst.c_str(), c_mid.c_str(),
-                        c_lst.c_str())
-              << std::endl;
-    std::cout << format("\t\tCustomer balance: %lf",
-                        static_cast<double>(customer.c_bal / 100.0))
-              << std::endl;
-    std::cout << format("\t\tWarehouse & district name: %s, %s",
-                        w_name->c_str(), d_name->c_str())
-              << std::endl;
+    outputs_.push_back(format("(a) Name of Customer: (%s, %s, %s)",
+                                  c_fst.c_str(), c_mid.c_str(), c_lst.c_str()));
+    outputs_.push_back(format("(b) Customer's Balance: %lf",
+                                  static_cast<double>(customer.c_bal / 100.0)));
+    outputs_.push_back(
+        format("(c) Customer's Warehouse: %s", w_name->c_str()));
+    outputs_.push_back(
+        format("(d) Customer's District: %s", d_name->c_str()));
 
     if (warehouse_it) cass_iterator_free(warehouse_it);
     if (district_it) cass_iterator_free(district_it);
@@ -104,9 +119,12 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getCustomerName(
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_info.c_w_id,
                                         c_info.c_d_id, c_info.c_id);
-  if (!st.ok()) return {st, it};
-  if (!cass_iterator_next(it))
+  if (!st.ok()) {
+    return {st, it};
+  }
+  if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Customer not found"), it};
+  }
   return {st, it};
 }
 
@@ -121,9 +139,12 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getWarehouse(
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id);
-  if (!st.ok()) return {st, it};
-  if (!cass_iterator_next(it))
+  if (!st.ok()) {
+    return {st, it};
+  }
+  if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Warehouse not found"), it};
+  }
   return {st, it};
 }
 
@@ -138,9 +159,12 @@ std::pair<Status, CassIterator*> YCQLTopBalanceTxn::getDistrict(
       ";";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, d_id);
-  if (!st.ok()) return {st, it};
-  if (!cass_iterator_next(it))
+  if (!st.ok()) {
+    return {st, it};
+  }
+  if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("District not found"), it};
+  }
   return {st, it};
 }
 

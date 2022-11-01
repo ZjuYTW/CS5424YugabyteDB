@@ -8,9 +8,23 @@ using ydb_util::format;
 
 Status YCQLOrderStatusTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Order-status Transaction started";
+  const auto InputString = format("O %d %d %d", c_w_id_, c_d_id_, c_id_);
+  auto start_time = std::chrono::system_clock::now();
   auto st = Retry(std::bind(&YCQLOrderStatusTxn::executeLocal, this),
                   MAX_RETRY_ATTEMPTS);
-  if (st.ok()) LOG_INFO << "Order-status Transaction completed";
+  auto end_time = std::chrono::system_clock::now();
+  *diff_t = (end_time - start_time).count();
+  if (st.ok()) {
+    LOG_INFO << "Order-status Transaction completed";
+    // Txn output
+    txn_out_ << InputString << std::endl;
+    for (const auto& ostr : outputs_) {
+      txn_out_ << "\t" << ostr << std::endl;
+    }
+  } else {
+    err_out_ << InputString << std::endl;
+    err_out_ << st.ToString() << std::endl;
+  }
   return st;
 }
 
@@ -22,62 +36,52 @@ Status YCQLOrderStatusTxn::executeLocal() noexcept {
   std::tie(st, customer_it) = getCustomerInfo();
   if (!st.ok()) return st;
 
-  // TODO(winston.yan): check type of c_balance
-  std::cout << format("\t1.C_NAME: (%s, %s, %s), C_BALANCE: %s",
-                      GetStringValue(GetValueFromCassRow<std::string>(
-                                         customer_it, "c_first"))
-                          .c_str(),
-                      GetStringValue(GetValueFromCassRow<std::string>(
-                                         customer_it, "c_middle"))
-                          .c_str(),
-                      GetStringValue(GetValueFromCassRow<std::string>(
-                                         customer_it, "c_last"))
-                          .c_str(),
-                      GetStringValue(GetValueFromCassRow<std::int64_t>(
-                                         customer_it, "c_balance"),
-                                     100)
-                          .c_str())
-            << std::endl;
+  outputs_.push_back(format(
+      "(a) Customer name & balance: (C_FIRST,C_MIDDLE,C_LAST)=(%s, %s, %s), "
+      "C_BALANCE: %s",
+      GetStringValue(GetValueFromCassRow<std::string>(customer_it, "c_first"))
+          .c_str(),
+      GetStringValue(GetValueFromCassRow<std::string>(customer_it, "c_middle"))
+          .c_str(),
+      GetStringValue(GetValueFromCassRow<std::string>(customer_it, "c_last"))
+          .c_str(),
+      GetStringValue(
+          GetValueFromCassRow<std::int64_t>(customer_it, "c_balance"), 100)
+          .c_str()));
+
   LOG_DEBUG << "Get Last Order";
   std::tie(st, order_it) = getLastOrder();
   if (!st.ok()) return st;
 
   auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
-  // TODO(winston.yan): check type of o_entry_d
-  std::cout << format("\t2.O_ID: %d, O_ENTRY_D: %s, O_CARRIER_ID: %s", o_id,
-                      GetStringValue(
-                          GetValueFromCassRow<int64_t>(order_it, "o_entry_d"))
-                          .c_str(),
-                      GetStringValue(GetValueFromCassRow<int32_t>(
-                                         order_it, "o_carrier_id"))
-                          .c_str())
-            << std::endl;
+  outputs_.push_back(format(
+      "(b) O_ID: %d, O_ENTRY_D: %s, O_CARRIER_ID: %s", o_id,
+      GetStringValue(GetValueFromCassRow<int64_t>(order_it, "o_entry_d"))
+          .c_str(),
+      GetStringValue(GetValueFromCassRow<int32_t>(order_it, "o_carrier_id"))
+          .c_str()));
 
   std::tie(st, orderLine_it) = getOrderLines(o_id);
   if (!st.ok()) return st;
 
-  std::cout << format("\t3.For each item in the order %d", o_id) << std::endl;
+  outputs_.push_back(format("(c) For each item in the order %d", o_id));
   while (cass_iterator_next(orderLine_it)) {
-    std::cout << format(
-                     "\t\tOL_I_ID: %s, OL_SUPPLY_W_ID: %s, OL_QUANTITY: %s, "
-                     "OL_AMOUNT: %s, OL_DELIVER_D: %s",
-                     GetStringValue(
-                         GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id"))
-                         .c_str(),
-                     GetStringValue(GetValueFromCassRow<int32_t>(
-                                        orderLine_it, "ol_supply_w_id"))
-                         .c_str(),
-                     GetStringValue(GetValueFromCassRow<int32_t>(orderLine_it,
-                                                                 "ol_quantity"),
-                                    100)
-                         .c_str(),
-                     GetStringValue(GetValueFromCassRow<int64_t>(orderLine_it,
-                                                                 "ol_amount"))
-                         .c_str(),
-                     GetStringValue(GetValueFromCassRow<int64_t>(
-                                        orderLine_it, "ol_delivery_d"))
-                         .c_str())
-              << std::endl;
+    outputs_.push_back(format(
+        "\tOL_I_ID: %s, OL_SUPPLY_W_ID: %s, OL_QUANTITY: %s, OL_AMOUNT: %s, "
+        "OL_DELIVER_D: %s",
+        GetStringValue(GetValueFromCassRow<int32_t>(orderLine_it, "ol_i_id"))
+            .c_str(),
+        GetStringValue(
+            GetValueFromCassRow<int32_t>(orderLine_it, "ol_supply_w_id"))
+            .c_str(),
+        GetStringValue(
+            GetValueFromCassRow<int32_t>(orderLine_it, "ol_quantity"), 100)
+            .c_str(),
+        GetStringValue(GetValueFromCassRow<int64_t>(orderLine_it, "ol_amount"))
+            .c_str(),
+        GetStringValue(
+            GetValueFromCassRow<int64_t>(orderLine_it, "ol_delivery_d"))
+            .c_str()));
   }
 
   if (customer_it) cass_iterator_free(customer_it);
