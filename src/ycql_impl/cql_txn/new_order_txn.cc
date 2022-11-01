@@ -113,18 +113,16 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
   auto c_discount = GetDiscount(custom_it);
   total_amount = total_amount * (1 + d_tax + w_tax) * (1 - c_discount);
   std::string current_time = ydb_util::getLocalTimeString();
-  st = processOrder(next_o_id, order_lines.size(), all_local, total_amount,
-                    current_time);
+  st = processOrder(next_o_id, order_lines.size(), all_local, current_time);
   assert(st.ok());
-  processOutput(custom_it, district_it, warehouse_it, total_amount,
-                current_time, c_discount, w_tax, d_tax, next_o_id);
+  processOutput(custom_it, total_amount, current_time, c_discount, w_tax, d_tax,
+                next_o_id);
   return st;
 }
 
 Status YCQLNewOrderTxn::processOrder(int32_t next_o_id, int32_t order_num,
-                                     int all_local, int64_t total_amount,
+                                     int all_local,
                                      std::string& current_time) noexcept {
-  LOG_INFO << "current time is " << current_time;
   std::string stmt =
       "INSERT INTO " + YCQLKeyspace +
       ".orders(o_w_id, o_d_id, o_id, o_c_id, o_ol_cnt, o_all_local, "
@@ -311,10 +309,11 @@ void YCQLNewOrderTxn::processItemOutput(size_t start_idx, const OrderLine& ol,
       s_quantity);
 }
 
-void YCQLNewOrderTxn::processOutput(
-    CassIterator* customer_it, CassIterator* district_it,
-    CassIterator* warehouse_it, int64_t total_amount, std::string& current_time,
-    double discount, double w_tax, double d_tax, int32_t o_id) noexcept {
+void YCQLNewOrderTxn::processOutput(CassIterator* customer_it,
+                                    int64_t total_amount,
+                                    std::string& current_time, double discount,
+                                    double w_tax, double d_tax,
+                                    int32_t o_id) noexcept {
   // Customer Info
   auto c_credit = GetValueFromCassRow<std::string>(customer_it, "c_credit");
   auto c_last = GetValueFromCassRow<std::string>(customer_it, "c_last");

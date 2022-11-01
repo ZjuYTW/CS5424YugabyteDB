@@ -47,7 +47,7 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
       std::vector<OrderLine>& order_lines, int32_t next_o_id) noexcept;
 
   Status processOrder(int32_t next_o_id, int32_t order_num, int all_local,
-                      int64_t total_amount, std::string& current_time) noexcept;
+                      std::string& current_time) noexcept;
 
   Status processOrderMaxQuantity(const std::vector<OrderLine>& order_lines,
                                  int32_t next_o_id) noexcept;
@@ -56,8 +56,7 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
                          int64_t item_amount, int32_t s_quantity,
                          const std::string& i_name) noexcept;
 
-  void processOutput(CassIterator* customer_it, CassIterator* district_it,
-                     CassIterator* warehouse_it, int64_t total_amount,
+  void processOutput(CassIterator* customer_it, int64_t total_amount,
                      std::string& current_time, double discount, double w_tax,
                      double d_tax, int32_t o_id) noexcept;
 
