@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include "cassandra.h"
+#include "common/util/string_util.h"
 #include "ycql_impl/cql_exe_util.h"
 
 namespace ycql_impl {
@@ -11,6 +12,9 @@ using Status = ydb_util::Status;
 Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Delivery transaction started";
   Status st = Status::OK();
+  auto DeliveryInput = ydb_util::format("D %d %d", w_id_, carrier_id_);
+
+  auto start = std::chrono::system_clock::now();
   for (d_id_ = 1; d_id_ <= 10; ++d_id_) {
     LOG_INFO << "Delivery process on d_id[" << d_id_ << "]";
     st = Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this),

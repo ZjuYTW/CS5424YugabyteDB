@@ -41,6 +41,12 @@ double GetDiscount(CassIterator* custom_it) noexcept {
   return c_discount_d;
 }
 
+double GetPrice(CassIterator* item_it) noexcept {
+  auto i_price = ycql_impl::GetValueFromCassRow<int32_t>(item_it, "i_price");
+  double i_price_d = static_cast<double>(i_price.value() / 100);
+  return i_price_d;
+}
+
 ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,
                               CassSession* conn) noexcept {
   auto* batch = cass_batch_new(CassBatchType::CASS_BATCH_TYPE_LOGGED);
