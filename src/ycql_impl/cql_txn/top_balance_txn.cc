@@ -40,7 +40,8 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
   Status st = Status::OK();
   CassIterator* customer_it = nullptr;
 
-  std::vector<std::future<std::vector<CustomerInfo>>> fts(10);
+  std::vector<std::future<std::vector<CustomerInfo>>> fts;
+  fts.reserve(10);
 
   for (size_t i = 1; i <= 10; i++) {
     auto exec_one_distrcit = [this](size_t i) {
@@ -82,7 +83,7 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
   std::priority_queue<CustomerInfo, std::vector<CustomerInfo>, std::greater<>>
       pq;
   for (size_t i = 1; i <= 10; i++) {
-    auto part_customers = fts[i].get();
+    auto part_customers = fts[i-1].get();
     for (auto& part_cstomer : part_customers) {
       pq.push(std::move(part_cstomer));
     }
