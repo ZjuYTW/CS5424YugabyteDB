@@ -66,9 +66,10 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   std::ofstream& err_out_;
 
   std::vector<std::string> outputs_;
-
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(CQLTxnExecuteTest, NewOrderTest1);
   FRIEND_TEST(TxnArgsParserTest, new_order);
+#endif
   constexpr static int MaxRetryTime = 3;
 };
 }  // namespace ycql_impl

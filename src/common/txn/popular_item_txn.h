@@ -31,7 +31,9 @@ class PopularItemTxn : public Txn {
   uint32_t w_id_, d_id_, l_;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, popular_item);
+#endif
 };
 }  // namespace ydb_util
 #endif

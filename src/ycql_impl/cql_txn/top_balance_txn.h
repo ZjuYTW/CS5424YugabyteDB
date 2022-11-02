@@ -16,7 +16,9 @@ class YCQLTopBalanceTxn : public ydb_util::TopBalanceTxn {
   Status Execute(double* diff_t) noexcept override;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(CQLTxnExecuteTest, TopBalanceTxnTest);
+#endif
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

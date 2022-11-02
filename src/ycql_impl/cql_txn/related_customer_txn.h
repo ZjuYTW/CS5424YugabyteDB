@@ -20,8 +20,10 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   Status Execute(double* diff_t) noexcept override;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, related_customer);
   FRIEND_TEST(CQLTxnExecuteTest, RelatedCustomerTxnTest);
+#endif
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

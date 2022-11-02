@@ -27,7 +27,9 @@ class TopBalanceTxn : public Txn {
   }
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, top_balance);
+#endif
 };
 }  // namespace ydb_util
 #endif

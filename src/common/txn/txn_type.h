@@ -8,7 +8,10 @@
 #include "common/util/logger.h"
 #include "common/util/status.h"
 #include "common/util/string_util.h"
+
+#ifdef BUILD_TEST_PERF
 #include "gtest/gtest_prod.h"
+#endif
 
 namespace ydb_util {
 enum class TxnType {

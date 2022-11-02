@@ -19,8 +19,10 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
   Status Execute(double* diff_t) noexcept override;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, popular_item);
   FRIEND_TEST(CQLTxnExecuteTest, PopularItemTxnTest);
+#endif
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

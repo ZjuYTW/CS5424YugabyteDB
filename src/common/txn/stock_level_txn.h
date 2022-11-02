@@ -31,7 +31,9 @@ class StockLevelTxn : public Txn {
   uint32_t w_id_, d_id_, t_, l_;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, stock_level);
+#endif
 };
 
 }  // namespace ydb_util

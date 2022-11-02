@@ -30,7 +30,9 @@ class OrderStatusTxn : public Txn {
   uint32_t c_w_id_, c_d_id_, c_id_;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, order_status);
+#endif
 };
 
 }  // namespace ydb_util
