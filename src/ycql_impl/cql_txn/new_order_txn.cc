@@ -255,7 +255,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getItem(
   std::string stmt = "SELECT * FROM " + YCQLKeyspace + ".item WHERE i_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, item_id);
-  if(!st.ok()){
+  if (!st.ok()) {
     LOG_DEBUG << "getItem failed, " + st.ToString();
     return {st, it};
   }
@@ -268,7 +268,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getDistrict() noexcept {
                      ".district WHERE d_w_id = ? and d_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
-  if(!st.ok()){
+  if (!st.ok()) {
     LOG_DEBUG << "getDistrict failed, " + st.ToString();
     return {st, it};
   }
@@ -281,7 +281,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getWarehouse() noexcept {
       "SELECT w_tax FROM " + YCQLKeyspace + ".warehouse WHERE w_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_);
-  if(!st.ok()){
+  if (!st.ok()) {
     LOG_DEBUG << "getWarehouse failed, " + st.ToString();
     return {st, it};
   }
@@ -295,7 +295,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer() noexcept {
                      ".customer WHERE c_w_id = ? and c_d_id = ? and c_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, c_id_);
-  if(!st.ok()){
+  if (!st.ok()) {
     LOG_DEBUG << "getCustomer failed, " + st.ToString();
     return {st, it};
   }
@@ -311,7 +311,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getStock(
                      ".stock WHERE s_w_id = ? and s_i_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, i_id);
-  if(!st.ok()){
+  if (!st.ok()) {
     LOG_DEBUG << "getStock failed, " + st.ToString();
     return {st, it};
   }
