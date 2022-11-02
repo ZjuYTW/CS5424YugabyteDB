@@ -114,7 +114,7 @@ Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
 }
 
 Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
-  int32_t item_num;
+  std::vector<std::pair<int32_t, int32_t>> lines;
   {
     auto [st, it] = getAllOrderLineNumber(o_id);
     if (!st.ok()) {
@@ -122,21 +122,25 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
       LOG_DEBUG << "Get All Order Line Number failed, " << st.ToString();
       return st;
     }
-    item_num = GetValueFromCassRow<int64_t>(it, "count").value();
+    while (cass_iterator_next(it)) {
+      auto ol_i_id = GetValueFromCassRow<int32_t>(it, "ol_i_id").value();
+      auto ol_number = GetValueFromCassRow<int32_t>(it, "ol_number").value();
+      lines.emplace_back(ol_i_id, ol_number);
+    }
     cass_iterator_free(it);
   }
 
   std::vector<CassStatement*> cass_stmts;
-  cass_stmts.reserve(item_num);
-  for (int32_t i = 1; i <= item_num; i++) {
-    std::string stmt =
-        "UPDATE " + YCQLKeyspace +
-        ".orderline "
-        "SET ol_delivery_d = currenttimestamp() "
-        "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_number = ?";
+  cass_stmts.reserve(lines.size());
+  for (auto& [ol_i_id, ol_number] : lines) {
+    std::string stmt = "UPDATE " + YCQLKeyspace +
+                       ".orderline "
+                       "SET ol_delivery_d = currenttimestamp() "
+                       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND "
+                       "ol_number = ? AND ol_i_id = ?";
     auto cass_stmt = cass_statement_new(stmt.c_str(), 4);
-    auto rc =
-        ycql_impl::cql_statement_fill_args(cass_stmt, w_id_, d_id_, o_id, i);
+    auto rc = ycql_impl::cql_statement_fill_args(cass_stmt, w_id_, d_id_, o_id,
+                                                 ol_number, ol_i_id);
     assert(rc == CASS_OK);
     cass_stmts.push_back(cass_stmt);
   }
@@ -163,13 +167,10 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
     int32_t o_id) noexcept {
   std::string stmt =
-      "SELECT count(*) as count FROM " + YCQLKeyspace +
+      "SELECT ol_i_id, ol_number as count FROM " + YCQLKeyspace +
       ".orderline where ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
-  if (!cass_iterator_next(it)) {
-    return {Status::ExecutionFailed("Get OrderLine Count failed"), it};
-  }
   return {st, it};
 }
 
