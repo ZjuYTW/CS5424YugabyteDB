@@ -167,7 +167,7 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
     int32_t o_id) noexcept {
   std::string stmt =
-      "SELECT ol_i_id, ol_number as count FROM " + YCQLKeyspace +
+      "SELECT ol_i_id, ol_number FROM " + YCQLKeyspace +
       ".orderline where ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
