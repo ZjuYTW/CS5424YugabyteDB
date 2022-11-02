@@ -70,6 +70,7 @@ class CQLDriver {
     for (auto i : elapsedTime) {
       totalTime += i;
     }
+    assert(totalTime != 0);
 
     out_measure_fs << "Total number of transactions processed: "
                    << elapsedTime.size() << "\n"
