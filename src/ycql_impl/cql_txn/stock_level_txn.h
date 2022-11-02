@@ -14,8 +14,10 @@ class YCQLStockLevelTxn : public ydb_util::StockLevelTxn {
   Status Execute(double* diff_t) noexcept override;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, stock_level);
   FRIEND_TEST(CQLTxnExecuteTest, StockLevelTxnTest);
+#endif
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

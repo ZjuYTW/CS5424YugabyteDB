@@ -30,7 +30,9 @@ class DeliveryTxn : public Txn {
   uint32_t w_id_, carrier_id_;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, delivery);
+#endif
 };
 
 }  // namespace ydb_util

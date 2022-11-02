@@ -73,7 +73,9 @@ class NewOrderTxn : public Txn {
   std::vector<int> i_ids, w_ids, quantities;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, new_order);
+#endif
 };
 
 }  // namespace ydb_util

@@ -14,8 +14,10 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
   Status Execute(double* diff_t) noexcept override;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, delivery);
   FRIEND_TEST(CQLTxnExecuteTest, DeliveryTxnTest);
+#endif
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

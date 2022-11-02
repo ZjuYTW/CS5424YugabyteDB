@@ -17,8 +17,10 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
   Status Execute(double* diff_t) noexcept override;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, order_status);
   FRIEND_TEST(CQLTxnExecuteTest, OrderStatusTxnTest);
+#endif
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;

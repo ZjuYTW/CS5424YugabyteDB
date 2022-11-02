@@ -35,7 +35,9 @@ class PaymentTxn : public Txn {
   double payment_;
 
  private:
+#ifdef BUILD_TEST_PERF
   FRIEND_TEST(TxnArgsParserTest, payment);
+#endif
 };
 
 }  // namespace ydb_util

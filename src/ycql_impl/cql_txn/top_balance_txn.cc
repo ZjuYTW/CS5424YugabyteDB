@@ -83,7 +83,7 @@ Status YCQLTopBalanceTxn::executeLocal() noexcept {
   std::priority_queue<CustomerInfo, std::vector<CustomerInfo>, std::greater<>>
       pq;
   for (size_t i = 1; i <= 10; i++) {
-    auto part_customers = fts[i-1].get();
+    auto part_customers = fts[i - 1].get();
     for (auto& part_cstomer : part_customers) {
       pq.push(std::move(part_cstomer));
     }
