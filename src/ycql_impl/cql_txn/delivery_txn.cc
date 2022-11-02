@@ -138,7 +138,7 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
                        "SET ol_delivery_d = currenttimestamp() "
                        "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND "
                        "ol_number = ? AND ol_i_id = ?";
-    auto cass_stmt = cass_statement_new(stmt.c_str(), 4);
+    auto cass_stmt = cass_statement_new(stmt.c_str(), 5);
     auto rc = ycql_impl::cql_statement_fill_args(cass_stmt, w_id_, d_id_, o_id,
                                                  ol_number, ol_i_id);
     assert(rc == CASS_OK);
