@@ -16,9 +16,9 @@ set(INSTALL_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
 
 set(HEADERS_DIR ${PROJECT_SOURCE_DIR}/src)
 
-option(BUILD_YCQL_PERF "build ycql perf program" off)
-option(BUILD_YSQL_PERF "build ysql perf program" off)
-option(BUILD_TEST_PERF "build test program" on)
+option(BUILD_YCQL_PERF "build ycql perf program" on)
+option(BUILD_YSQL_PERF "build ysql perf program" on)
+option(BUILD_TEST_PERF "build test program" off)
 
 find_library(CQL_LIB_NAME NAMES cassandra)
 find_library(SQL_LIB_NAME NAMES pqxx)
