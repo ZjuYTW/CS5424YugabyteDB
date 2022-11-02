@@ -25,9 +25,9 @@ class CQLDriver {
     std::string outputMeasure =
         outDir + "/measure_log/cql_" + std::to_string(idx_) + ".out";
     std::string outputTxn =
-        outDir + "/txn_log/sql_" + std::to_string(idx_) + ".out";
+        outDir + "/txn_log/cql_" + std::to_string(idx_) + ".out";
     std::string outputErr =
-        outDir + "/err_log/sql_" + std::to_string(idx_) + ".out";
+        outDir + "/err_log/cql_" + std::to_string(idx_) + ".out";
 
     auto out_txn_fs = std::ofstream(outputTxn, std::ios::out);
     auto out_measure_fs = std::ofstream(outputMeasure, std::ios::out);

@@ -49,6 +49,7 @@ Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
       txn_out_ << "\t" << str << std::endl;
     }
   } else {
+    err_out_ << st.ToString() << std::endl;
     err_out_ << NewOrder << std::endl;
     for (auto& str : orders_) {
       err_out_ << str << std::endl;
@@ -255,6 +256,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getItem(
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, item_id);
   if(!st.ok()){
+    LOG_DEBUG << "getItem failed, " + st.ToString();
     return {st, it};
   }
   cass_iterator_next(it);
@@ -267,6 +269,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getDistrict() noexcept {
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
   if(!st.ok()){
+    LOG_DEBUG << "getDistrict failed, " + st.ToString();
     return {st, it};
   }
   cass_iterator_next(it);
@@ -279,6 +282,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getWarehouse() noexcept {
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_);
   if(!st.ok()){
+    LOG_DEBUG << "getWarehouse failed, " + st.ToString();
     return {st, it};
   }
   cass_iterator_next(it);
@@ -292,6 +296,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer() noexcept {
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, c_id_);
   if(!st.ok()){
+    LOG_DEBUG << "getCustomer failed, " + st.ToString();
     return {st, it};
   }
   cass_iterator_next(it);
@@ -307,6 +312,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getStock(
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, i_id);
   if(!st.ok()){
+    LOG_DEBUG << "getStock failed, " + st.ToString();
     return {st, it};
   }
   cass_iterator_next(it);
