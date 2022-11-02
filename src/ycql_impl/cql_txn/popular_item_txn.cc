@@ -31,8 +31,7 @@ Status YCQLPopularItemTxn::Execute(double* diff_t) noexcept {
 Status YCQLPopularItemTxn::executeLocal() noexcept {
   Status st = Status::OK();
   outputs_.push_back(format("District identifier: (%d, %d)", w_id_, d_id_));
-  outputs_.push_back(
-      format("Number of last orders to be examined: %d", l_));
+  outputs_.push_back(format("Number of last orders to be examined: %d", l_));
 
   CassIterator* next_order_it = nullptr;
   std::tie(st, next_order_it) = getNextOrder();
@@ -91,7 +90,7 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
         cass_iterator_free(item_it);
         popularItems[i_name] += 1;
         outputs_.push_back(format("\tItem name: %s, Quantity ordered: %d",
-                                      i_name.c_str(), ol_quantity));
+                                  i_name.c_str(), ol_quantity));
       }
     }
     if (orderLine_it) cass_iterator_free(orderLine_it);
@@ -103,9 +102,8 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
   outputs_.emplace_back("(d) For each distinct popular item:");
   for (const auto& [i_name, cnt] : popularItems) {
     auto percentage = 1.0 * cnt / order_size;
-    outputs_.push_back(
-        format("\tItem name: %s, Occurring percentage: %.2f%%", i_name.c_str(),
-               percentage * 100));
+    outputs_.push_back(format("\tItem name: %s, Occurring percentage: %.2f%%",
+                              i_name.c_str(), percentage * 100));
   }
 
   if (order_it) cass_iterator_free(order_it);

@@ -49,8 +49,8 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
   if (!st.ok()) return st;
 
   outputs_.emplace_back("(a) Customer information:");
-  outputs_.push_back(format(
-      "\tIdentifier: (C_W_ID,C_D_ID,C_ID)=(%d, %d, %d)", w_id_, d_id_, c_id_));
+  outputs_.push_back(format("\tIdentifier: (C_W_ID,C_D_ID,C_ID)=(%d, %d, %d)",
+                            w_id_, d_id_, c_id_));
   outputs_.push_back(format(
       "\tName: (C_FIRST,C_MIDDLE,C_LAST)=(%s, %s, %s)",
       GetStringValue(GetValueFromCassRow<std::string>(customer_it, "c_first"))
