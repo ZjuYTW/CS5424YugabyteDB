@@ -109,9 +109,8 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(
     fts.push_back(std::async(std::launch::async, exec_one_warehouse, i));
   }
   std::unordered_map<const order_key_t, int, order_key_hash> order_counter;
-  for (int32_t i = 1; i <= 10; i++) {
-    if (i == c_w_id_) continue;
-    auto part_order_count = fts[i - 1].get();
+  for (auto & ft : fts) {
+    auto part_order_count = ft.get();
     for (auto& [k, v] : part_order_count) {
       order_counter[k] += v;
     }
