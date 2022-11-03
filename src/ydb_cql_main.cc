@@ -44,7 +44,7 @@ CassCluster* create_cluster(const char* hosts) {
 }
 
 int main(int argc, char* argv[]) {
-  ThreadPool pool(1);
+  ThreadPool pool(5);
   int idx = std::stoi(SERVER_IDX);
   int totalTxn = std::stoi(TXN_NUM);
   int serverNum = std::stoi(SERVER_NUM);

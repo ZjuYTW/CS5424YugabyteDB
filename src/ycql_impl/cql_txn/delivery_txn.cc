@@ -1,7 +1,7 @@
 #include "ycql_impl/cql_txn/delivery_txn.h"
 
-#include <future>
 #include <cassert>
+#include <future>
 
 #include "cassandra.h"
 #include "common/util/string_util.h"
@@ -29,15 +29,15 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
 
   auto start = std::chrono::system_clock::now();
   std::vector<std::future<Status>> fts;
-  for (d_id_ = 1; d_id_ <= 10; ++d_id_) {
-    LOG_INFO << "Delivery process on d_id[" << d_id_ << "]";
-    auto exec_one_district = [this](int32_t i) {
-      return Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this),
-                 MAX_RETRY_ATTEMPTS);
+  for (int32_t d_id = 1; d_id <= 10; ++d_id) {
+    LOG_INFO << "Delivery process on d_id[" << d_id << "]";
+    auto exec_one_district = [this, d_id](int32_t i) {
+      return Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this, d_id),
+                   MAX_RETRY_ATTEMPTS);
     };
-    fts.push_back(std::async(std::launch::async, exec_one_district, d_id_));
+    fts.push_back(std::async(std::launch::async, exec_one_district, d_id));
   }
-  for (auto &ft: fts) {
+  for (auto& ft : fts) {
     st = ft.get();
     if (!st.ok()) {
       LOG_FATAL << "Delivery transaction execution failed, " << st.ToString();
@@ -53,42 +53,41 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
     err_out_ << InputString << std::endl;
     err_out_ << st.ToString() << std::endl;
   }
-  #ifndef NDEBUG
-  if(trace_timer_)
-    trace_timer_->Print();
-  #endif
+#ifndef NDEBUG
+  if (trace_timer_) trace_timer_->Print();
+#endif
   return st;
 }
 
-Status YCQLDeliveryTxn::executeLocal() noexcept {
+Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   Status st = Status::OK();
 
   CassIterator* order_it = nullptr;
   LOG_DEBUG << "Get Next Delivery Order";
-  std::tie(st, order_it) = getNextDeliveryOrder();
+  std::tie(st, order_it) = getNextDeliveryOrder(d_id);
   if (!st.ok()) return st;
   auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
   auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id").value();
   if (order_it) cass_iterator_free(order_it);
 
   LOG_DEBUG << "Update Carrier Id";
-  st = updateCarrierId(o_id);
+  st = updateCarrierId(o_id, d_id);
   if (!st.ok()) return st;
 
   LOG_DEBUG << "Update Order Line Delivery Date";
-  st = updateOrderLineDeliveryDate(o_id);
+  st = updateOrderLineDeliveryDate(o_id, d_id);
   if (!st.ok()) return st;
 
   LOG_DEBUG << "Get OrderPaymentAmount";
   CassIterator* amount_it = nullptr;
-  std::tie(st, amount_it) = getOrderPaymentAmount(o_id);
+  std::tie(st, amount_it) = getOrderPaymentAmount(o_id, d_id);
   if (!st.ok()) return st;
   auto total_amount =
       GetValueFromCassRow<int64_t>(amount_it, "sum_ol_amount").value();
   if (amount_it) cass_iterator_free(amount_it);
 
   LOG_DEBUG << "update Customer Bal And Delivery Cnt";
-  st = updateCustomerBalAndDeliveryCnt(c_id, total_amount);
+  st = updateCustomerBalAndDeliveryCnt(c_id, total_amount, d_id);
   if (!st.ok()) {
     LOG_DEBUG << "update Customer Bal failed, " << st.ToString();
     return st;
@@ -97,10 +96,10 @@ Status YCQLDeliveryTxn::executeLocal() noexcept {
   return st;
 }
 
-std::pair<Status, CassIterator*>
-YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
+std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
+    int32_t d_id) noexcept {
   // Note: we just record one portion
-  if(d_id_ == 1){
+  if (d_id == 1) {
     TRACE_GUARD
   }
   std::string stmt =
@@ -113,13 +112,15 @@ YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
       "LIMIT 1 "
       "ALLOW FILTERING;";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id);
   if (!st.ok()) {
     assert(!it);
     LOG_DEBUG << st.ToString();
     return {st, it};
   }
   if (!cass_iterator_next(it)) {
+    std::cout << stmt << std::endl;
+    std::cout << "w_id: " << w_id_ << ", d_id: " << d_id << std::endl;
     cass_iterator_free(it);
     // This means we can't find a coressponding avaliable order, just skip it
     return {Status::EndOfFile("Next Delivery Order not found"), it};
@@ -127,9 +128,9 @@ YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
   return {st, it};
 }
 
-Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
+Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id, int32_t d_id) noexcept {
   // Note: we just record one portion
-  if(d_id_ == 1){
+  if (d_id == 1) {
     TRACE_GUARD
   }
   std::string stmt = "UPDATE " + YCQLKeyspace +
@@ -137,18 +138,19 @@ Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
                      "SET o_carrier_id = ? "
                      "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? "
                      ";";
-  return ycql_impl::execute_write_cql(conn_, stmt, carrier_id_, w_id_, d_id_,
+  return ycql_impl::execute_write_cql(conn_, stmt, carrier_id_, w_id_, d_id,
                                       o_id);
 }
 
-Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
+Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id,
+                                                    int32_t d_id) noexcept {
   // Note: we just record one portion
-  if(d_id_ == 1){
+  if (d_id == 1) {
     TRACE_GUARD
   }
   std::vector<std::pair<int32_t, int32_t>> lines;
   {
-    auto [st, it] = getAllOrderLineNumber(o_id);
+    auto [st, it] = getAllOrderLineNumber(o_id, d_id);
     if (!st.ok()) {
       assert(!it);
       LOG_DEBUG << "Get All Order Line Number failed, " << st.ToString();
@@ -171,7 +173,7 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
                        "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND "
                        "ol_number = ? AND ol_i_id = ?";
     auto cass_stmt = cass_statement_new(stmt.c_str(), 5);
-    auto rc = ycql_impl::cql_statement_fill_args(cass_stmt, w_id_, d_id_, o_id,
+    auto rc = ycql_impl::cql_statement_fill_args(cass_stmt, w_id_, d_id, o_id,
                                                  ol_number, ol_i_id);
     assert(rc == CASS_OK);
     cass_stmts.push_back(cass_stmt);
@@ -180,9 +182,9 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
 }
 
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
-    int32_t o_id) noexcept {
+    int32_t o_id, int32_t d_id) noexcept {
   // Note: we just record one portion
-  if(d_id_ == 1){
+  if (d_id == 1) {
     TRACE_GUARD
   }
   std::string stmt =
@@ -192,7 +194,7 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
       ".orderline "
       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? ";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id, o_id);
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Order Payment Amount not found"), it};
   }
@@ -200,23 +202,24 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
 }
 
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
-    int32_t o_id) noexcept {
+    int32_t o_id, int32_t d_id) noexcept {
   // Note: we just record one portion
-  if(d_id_ == 1){
+  if (d_id == 1) {
     TRACE_GUARD
   }
   std::string stmt =
       "SELECT ol_i_id, ol_number FROM " + YCQLKeyspace +
       ".orderline where ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id, o_id);
   return {st, it};
 }
 
-Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(
-    int32_t c_id, int64_t total_amount) noexcept {
+Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(int32_t c_id,
+                                                        int64_t total_amount,
+                                                        int32_t d_id) noexcept {
   // Note: we just record one portion
-  if(d_id_ == 1){
+  if (d_id == 1) {
     TRACE_GUARD
   }
   std::string stmt = "UPDATE " + YCQLKeyspace +
@@ -225,7 +228,7 @@ Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(
                      std::to_string(total_amount) +
                      ", c_delivery_cnt = c_delivery_cnt + 1 "
                      "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?";
-  return ycql_impl::execute_write_cql(conn_, stmt, (int32_t)w_id_, d_id_, c_id);
+  return ycql_impl::execute_write_cql(conn_, stmt, (int32_t)w_id_, d_id, c_id);
 }
 
 };  // namespace ycql_impl

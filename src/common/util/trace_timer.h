@@ -2,6 +2,7 @@
 #define YDB_PERF_TRACE_TIMER_H_
 #include <stdarg.h>
 
+#include <cassert>
 #include <cstdio>
 #include <stack>
 #include <string>
@@ -59,7 +60,7 @@ class TraceTimer {
                         start_us_, GetNowMicroSec() - start_us_, pos_, buffer_);
   }
 
-  void StartSpan(const char* fmt, ...)noexcept {
+  void StartSpan(const char* fmt, ...) noexcept {
     va_list args;
     va_start(args, fmt);
     auto name = format(fmt, args);

@@ -64,10 +64,9 @@ Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
       err_out_ << str << std::endl;
     }
   }
-  #ifndef NDEBUG
-  if(trace_timer_)
-    trace_timer_->Print();
-  #endif
+#ifndef NDEBUG
+  if (trace_timer_) trace_timer_->Print();
+#endif
   return st;
 }
 
@@ -137,6 +136,7 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
 Status YCQLNewOrderTxn::processOrder(int32_t next_o_id, int32_t order_num,
                                      int all_local,
                                      std::string& current_time) noexcept {
+  TRACE_GUARD
   std::string stmt =
       "INSERT INTO " + YCQLKeyspace +
       ".orders(o_w_id, o_d_id, o_id, o_c_id, o_ol_cnt, o_all_local, "
@@ -149,6 +149,7 @@ Status YCQLNewOrderTxn::processOrder(int32_t next_o_id, int32_t order_num,
 
 Status YCQLNewOrderTxn::processOrderMaxQuantity(
     const std::vector<OrderLine>& order_lines, int32_t next_o_id) noexcept {
+  TRACE_GUARD
   std::vector<std::pair<int32_t, int32_t>> sort_orders;
   sort_orders.reserve(order_lines.size());
   for (auto& ol : order_lines) {
@@ -174,6 +175,7 @@ Status YCQLNewOrderTxn::processOrderMaxQuantity(
 // TODO(ZjuYTW): Refactor the following shit
 std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
     std::vector<OrderLine>& order_lines, int32_t next_o_id) noexcept {
+  TRACE_GUARD
   int64_t total_amount = 0;
   Status s;
   CassIterator *stock_it = nullptr, *item_it = nullptr;
@@ -243,6 +245,7 @@ std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
 
 Status YCQLNewOrderTxn::updateNextOId(int32_t next_o_id,
                                       int32_t prev_next_o_id) noexcept {
+  TRACE_GUARD
   std::string stmt =
       "UPDATE " + YCQLKeyspace +
       ".district SET d_next_o_id = ? WHERE d_w_id = ? and d_id = ? IF "
@@ -265,6 +268,7 @@ Status YCQLNewOrderTxn::updateStock(int32_t adjusted_qty, int32_t prev_qty,
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getItem(
     int32_t item_id) noexcept {
+  TRACE_GUARD
   std::string stmt = "SELECT * FROM " + YCQLKeyspace + ".item WHERE i_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, item_id);
@@ -277,6 +281,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getItem(
 }
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getDistrict() noexcept {
+  TRACE_GUARD
   std::string stmt = "SELECT d_tax, d_next_o_id FROM " + YCQLKeyspace +
                      ".district WHERE d_w_id = ? and d_id = ?";
   CassIterator* it = nullptr;
@@ -290,6 +295,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getDistrict() noexcept {
 }
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getWarehouse() noexcept {
+  TRACE_GUARD
   std::string stmt =
       "SELECT w_tax FROM " + YCQLKeyspace + ".warehouse WHERE w_id = ?";
   CassIterator* it = nullptr;
@@ -303,6 +309,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getWarehouse() noexcept {
 }
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer() noexcept {
+  TRACE_GUARD
   std::string stmt = "SELECT c_last, c_credit, c_discount FROM " +
                      YCQLKeyspace +
                      ".customer WHERE c_w_id = ? and c_d_id = ? and c_id = ?";
@@ -318,6 +325,7 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer() noexcept {
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getStock(
     int32_t i_id, int32_t w_id) noexcept {
+  TRACE_GUARD
   std::string stmt = "SELECT s_quantity, s_dist_" +
                      ((d_id_ < 10 ? "0" : "") + std::to_string(d_id_)) +
                      " FROM " + YCQLKeyspace +

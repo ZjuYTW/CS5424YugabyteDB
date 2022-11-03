@@ -1,5 +1,7 @@
 #ifndef YCQL_IMPL_DELIVERY_TXN_H_
 #define YCQL_IMPL_DELIVERY_TXN_H_
+#include <sys/_types/_int32_t.h>
+
 #include "common/txn/delivery_txn.h"
 #include "common/util/trace_timer.h"
 
@@ -31,16 +33,17 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
   ydb_util::TraceTimer* trace_timer_{nullptr};
 #endif
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
-  int32_t d_id_{};
 
-  Status executeLocal() noexcept;
-  std::pair<Status, CassIterator*> getNextDeliveryOrder() noexcept;
-  std::pair<Status, CassIterator*> getOrderPaymentAmount(int32_t o_id) noexcept;
-  std::pair<Status, CassIterator*> getAllOrderLineNumber(int32_t o_id) noexcept;
-  Status updateCarrierId(int32_t o_id) noexcept;
-  Status updateOrderLineDeliveryDate(int32_t o_id) noexcept;
-  Status updateCustomerBalAndDeliveryCnt(int32_t c_id,
-                                         int64_t total_amount) noexcept;
+  Status executeLocal(int32_t d_id) noexcept;
+  std::pair<Status, CassIterator*> getNextDeliveryOrder(int32_t d_id) noexcept;
+  std::pair<Status, CassIterator*> getOrderPaymentAmount(int32_t o_id,
+                                                         int32_t d_id) noexcept;
+  std::pair<Status, CassIterator*> getAllOrderLineNumber(int32_t o_id,
+                                                         int32_t d_id) noexcept;
+  Status updateCarrierId(int32_t o_id, int32_t d_id) noexcept;
+  Status updateOrderLineDeliveryDate(int32_t o_id, int32_t d_id) noexcept;
+  Status updateCustomerBalAndDeliveryCnt(int32_t c_id, int64_t total_amount,
+                                         int32_t d_id) noexcept;
 };
 };  // namespace ycql_impl
 

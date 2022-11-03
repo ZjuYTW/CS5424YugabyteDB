@@ -42,6 +42,7 @@ data/data_files
 data/project_files
 /tmp
 /data/xact_files/
+/data/output/*
 
 # IDE
 .vscode/*
