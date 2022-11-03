@@ -163,6 +163,12 @@ std::optional<T> GetValueFromCassRow(CassIterator* it,
       return std::nullopt;
     }
     assert(rc == CASS_OK);
+  } else if constexpr (std::is_same_v<cass_bool_t, T>) {
+    rc = cass_value_get_bool(cass_row_get_column_by_name(row, col_name), &ret);
+    if (rc == CassError::CASS_ERROR_LIB_NULL_VALUE) {
+      return std::nullopt;
+    }
+    assert(rc == CASS_OK);
   } else if constexpr (std::is_same_v<uint32_t, T>) {
     rc =
         cass_value_get_uint32(cass_row_get_column_by_name(row, col_name), &ret);
