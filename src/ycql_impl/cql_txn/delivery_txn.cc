@@ -37,11 +37,13 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
     };
     fts.push_back(std::async(std::launch::async, exec_one_district, d_id));
   }
+  int cnt = 0;
   for (auto& ft : fts) {
     st = ft.get();
     if (!st.ok()) {
-      LOG_FATAL << "Delivery transaction execution failed, " << st.ToString();
-      break;
+      LOG_FATAL << "Delivery transaction distrcit [ << " << ++cnt
+                << "] execution failed, " << st.ToString();
+      continue;
     }
   }
   auto end_time = std::chrono::system_clock::now();
@@ -56,7 +58,7 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
 #ifndef NDEBUG
   if (trace_timer_) trace_timer_->Print();
 #endif
-  return st;
+  return (st.ok() || st.isEndOfFile()) ? Status::OK() : st;
 }
 
 Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {

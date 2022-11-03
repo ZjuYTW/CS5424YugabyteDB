@@ -62,7 +62,7 @@ class CQLDriver {
 #endif
       s = t->Execute(&processTime);
       if (!s.ok()) {
-        LOG_ERROR << "CQL Transaction failed";
+        LOG_ERROR << "CQL Transaction failed " << s.ToString();
         break;
       } else {
         elapsedTime.push_back(processTime);
