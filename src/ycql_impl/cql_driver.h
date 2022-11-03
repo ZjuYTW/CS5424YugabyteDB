@@ -79,17 +79,21 @@ class CQLDriver {
     out_measure_fs << "Total number of transactions processed: "
                    << elapsedTime.size() << "\n"
                    << "Total elapsed time for processing the transactions: "
-                   << totalTime << "\n"
+                   << totalTime / 1e9 << " seconds\n"
                    << "Transaction throughput: "
-                   << elapsedTime.size() / totalTime << "\n"
+                   << elapsedTime.size() / totalTime * 1e9
+                   << " transactions/second\n"
                    << "Average transaction latency: "
-                   << totalTime * 60 / elapsedTime.size() << "\n"
+                   << totalTime / 1e9 / elapsedTime.size() << " seconds\n"
                    << "Median transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.5] * 60 << "\n"
+                   << elapsedTime[elapsedTime.size() * 0.5] / 1e9
+                   << " seconds\n"
                    << "95th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.95] * 60 << "\n"
+                   << elapsedTime[elapsedTime.size() * 0.95] / 1e9
+                   << " seconds\n"
                    << "99th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.99] * 60 << std::endl;
+                   << elapsedTime[elapsedTime.size() * 0.99] / 1e9 << " seconds"
+                   << std::endl;
 
     cass_session_free(session);
     return s.isEndOfFile() ? Status::OK() : s;
