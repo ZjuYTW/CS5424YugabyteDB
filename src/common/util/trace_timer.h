@@ -10,7 +10,6 @@
 #include "common/util/logger.h"
 #include "common/util/string_util.h"
 
-#ifndef TRACE_GUARD
 #define TRACE_GUARD__(line)                                                 \
   do {                                                                      \
     if (nullptr == trace_timer_) {                                          \
@@ -35,8 +34,10 @@
     defer_finish_span_##line.Cancel();                                      \
   }
 
+#ifndef NDEBUG
 #define TRACE_GUARD TRACE_GUARD__(__LINE__)
-
+#else
+#define TRACE_GUARD
 #endif
 
 namespace ydb_util {

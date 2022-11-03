@@ -21,10 +21,12 @@ std::vector<std::string> str_split(const std::string& input,
 }
 
 std::string format(const char* fmt, va_list args) noexcept {
+  va_list vl_copy;
+  va_copy(vl_copy, args);
   const auto len = vsnprintf(nullptr, 0, fmt, args);
   std::string r;
   r.resize(static_cast<size_t>(len) + 1);
-  vsnprintf(&r.front(), len + 1, fmt, args);
+  vsnprintf(&r.front(), len + 1, fmt, vl_copy);
   r.resize(static_cast<size_t>(len));
   return r;
 }

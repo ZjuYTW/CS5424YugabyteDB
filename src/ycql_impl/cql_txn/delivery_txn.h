@@ -1,7 +1,5 @@
 #ifndef YCQL_IMPL_DELIVERY_TXN_H_
 #define YCQL_IMPL_DELIVERY_TXN_H_
-#include <sys/_types/_int32_t.h>
-
 #include "common/txn/delivery_txn.h"
 #include "common/util/trace_timer.h"
 
