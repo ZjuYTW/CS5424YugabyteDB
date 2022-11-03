@@ -1,15 +1,21 @@
 #ifndef YCQL_NEW_ORDER_TXN_H_
 #define YCQL_NEW_ORDER_TXN_H_
 #include "common/txn/new_order_txn.h"
+#include "common/util/trace_timer.h"
 
 namespace ycql_impl {
 class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   using Status = ydb_util::Status;
 
  public:
-  explicit YCQLNewOrderTxn(CassSession* session, std::ofstream& txn_out,
-                           std::ofstream& err_out)
+  YCQLNewOrderTxn(CassSession* session, std::ofstream& txn_out,
+                  std::ofstream& err_out)
       : NewOrderTxn(), conn_(session), txn_out_(txn_out), err_out_(err_out) {}
+#ifndef NDEBUG
+  void SetTraceTimer(ydb_util::TraceTimer* timer) noexcept override {
+    trace_timer_ = timer;
+  }
+#endif
 
   virtual ~YCQLNewOrderTxn() = default;
 
@@ -64,6 +70,8 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
 
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+
+  ydb_util::TraceTimer* trace_timer_{nullptr};
 
   std::vector<std::string> outputs_;
 #ifdef BUILD_TEST_PERF

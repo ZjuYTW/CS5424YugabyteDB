@@ -1,8 +1,10 @@
 #include "ycql_impl/cql_txn/related_customer_txn.h"
 
+#include <future>
 #include <thread>
 
 #include "ycql_impl/cql_exe_util.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
@@ -10,6 +12,15 @@ using ycql_impl::ValidOrSleep;
 using ydb_util::format;
 
 Status YCQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
+  if (YDB_SKIP_RELATED_CUSTOMER) {
+    *diff_t = 0;
+    return Status::OK();
+  }
+#ifndef NDEBUG
+  if (trace_timer_) {
+    trace_timer_->Reset();
+  }
+#endif
   LOG_INFO << "Related-customer transaction started";
   const auto InputString = format("R %d %d %d", c_w_id_, c_d_id_, c_id_);
   auto start_time = std::chrono::system_clock::now();
@@ -18,7 +29,7 @@ Status YCQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   auto end_time = std::chrono::system_clock::now();
   *diff_t = (end_time - start_time).count();
   if (st.ok()) {
-    LOG_INFO << "Related-customer transaction completed";
+    LOG_INFO << "Related-customer transaction completed, time cost " << *diff_t;
     // Txn output
     txn_out_ << InputString << std::endl;
     for (const auto& ostr : outputs_) {
@@ -81,16 +92,49 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(
   if (i_ids.size() < 2) return st;
 
   CassIterator* order_it = nullptr;
-  std::tie(st, order_it) = getRelatedOrders(i_ids);
-  if (!st.ok()) return st;
-  std::unordered_map<const order_key_t, int, order_key_hash> order_counter;
-  while (cass_iterator_next(order_it)) {
-    auto ol_w_id = GetValueFromCassRow<int32_t>(order_it, "ol_w_id").value();
-    auto ol_d_id = GetValueFromCassRow<int32_t>(order_it, "ol_d_id").value();
-    auto ol_o_id = GetValueFromCassRow<int32_t>(order_it, "ol_o_id").value();
-    ++order_counter[std::make_tuple(ol_w_id, ol_d_id, ol_o_id)];
+  std::vector<
+      std::future<std::unordered_map<const order_key_t, int, order_key_hash>>>
+      fts;
+  for (int32_t i = 1; i <= 10; i++) {
+    if (i == c_w_id_) continue;
+    auto exec_one_warehouse = [this, &i_ids](int32_t i) {
+      while (true) {
+        auto [st, order_it] = this->getRelatedOrders(i_ids, i);
+        if (!st.ok()) continue;
+        std::unordered_map<const order_key_t, int, order_key_hash>
+            order_counter;
+        while (cass_iterator_next(order_it)) {
+          auto ol_w_id =
+              GetValueFromCassRow<int32_t>(order_it, "ol_w_id").value();
+          auto ol_d_id =
+              GetValueFromCassRow<int32_t>(order_it, "ol_d_id").value();
+          auto ol_o_id =
+              GetValueFromCassRow<int32_t>(order_it, "ol_o_id").value();
+          ++order_counter[std::make_tuple(ol_w_id, ol_d_id, ol_o_id)];
+        }
+        cass_iterator_free(order_it);
+        return order_counter;
+      }
+    };
+    fts.push_back(std::async(std::launch::async, exec_one_warehouse, i));
   }
-  cass_iterator_free(order_it);
+  std::unordered_map<const order_key_t, int, order_key_hash> order_counter;
+  for (auto& ft : fts) {
+    auto part_order_count = ft.get();
+    for (auto& [k, v] : part_order_count) {
+      order_counter[k] += v;
+    }
+  }
+
+  //   if (!st.ok()) return st;
+  // std::unordered_map<const order_key_t, int, order_key_hash> order_counter;
+  // while (cass_iterator_next(order_it)) {
+  // auto ol_w_id = GetValueFromCassRow<int32_t>(order_it, "ol_w_id").value();
+  // auto ol_d_id = GetValueFromCassRow<int32_t>(order_it, "ol_d_id").value();
+  // auto ol_o_id = GetValueFromCassRow<int32_t>(order_it, "ol_o_id").value();
+  // ++order_counter[std::make_tuple(ol_w_id, ol_d_id, ol_o_id)];
+  // }
+  // cass_iterator_free(order_it);
 
   for (const auto& [order_key, count] : order_counter) {
     if (count < THRESHOLD) continue;
@@ -111,20 +155,20 @@ Status YCQLRelatedCustomerTxn::addRelatedCustomers(
 }
 
 std::pair<Status, CassIterator*> YCQLRelatedCustomerTxn::getRelatedOrders(
-    const std::vector<int32_t>& i_ids) noexcept {
+    const std::vector<int32_t>& i_ids, const int32_t w_id) noexcept {
   std::string stmt =
       "SELECT ol_w_id, ol_d_id, ol_o_id "
       "FROM " +
       YCQLKeyspace +
       ".orderline "
-      "WHERE ol_w_id != ? "
+      "WHERE ol_w_id = ? "
       "AND ol_i_id IN (" +
       idSetToString(i_ids) +
       ") "
       ";";
   CassIterator* it = nullptr;
   LOG_INFO << stmt;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id);
   return {st, it};
 }
 

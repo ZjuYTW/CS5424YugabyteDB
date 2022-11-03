@@ -1,16 +1,23 @@
 #ifndef YCQL_PAYMENT_TXN_H_
 #define YCQL_PAYMENT_TXN_H_
 #include "common/txn/payment_txn.h"
+#include "common/util/trace_timer.h"
 
 namespace ycql_impl {
 class YCQLPaymentTxn : public ydb_util::PaymentTxn {
   using Status = ydb_util::Status;
 
  public:
-  explicit YCQLPaymentTxn(CassSession* session, std::ofstream& txn_out,
-                          std::ofstream& err_out)
+  YCQLPaymentTxn(CassSession* session, std::ofstream& txn_out,
+                 std::ofstream& err_out)
       : PaymentTxn(), conn_(session), txn_out_(txn_out), err_out_(err_out) {}
   Status Execute(double* diff_t) noexcept override;
+
+#ifndef NDEBUG
+  void SetTraceTimer(ydb_util::TraceTimer* timer) noexcept override {
+    trace_timer_ = timer;
+  }
+#endif
 
  private:
 #ifdef BUILD_TEST_PERF
@@ -20,6 +27,11 @@ class YCQLPaymentTxn : public ydb_util::PaymentTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+
+#ifndef NDEBUG
+  ydb_util::TraceTimer* trace_timer_{nullptr};
+#endif
+
   std::vector<std::string> outputs_;
   static constexpr int MAX_RETRY_ATTEMPTS = 3;
 

@@ -6,6 +6,7 @@
 #include "cassandra.h"
 #include "common/txn/txn_type.h"
 #include "common/util/status.h"
+#include "common/util/trace_timer.h"
 #include "ycql_impl/ycql_parser.h"
 
 namespace ycql_impl {
@@ -25,9 +26,9 @@ class CQLDriver {
     std::string outputMeasure =
         outDir + "/measure_log/cql_" + std::to_string(idx_) + ".out";
     std::string outputTxn =
-        outDir + "/txn_log/sql_" + std::to_string(idx_) + ".out";
+        outDir + "/txn_log/cql_" + std::to_string(idx_) + ".out";
     std::string outputErr =
-        outDir + "/err_log/sql_" + std::to_string(idx_) + ".out";
+        outDir + "/err_log/cql_" + std::to_string(idx_) + ".out";
 
     auto out_txn_fs = std::ofstream(outputTxn, std::ios::out);
     auto out_measure_fs = std::ofstream(outputMeasure, std::ios::out);
@@ -56,9 +57,12 @@ class CQLDriver {
         break;
       }
       double processTime;
+#ifndef NDEBUG
+      t->SetTraceTimer(&trace_timer_);
+#endif
       s = t->Execute(&processTime);
       if (!s.ok()) {
-        LOG_ERROR << "CQL Transaction failed";
+        LOG_ERROR << "CQL Transaction failed " << s.ToString();
         break;
       } else {
         elapsedTime.push_back(processTime);
@@ -70,21 +74,26 @@ class CQLDriver {
     for (auto i : elapsedTime) {
       totalTime += i;
     }
+    assert(totalTime != 0);
 
     out_measure_fs << "Total number of transactions processed: "
                    << elapsedTime.size() << "\n"
                    << "Total elapsed time for processing the transactions: "
-                   << totalTime << "\n"
+                   << totalTime / 1e9 << " seconds\n"
                    << "Transaction throughput: "
-                   << elapsedTime.size() / totalTime << "\n"
+                   << elapsedTime.size() / totalTime * 1e9
+                   << " transactions/second\n"
                    << "Average transaction latency: "
-                   << totalTime * 60 / elapsedTime.size() << "\n"
+                   << totalTime / 1e9 / elapsedTime.size() << " seconds\n"
                    << "Median transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.5] * 60 << "\n"
+                   << elapsedTime[elapsedTime.size() * 0.5] / 1e9
+                   << " seconds\n"
                    << "95th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.95] * 60 << "\n"
+                   << elapsedTime[elapsedTime.size() * 0.95] / 1e9
+                   << " seconds\n"
                    << "99th percentile transaction latency: "
-                   << elapsedTime[elapsedTime.size() * 0.99] * 60 << std::endl;
+                   << elapsedTime[elapsedTime.size() * 0.99] / 1e9 << " seconds"
+                   << std::endl;
 
     cass_session_free(session);
     return s.isEndOfFile() ? Status::OK() : s;
@@ -116,6 +125,9 @@ class CQLDriver {
   static std::string xactDir;
   static std::string outDir;
   int idx_;
+#ifndef NDEBUG
+  ydb_util::TraceTimer trace_timer_;
+#endif
 };
 
 std::string CQLDriver::xactDir = "data/xact_files/";

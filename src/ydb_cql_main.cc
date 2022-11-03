@@ -2,6 +2,27 @@
 #include "common/parser/parser.h"
 #include "common/util/env_util.h"
 #include "ycql_impl/cql_driver.h"
+#include "ycql_impl/defines.h"
+
+#ifndef SKIP_MARCO
+#define SKIP_ONE_(name)                                           \
+  do {                                                            \
+    if (ydb_util::getenv("YDB_SKIP_" #name, "false") == "true") { \
+      ycql_impl::YDB_SKIP_##name = true;                          \
+      std::cout << "skiping " #name << std::endl;                 \
+    }                                                             \
+  } while (0);
+
+#define SKIP_MARCO            \
+  SKIP_ONE_(DELIVERY)         \
+  SKIP_ONE_(NEW_ORDER)        \
+  SKIP_ONE_(ORDER_STATUS)     \
+  SKIP_ONE_(PAYMENT)          \
+  SKIP_ONE_(POPULAR_ITEM)     \
+  SKIP_ONE_(RELATED_CUSTOMER) \
+  SKIP_ONE_(STOCK_LEVEL)      \
+  SKIP_ONE_(TOP_BALANCE)
+#endif
 
 const std::string HOST = ydb_util::getenv("YDB_HOST", "127.0.0.1");
 const std::string SERVER_NUM = ydb_util::getenv("YDB_SERVER_NUM", "5");
@@ -27,6 +48,7 @@ int main(int argc, char* argv[]) {
   int idx = std::stoi(SERVER_IDX);
   int totalTxn = std::stoi(TXN_NUM);
   int serverNum = std::stoi(SERVER_NUM);
+  SKIP_MARCO
   CassCluster* cluster = nullptr;
   cluster = create_cluster(HOST.c_str());
 

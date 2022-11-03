@@ -4,21 +4,31 @@
 #include <thread>
 
 #include "ycql_impl/cql_exe_util.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
 using ydb_util::format;
 
 Status YCQLTopBalanceTxn::Execute(double* diff_t) noexcept {
+  if (YDB_SKIP_TOP_BALANCE) {
+    *diff_t = 0;
+    return Status::OK();
+  }
+#ifndef NDEBUG
+  if (trace_timer_) {
+    trace_timer_->Reset();
+  }
+#endif
   LOG_INFO << "Top-Balance Transaction started";
-  outputs_.resize(TOP_K * 4);
+  outputs_.reserve(TOP_K * 4);
   auto start_time = std::chrono::system_clock::now();
   auto st = Retry(std::bind(&YCQLTopBalanceTxn::executeLocal, this),
                   MAX_RETRY_ATTEMPTS);
   auto end_time = std::chrono::system_clock::now();
   *diff_t = (end_time - start_time).count();
   if (st.ok()) {
-    LOG_INFO << "Top-Balance Transaction completed";
+    LOG_INFO << "Top-Balance Transaction completed, time cost " << *diff_t;
     // Txn output: reverse top balance customer output order
     auto n = outputs_.size();
     assert(n % 4 == 0);
