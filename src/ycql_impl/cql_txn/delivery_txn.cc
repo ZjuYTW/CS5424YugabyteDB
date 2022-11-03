@@ -1,5 +1,6 @@
 #include "ycql_impl/cql_txn/delivery_txn.h"
 
+#include <future>
 #include <cassert>
 
 #include "cassandra.h"
@@ -18,13 +19,18 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   auto DeliveryInput = ydb_util::format("D %d %d", w_id_, carrier_id_);
 
   auto start = std::chrono::system_clock::now();
+  std::vector<std::future<Status>> fts;
   for (d_id_ = 1; d_id_ <= 10; ++d_id_) {
     LOG_INFO << "Delivery process on d_id[" << d_id_ << "]";
-    st = Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this),
-               MAX_RETRY_ATTEMPTS);
-    if (!st.ok()) {
-      LOG_FATAL << "Delivery transaction execution failed"
-                << ", " << st.ToString();
+    auto exec_one_district = [this](int32_t i) {
+      return Retry(std::bind(&YCQLDeliveryTxn::executeLocal, this),
+                 MAX_RETRY_ATTEMPTS);
+    };
+    fts.push_back(std::async(std::launch::async, exec_one_district, d_id_));
+  }
+  for (auto &ft: fts) {
+    if (!ft.get().ok()) {
+      LOG_FATAL << "Delivery transaction execution failed, " << st.ToString();
       break;
     }
   }
