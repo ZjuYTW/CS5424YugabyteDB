@@ -11,7 +11,7 @@ using ydb_util::format;
 
 Status YCQLTopBalanceTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Top-Balance Transaction started";
-  outputs_.resize(TOP_K * 4);
+  outputs_.reserve(TOP_K * 4);
   auto start_time = std::chrono::system_clock::now();
   auto st = Retry(std::bind(&YCQLTopBalanceTxn::executeLocal, this),
                   MAX_RETRY_ATTEMPTS);

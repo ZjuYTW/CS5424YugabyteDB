@@ -10,7 +10,7 @@ Status YCQLPaymentTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Payment Transaction started";
   const auto InputString =
       format("P %d %d %d %.2f", w_id_, d_id_, c_id_, payment_);
-  outputs_.resize(10);
+  outputs_.reserve(10);
   auto start_time = std::chrono::system_clock::now();
   auto st =
       Retry(std::bind(&YCQLPaymentTxn::executeLocal, this), MAX_RETRY_ATTEMPTS);

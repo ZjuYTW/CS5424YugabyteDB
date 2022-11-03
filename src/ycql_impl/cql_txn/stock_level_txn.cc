@@ -12,7 +12,7 @@ Status YCQLStockLevelTxn::Execute(double* diff_t) noexcept {
   LOG_INFO << "Stock-level Transaction started";
   const auto InputString =
       format("S %d %d %d %d", this->w_id_, this->d_id_, this->l_, this->t_);
-  outputs_.resize(1);
+  outputs_.reserve(1);
   auto start_time = std::chrono::system_clock::now();
   auto st = Retry(std::bind(&YCQLStockLevelTxn::executeLocal, this),
                   MAX_RETRY_ATTEMPTS);
