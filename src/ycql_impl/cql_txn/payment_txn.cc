@@ -45,8 +45,14 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
   CassIterator *customer_it = nullptr, *warehouse_it = nullptr,
                *district_it = nullptr;
 
-  LOG_DEBUG << "Update Warehouse, District, Customer";
-  st = batchUpdateCustomerDistrictWarehouse();
+  LOG_DEBUG << "Update Warehouse";
+  st = updateWarehouseYTD();
+  if (!st.ok()) return st;
+  LOG_DEBUG << "Update District";
+  st = updateDistrictYTD();
+  if (!st.ok()) return st;
+  LOG_DEBUG << "Update Customer";
+  st = updateCustomerPayment();
   if (!st.ok()) return st;
 
   std::tie(st, customer_it) = getCustomer();
