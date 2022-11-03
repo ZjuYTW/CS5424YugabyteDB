@@ -1,6 +1,7 @@
 #include "ycql_impl/cql_txn/new_order_txn.h"
 
 #include <chrono>
+#include <future>
 
 #include "cassandra.h"
 #include "common/util/logger.h"
@@ -176,79 +177,90 @@ Status YCQLNewOrderTxn::processOrderMaxQuantity(
 std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
     std::vector<OrderLine>& order_lines, int32_t next_o_id) noexcept {
   TRACE_GUARD
-  int64_t total_amount = 0;
+  std::atomic<int64_t> total_amount = 0;
   Status s;
-  CassIterator *stock_it = nullptr, *item_it = nullptr;
-  std::vector<CassStatement*> stmts;
-  stmts.reserve(order_lines.size() * 2);
+
+  std::vector<std::future<Status>> fts;
+  fts.reserve(order_lines.size());
   for (size_t i = 0; i < order_lines.size(); i++) {
-    auto free_func = [&stock_it, &item_it]() {
-      if (stock_it) {
-        cass_iterator_free(stock_it);
+    auto exec_one_order_line = [this, &order_lines, &total_amount,
+                                &next_o_id](size_t i) {
+      if (i == 0) {
+        TRACE_GUARD
       }
-      if (item_it) {
-        cass_iterator_free(item_it);
+      CassIterator *stock_it = nullptr, *item_it = nullptr;
+      Status s;
+      auto free_func = [&stock_it, &item_it]() {
+        if (stock_it) {
+          cass_iterator_free(stock_it);
+        }
+        if (item_it) {
+          cass_iterator_free(item_it);
+        }
+      };
+      DEFER(std::move(free_func));
+      std::tie(s, stock_it) =
+          getStock(order_lines[i].i_id, order_lines[i].w_id);
+      if (!s.ok()) {
+        LOG_DEBUG << "Get Stock failed, " << s.ToString();
+        return s;
       }
+      auto stock_quantity =
+          ycql_impl::GetValueFromCassRow<int32_t>(stock_it, "s_quantity")
+              .value();
+      std::string dist_col =
+          "s_dist_" + ((d_id_ < 10 ? "0" : "") + std::to_string(d_id_));
+      auto stock_info = ycql_impl::GetValueFromCassRow<std::string>(
+          stock_it, dist_col.c_str());
+      int32_t adjusted_qty = stock_quantity - order_lines[i].quantity;
+      if (adjusted_qty < 10) {
+        adjusted_qty += 100;
+      }
+      s = updateStock(adjusted_qty, stock_quantity, order_lines[i].quantity,
+                      (order_lines[i].w_id != w_id_), order_lines[i].w_id,
+                      order_lines[i].i_id);
+      std::tie(s, item_it) = getItem(order_lines[i].i_id);
+      if (!s.ok()) {
+        // Maybe timeout?
+        LOG_DEBUG << "Update Stock failed, " << s.ToString();
+        return s;
+      }
+      auto i_price =
+          ycql_impl::GetValueFromCassRow<int32_t>(item_it, "i_price").value();
+
+      auto i_name =
+          ycql_impl::GetValueFromCassRow<std::string>(item_it, "i_name")
+              .value();
+      // Note: this item_amount is enlarged by 100, when output we need to
+      // convert back
+      int64_t item_amount = order_lines[i].quantity * i_price;
+      // create one order-line
+      std::string stmt =
+          "INSERT INTO " + YCQLKeyspace +
+          ".orderline (ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, "
+          "ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info)"
+          "VALUES(?,?,?,?,?,?,?,?,?)";
+      s = ycql_impl::execute_write_cql(
+          conn_, stmt, w_id_, d_id_, next_o_id, (int32_t)i + 1,
+          order_lines[i].i_id, item_amount, order_lines[i].w_id,
+          order_lines[i].quantity, dist_col.c_str());
+      if (!s.ok()) {
+        // Timeout?
+        LOG_DEBUG << "Create One Order-Line failed, " << s.ToString();
+        return s;
+      }
+      processItemOutput(i, order_lines[i], item_amount, adjusted_qty, i_name);
+      total_amount.fetch_add(item_amount);
+      return s;
     };
-    DEFER(std::move(free_func));
-
-    std::tie(s, stock_it) = getStock(order_lines[i].i_id, order_lines[i].w_id);
-    if (!s.ok()) {
-      LOG_DEBUG << "Get Stock failed, " << s.ToString();
-      return {s, -1};
-    }
-    auto stock_quantity =
-        ycql_impl::GetValueFromCassRow<int32_t>(stock_it, "s_quantity").value();
-    std::string dist_col =
-        "s_dist_" + ((d_id_ < 10 ? "0" : "") + std::to_string(d_id_));
-    auto stock_info =
-        ycql_impl::GetValueFromCassRow<std::string>(stock_it, dist_col.c_str());
-    int32_t adjusted_qty = stock_quantity - order_lines[i].quantity;
-    if (adjusted_qty < 10) {
-      adjusted_qty += 100;
-    }
-    // update stock
-    stmts.push_back(genUpdateStockStatement(
-        adjusted_qty, stock_quantity, order_lines[i].quantity,
-        (order_lines[i].w_id != w_id_), order_lines[i].w_id,
-        order_lines[i].i_id));
-    std::tie(s, item_it) = getItem(order_lines[i].i_id);
-    if (!s.ok()) {
-      // Maybe timeout?
-      LOG_DEBUG << "Update Stock failed, " << s.ToString();
-      return {s, -1};
-    }
-    auto i_price =
-        ycql_impl::GetValueFromCassRow<int32_t>(item_it, "i_price").value();
-
-    auto i_name =
-        ycql_impl::GetValueFromCassRow<std::string>(item_it, "i_name").value();
-    // Note: this item_amount is enlarged by 100, when output we need to convert
-    // back
-    int64_t item_amount = order_lines[i].quantity * i_price;
-
-    // create one order-line
-    stmts.push_back(genCreateOneOrderLineStatement(
-        next_o_id, i + 1, order_lines[i].i_id, item_amount, order_lines[i].w_id,
-        order_lines[i].quantity, dist_col.c_str()));
-    // std::string stmt =
-    // "INSERT INTO " + YCQLKeyspace +
-    // ".orderline (ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, "
-    // "ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info)"
-    // "VALUES(?,?,?,?,?,?,?,?,?)";
-    // s = ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_, next_o_id,
-    // (int32_t)i + 1, order_lines[i].i_id,
-    // item_amount, order_lines[i].w_id,
-    // order_lines[i].quantity, dist_col.c_str());
-    processItemOutput(i, order_lines[i], item_amount, adjusted_qty, i_name);
-    total_amount += item_amount;
+    fts.push_back(std::async(std::launch::async, exec_one_order_line, i));
   }
-  s = BatchExecute(stmts, conn_);
-  if (!s.ok()) {
-    LOG_FATAL << "Batch execute on process order lines failed, "
-              << s.ToString();
+  for (auto& ft : fts) {
+    if (!ft.get().ok()) {
+      return {ft.get(), -1};
+    }
   }
-  return {s, total_amount};
+  return {Status::OK(), total_amount.load()};
 }
 
 Status YCQLNewOrderTxn::updateNextOId(int32_t next_o_id,
@@ -263,7 +275,7 @@ Status YCQLNewOrderTxn::updateNextOId(int32_t next_o_id,
 }
 
 Status YCQLNewOrderTxn::updateStock(int32_t adjusted_qty, int32_t prev_qty,
-                                    int64_t ordered_qty, int remote_cnt,
+                                    int32_t ordered_qty, int remote_cnt,
                                     int32_t w_id, int32_t item_id) noexcept {
   std::string stmt =
       "UPDATE " + YCQLKeyspace +
@@ -274,41 +286,8 @@ Status YCQLNewOrderTxn::updateStock(int32_t adjusted_qty, int32_t prev_qty,
                                       remote_cnt, w_id, item_id, prev_qty);
 }
 
-CassStatement* YCQLNewOrderTxn::genUpdateStockStatement(
-    int32_t adjusted_qty, int32_t prev_qty, int64_t ordered_qty, int remote_cnt,
-    int32_t w_id, int32_t item_id) noexcept {
-  std::string stmt =
-      "UPDATE " + YCQLKeyspace +
-      ".stock SET s_quantity = ?, s_ytd = s_ytd + ?, s_order_cnt = "
-      "s_order_cnt + 1, s_remote_cnt = s_remote_cnt + ? WHERE s_w_id = ? and "
-      "s_i_id = ? IF s_quantity = ?";
-  auto cass_stmt = cass_statement_new(stmt.c_str(), 6);
-  auto rc =
-      ycql_impl::cql_statement_fill_args(cass_stmt, adjusted_qty, ordered_qty,
-                                         remote_cnt, w_id, item_id, prev_qty);
-  assert(rc == CASS_OK);
-  return cass_stmt;
-}
-
-CassStatement* YCQLNewOrderTxn::genCreateOneOrderLineStatement(
-    int32_t next_o_id, int32_t ol_number, int32_t ol_i_id, int32_t item_amount,
-    int32_t supply_w_id, int32_t ol_quantity, const char* dist_info) noexcept {
-  std::string stmt =
-      "INSERT INTO " + YCQLKeyspace +
-      ".orderline (ol_w_id, ol_d_id, ol_o_id, ol_number, ol_i_id, "
-      "ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info)"
-      "VALUES(?,?,?,?,?,?,?,?,?)";
-  auto cass_stmt = cass_statement_new(stmt.c_str(), 9);
-  auto rc = ycql_impl::cql_statement_fill_args(
-      cass_stmt, w_id_, d_id_, next_o_id, ol_number, ol_i_id, item_amount,
-      supply_w_id, ol_quantity, dist_info);
-  assert(rc == CASS_OK);
-  return cass_stmt;
-}
-
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getItem(
     int32_t item_id) noexcept {
-  TRACE_GUARD
   std::string stmt = "SELECT * FROM " + YCQLKeyspace + ".item WHERE i_id = ?";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, item_id);
@@ -365,7 +344,6 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer() noexcept {
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getStock(
     int32_t i_id, int32_t w_id) noexcept {
-  TRACE_GUARD
   std::string stmt = "SELECT s_quantity, s_dist_" +
                      ((d_id_ < 10 ? "0" : "") + std::to_string(d_id_)) +
                      " FROM " + YCQLKeyspace +

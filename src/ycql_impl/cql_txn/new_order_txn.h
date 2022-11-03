@@ -45,21 +45,12 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   Status updateNextOId(int32_t next_o_id, int32_t prev_next_o_id) noexcept;
 
   Status updateStock(int32_t adjusted_qty, int32_t prev_qty,
-                     int64_t ordered_qty, int remote_cnt, int32_t w_id,
+                     int32_t ordered_qty, int remote_cnt, int32_t w_id,
                      int32_t item_id) noexcept;
-  CassStatement* genUpdateStockStatement(int32_t adjusted_qty, int32_t prev_qty,
-                                         int64_t ordered_qty, int remote_cnt,
-                                         int32_t w_id,
-                                         int32_t item_id) noexcept;
 
   // Return status and total_amount
   std::pair<Status, int64_t> processOrderLines(
       std::vector<OrderLine>& order_lines, int32_t next_o_id) noexcept;
-
-  CassStatement* genCreateOneOrderLineStatement(
-      int32_t next_o_id, int32_t ol_number, int32_t ol_i_id,
-      int32_t item_amount, int32_t supply_w_id, int32_t ol_quantity,
-      const char* dist_info) noexcept;
 
   Status processOrder(int32_t next_o_id, int32_t order_num, int all_local,
                       std::string& current_time) noexcept;

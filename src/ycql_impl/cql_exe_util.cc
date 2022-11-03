@@ -76,6 +76,7 @@ ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,
     size_t size;
     cass_future_error_message(future, &buf, &size);
     LOG_FATAL << "Batch execution failed, " << buf;
+    return ydb_util::Status::ExecutionFailed(std::string(buf, size));
   }
   cass_batch_free(batch);
   cass_future_free(future);
