@@ -1,12 +1,22 @@
 #include "ycql_impl/cql_txn/payment_txn.h"
 
 #include "ycql_impl/cql_exe_util.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
 using ydb_util::format;
 
 Status YCQLPaymentTxn::Execute(double* diff_t) noexcept {
+  if (YDB_SKIP_PAYMENT) {
+    *diff_t = 0;
+    return Status::OK();
+  }
+#ifndef NDEBUG
+  if (trace_timer_) {
+    trace_timer_->Reset();
+  }
+#endif
   LOG_INFO << "Payment Transaction started";
   const auto InputString =
       format("P %d %d %d %.2f", w_id_, d_id_, c_id_, payment_);
@@ -17,7 +27,7 @@ Status YCQLPaymentTxn::Execute(double* diff_t) noexcept {
   auto end_time = std::chrono::system_clock::now();
   *diff_t = (end_time - start_time).count();
   if (st.ok()) {
-    LOG_INFO << "Payment Transaction completed";
+    LOG_INFO << "Payment Transaction completed, time cost " << *diff_t;
     // Txn output
     txn_out_ << InputString << std::endl;
     for (const auto& ostr : outputs_) {

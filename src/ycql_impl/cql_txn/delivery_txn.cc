@@ -6,15 +6,24 @@
 #include "cassandra.h"
 #include "common/util/string_util.h"
 #include "ycql_impl/cql_exe_util.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
 using ydb_util::format;
 
 Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
+  if (YDB_SKIP_DELIVERY) {
+    *diff_t = 0;
+    return Status::OK();
+  }
+#ifndef NDEBUG
+  if (trace_timer_) {
+    trace_timer_->Reset();
+  }
+#endif
   LOG_INFO << "Delivery transaction started";
   const auto InputString = format("D %d %d", w_id_, carrier_id_);
-  auto start_time = std::chrono::system_clock::now();
   Status st = Status::OK();
   auto DeliveryInput = ydb_util::format("D %d %d", w_id_, carrier_id_);
 
@@ -29,20 +38,25 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
     fts.push_back(std::async(std::launch::async, exec_one_district, d_id_));
   }
   for (auto &ft: fts) {
-    if (!ft.get().ok()) {
+    st = ft.get();
+    if (!st.ok()) {
       LOG_FATAL << "Delivery transaction execution failed, " << st.ToString();
       break;
     }
   }
   auto end_time = std::chrono::system_clock::now();
-  *diff_t = (end_time - start_time).count();
+  *diff_t = (end_time - start).count();
   if (st.ok() || st.isEndOfFile()) {
-    LOG_INFO << "Delivery transaction completed";
+    LOG_INFO << "Delivery transaction completed, time cost: " << *diff_t;
     txn_out_ << InputString << std::endl;
   } else {
     err_out_ << InputString << std::endl;
     err_out_ << st.ToString() << std::endl;
   }
+  #ifndef NDEBUG
+  if(trace_timer_)
+    trace_timer_->Print();
+  #endif
   return st;
 }
 
@@ -85,6 +99,10 @@ Status YCQLDeliveryTxn::executeLocal() noexcept {
 
 std::pair<Status, CassIterator*>
 YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
+  // Note: we just record one portion
+  if(d_id_ == 1){
+    TRACE_GUARD
+  }
   std::string stmt =
       "SELECT o_id, o_c_id "
       "FROM " +
@@ -110,6 +128,10 @@ YCQLDeliveryTxn::getNextDeliveryOrder() noexcept {
 }
 
 Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
+  // Note: we just record one portion
+  if(d_id_ == 1){
+    TRACE_GUARD
+  }
   std::string stmt = "UPDATE " + YCQLKeyspace +
                      ".orders "
                      "SET o_carrier_id = ? "
@@ -120,6 +142,10 @@ Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id) noexcept {
 }
 
 Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
+  // Note: we just record one portion
+  if(d_id_ == 1){
+    TRACE_GUARD
+  }
   std::vector<std::pair<int32_t, int32_t>> lines;
   {
     auto [st, it] = getAllOrderLineNumber(o_id);
@@ -155,13 +181,16 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id) noexcept {
 
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
     int32_t o_id) noexcept {
+  // Note: we just record one portion
+  if(d_id_ == 1){
+    TRACE_GUARD
+  }
   std::string stmt =
       "SELECT SUM(ol_amount) as sum_ol_amount "
       "FROM " +
       YCQLKeyspace +
       ".orderline "
-      "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
-      "ALLOW FILTERING;";
+      "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? ";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, o_id);
   if (!cass_iterator_next(it)) {
@@ -172,6 +201,10 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
 
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
     int32_t o_id) noexcept {
+  // Note: we just record one portion
+  if(d_id_ == 1){
+    TRACE_GUARD
+  }
   std::string stmt =
       "SELECT ol_i_id, ol_number FROM " + YCQLKeyspace +
       ".orderline where ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?";
@@ -182,6 +215,10 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
 
 Status YCQLDeliveryTxn::updateCustomerBalAndDeliveryCnt(
     int32_t c_id, int64_t total_amount) noexcept {
+  // Note: we just record one portion
+  if(d_id_ == 1){
+    TRACE_GUARD
+  }
   std::string stmt = "UPDATE " + YCQLKeyspace +
                      ".customer "
                      "SET c_balance = c_balance + " +

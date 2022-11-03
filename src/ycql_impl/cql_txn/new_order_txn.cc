@@ -13,6 +13,15 @@ namespace ycql_impl {
 using Status = ydb_util::Status;
 
 Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
+  if (YDB_SKIP_NEW_ORDER) {
+    *diff_t = 0;
+    return Status::OK();
+  }
+#ifndef NDEBUG
+  if (trace_timer_) {
+    trace_timer_->Reset();
+  }
+#endif
   LOG_INFO << "New-Order Transaction started";
   std::vector<OrderLine> order_lines;
   order_lines.reserve(orders_.size());
@@ -40,7 +49,7 @@ Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
   auto end_time = std::chrono::system_clock::now();
   *diff_t = (end_time - start_time).count();
   if (st.ok()) {
-    LOG_INFO << "New-Order Transaction end";
+    LOG_INFO << "New-Order Transaction end, time cost" << *diff_t;
     txn_out_ << NewOrder << std::endl;
     for (auto& str : orders_) {
       txn_out_ << str << std::endl;
@@ -55,6 +64,10 @@ Status YCQLNewOrderTxn::Execute(double* diff_t) noexcept {
       err_out_ << str << std::endl;
     }
   }
+  #ifndef NDEBUG
+  if(trace_timer_)
+    trace_timer_->Print();
+  #endif
   return st;
 }
 

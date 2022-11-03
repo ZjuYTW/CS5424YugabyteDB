@@ -9,6 +9,7 @@ std::vector<std::string> str_split(const std::string& input,
                                    char delimiter) noexcept;
 
 std::string format(const char* fmt, ...) noexcept;
+std::string format(const char* fmt, va_list args) noexcept;
 char* getLocalTimeString() noexcept;
 }  // namespace ydb_util
 

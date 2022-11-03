@@ -1,5 +1,6 @@
 #include "env_util.h"
 
+#include <iostream>
 namespace ydb_util {
 
 std::string getenv(const std::string& key,

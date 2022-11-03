@@ -4,18 +4,25 @@
 #include <vector>
 
 #include "common/txn/related_customer_txn.h"
+#include "common/util/trace_timer.h"
 
 namespace ycql_impl {
 class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   using Status = ydb_util::Status;
 
  public:
-  explicit YCQLRelatedCustomerTxn(CassSession* session, std::ofstream& txn_out,
-                                  std::ofstream& err_out)
+  YCQLRelatedCustomerTxn(CassSession* session, std::ofstream& txn_out,
+                         std::ofstream& err_out)
       : RelatedCustomerTxn(),
         conn_(session),
         txn_out_(txn_out),
         err_out_(err_out) {}
+
+#ifndef NDEBUG
+  void SetTraceTimer(ydb_util::TraceTimer* timer) noexcept override {
+    trace_timer_ = timer;
+  }
+#endif
 
   Status Execute(double* diff_t) noexcept override;
 
@@ -27,6 +34,9 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   CassSession* conn_;
   std::ofstream& txn_out_;
   std::ofstream& err_out_;
+#ifndef NDEBUG
+  ydb_util::TraceTimer* trace_timer_{nullptr};
+#endif
   std::vector<std::string> outputs_;
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
   constexpr static int THRESHOLD = 2;

@@ -8,6 +8,7 @@
 #include "common/util/logger.h"
 #include "common/util/status.h"
 #include "common/util/string_util.h"
+#include "common/util/trace_timer.h"
 
 #ifdef BUILD_TEST_PERF
 #include "gtest/gtest_prod.h"
@@ -37,6 +38,8 @@ class Txn {
                       std::ifstream& ifs) noexcept = 0;
 
   inline TxnType GetTxnType() noexcept { return txn_type_; }
+
+  virtual void SetTraceTimer(ydb_util::TraceTimer* trace_timer) noexcept {}
 
  private:
   TxnType txn_type_;

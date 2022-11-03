@@ -3,12 +3,22 @@
 #include <unordered_set>
 
 #include "ycql_impl/cql_exe_util.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
 using ydb_util::format;
 
 Status YCQLStockLevelTxn::Execute(double* diff_t) noexcept {
+  if (YDB_SKIP_STOCK_LEVEL) {
+    *diff_t = 0;
+    return Status::OK();
+  }
+#ifndef NDEBUG
+  if (trace_timer_) {
+    trace_timer_->Reset();
+  }
+#endif
   LOG_INFO << "Stock-level Transaction started";
   const auto InputString =
       format("S %d %d %d %d", this->w_id_, this->d_id_, this->l_, this->t_);
@@ -19,7 +29,7 @@ Status YCQLStockLevelTxn::Execute(double* diff_t) noexcept {
   auto end_time = std::chrono::system_clock::now();
   *diff_t = (end_time - start_time).count();
   if (st.ok()) {
-    LOG_INFO << "Stock-level transaction completed";
+    LOG_INFO << "Stock-level transaction completed, time cost " << *diff_t;
     // Txn output
     txn_out_ << InputString << std::endl;
     for (const auto& ostr : outputs_) {

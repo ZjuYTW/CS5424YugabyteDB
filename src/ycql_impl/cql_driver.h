@@ -6,6 +6,7 @@
 #include "cassandra.h"
 #include "common/txn/txn_type.h"
 #include "common/util/status.h"
+#include "common/util/trace_timer.h"
 #include "ycql_impl/ycql_parser.h"
 
 namespace ycql_impl {
@@ -56,6 +57,9 @@ class CQLDriver {
         break;
       }
       double processTime;
+#ifndef NDEBUG
+      t->SetTraceTimer(&trace_timer_);
+#endif
       s = t->Execute(&processTime);
       if (!s.ok()) {
         LOG_ERROR << "CQL Transaction failed";
@@ -117,6 +121,9 @@ class CQLDriver {
   static std::string xactDir;
   static std::string outDir;
   int idx_;
+#ifndef NDEBUG
+  ydb_util::TraceTimer trace_timer_;
+#endif
 };
 
 std::string CQLDriver::xactDir = "data/xact_files/";

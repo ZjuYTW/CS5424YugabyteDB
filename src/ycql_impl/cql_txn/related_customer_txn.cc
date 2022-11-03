@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "ycql_impl/cql_exe_util.h"
+#include "ycql_impl/defines.h"
 
 namespace ycql_impl {
 using Status = ydb_util::Status;
@@ -11,6 +12,15 @@ using ycql_impl::ValidOrSleep;
 using ydb_util::format;
 
 Status YCQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
+  if (YDB_SKIP_RELATED_CUSTOMER) {
+    *diff_t = 0;
+    return Status::OK();
+  }
+#ifndef NDEBUG
+  if (trace_timer_) {
+    trace_timer_->Reset();
+  }
+#endif
   LOG_INFO << "Related-customer transaction started";
   const auto InputString = format("R %d %d %d", c_w_id_, c_d_id_, c_id_);
   auto start_time = std::chrono::system_clock::now();
@@ -19,7 +29,7 @@ Status YCQLRelatedCustomerTxn::Execute(double* diff_t) noexcept {
   auto end_time = std::chrono::system_clock::now();
   *diff_t = (end_time - start_time).count();
   if (st.ok()) {
-    LOG_INFO << "Related-customer transaction completed";
+    LOG_INFO << "Related-customer transaction completed, time cost " << *diff_t;
     // Txn output
     txn_out_ << InputString << std::endl;
     for (const auto& ostr : outputs_) {
