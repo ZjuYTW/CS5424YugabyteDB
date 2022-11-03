@@ -3,6 +3,8 @@
 #include <ctime>
 #include <thread>
 
+#include "cassandra.h"
+
 namespace ycql_impl {
 bool ValidOrSleep(bool done) noexcept {
   if (!done) {
@@ -63,16 +65,22 @@ std::string GetTimeFromTS(int64_t longDate) noexcept {
 
 ydb_util::Status BatchExecute(const std::vector<CassStatement*>& stmts,
                               CassSession* conn) noexcept {
-  auto* batch = cass_batch_new(CassBatchType::CASS_BATCH_TYPE_LOGGED);
+  auto* batch = cass_batch_new(CassBatchType::CASS_BATCH_TYPE_UNLOGGED);
   for (auto stmt : stmts) {
     cass_batch_add_statement(batch, stmt);
   }
   auto future = cass_session_execute_batch(conn, batch);
   auto rc = cass_future_error_code(future);
+  if (rc != CASS_OK) {
+    const char* buf = nullptr;
+    size_t size;
+    cass_future_error_message(future, &buf, &size);
+    LOG_FATAL << "Batch execution failed, " << buf;
+  }
   cass_batch_free(batch);
   cass_future_free(future);
-  if (rc != CASS_OK) {
-    return ydb_util::Status::ExecutionFailed(cass_error_desc(rc));
+  for (auto stmt : stmts) {
+    cass_statement_free(stmt);
   }
   return ydb_util::Status::OK();
 }
