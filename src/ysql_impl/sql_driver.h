@@ -138,7 +138,7 @@ class SQLDriver {
   int idx_;
   std::vector<double> elapsedTime;
 };
-std::string SQLDriver::xactDir = "data/test_xact_files/";
+std::string SQLDriver::xactDir = "data/xact_files/";
 std::string SQLDriver::outDir = "data/output/";
 
 }  // namespace ysql_impl

@@ -66,10 +66,11 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
             format("  (b).Name of customer who placed this order (%s, %s, %s)",
                    firstName, middleName, lastName));
         auto MaxOrderLinesQuery = format(
-            "SELECT ol_i_id, max(ol_quantity) as max_ol_quantity FROM "
+            "SELECT ol_i_id,max_ol_quantity FROM "
+            "(SELECT orderline.*, max(ol_quantity) over() as max_ol_quantity FROM "
             "orderline "
-            "WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %s group by "
-            "ol_i_id",
+            "WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %s) as maxOrderline "
+            "WHERE ol_quantity = max_ol_quantity",
             w_id_, d_id_, o_id);
         LOG_INFO << MaxOrderLinesQuery;
         pqxx::result orderLines = txn.exec(MaxOrderLinesQuery);

@@ -211,11 +211,12 @@ def main(conf):
         print(f">>>> Creating table for {cfg['name']}")
         create_table_stmt = parse_table(cfg['table'], cfg['name'])
         create_table(yb, create_table_stmt, cfg['name'])
+        print(f">>>> Altering table for {cfg['name']}")
+        alter_table(yb, cfg['foreign_keys'], cfg['name'])
         print(f">>>> Writing data for {cfg['name']}")
         # write_data(yb, cfg)
         write_data_multi(yb, cfg)
-        print(f">>>> Altering table for {cfg['name']}")
-        alter_table(yb, cfg['foreign_keys'], cfg['name'])
+
 
         if 'index' in cfg:
             print(f">>>> Creating index for {cfg['name']}")

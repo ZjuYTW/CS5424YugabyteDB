@@ -15,7 +15,7 @@ endif()
 if(BUILD_YSQL_PERF)
   add_subdirectory(ysql_impl)
   add_executable(ysql_perf ${YSQL_SOURCE_FILES})
-  target_link_libraries(ysql_perf ysql_impl_lib ${CQL_LIB_PATH} ${SQL_LIB_PATH} ${PQ_LIB_PATH})
+  target_link_libraries(ysql_perf ysql_impl_lib ${SQL_LIB_PATH} ${PQ_LIB_PATH})
   install(TARGETS ysql_perf DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
