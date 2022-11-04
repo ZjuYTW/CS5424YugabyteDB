@@ -180,8 +180,11 @@ Status YCQLNewOrderTxn::processOrderMaxQuantity(
 Status YCQLNewOrderTxn::processOrderNonDelivery(int32_t next_o_id) noexcept {
   TRACE_GUARD
   Status s;
-  std::string stmt = "INSERT INTO " + YCQLKeyspace + ".order_non_delivery(o_w_id, o_d_id, o_id, o_c_id) VALUES(?, ?, ?, ?)";
-  return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_, next_o_id, c_id_);
+  std::string stmt =
+      "INSERT INTO " + YCQLKeyspace +
+      ".order_non_delivery(o_w_id, o_d_id, o_id, o_c_id) VALUES(?, ?, ?, ?)";
+  return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_, next_o_id,
+                                      c_id_);
 }
 
 // TODO(ZjuYTW): Refactor the following shit
@@ -288,13 +291,16 @@ Status YCQLNewOrderTxn::updateNextOId(int32_t next_o_id,
 Status YCQLNewOrderTxn::updateStock(int32_t adjusted_qty, int32_t prev_qty,
                                     int32_t ordered_qty, int remote_cnt,
                                     int32_t w_id, int32_t item_id) noexcept {
-  std::string stmt =
-      "UPDATE " + YCQLKeyspace +
-      ".stock SET s_quantity = ?, s_ytd = s_ytd + ?, s_order_cnt = "
-      "s_order_cnt + 1, s_remote_cnt = s_remote_cnt + ? WHERE s_w_id = ? and "
-      "s_i_id = ? IF s_quantity = ?";
-  return ycql_impl::execute_write_cql(conn_, stmt, adjusted_qty, ordered_qty,
-                                      remote_cnt, w_id, item_id, prev_qty);
+  std::string stmt = "UPDATE " + YCQLKeyspace +
+                     ".stock SET s_quantity = ?, s_ytd = s_ytd + " +
+                     std::to_string(ordered_qty) +
+                     ", s_order_cnt = "
+                     "s_order_cnt + 1, s_remote_cnt = s_remote_cnt + " +
+                     std::to_string(remote_cnt) +
+                     " WHERE s_w_id = ? and "
+                     "s_i_id = ? IF s_quantity = ?";
+  return ycql_impl::execute_write_cql(conn_, stmt, adjusted_qty, w_id, item_id,
+                                      prev_qty);
 }
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getItem(

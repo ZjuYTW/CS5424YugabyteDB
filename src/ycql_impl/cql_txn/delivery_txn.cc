@@ -41,7 +41,7 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   for (auto& ft : fts) {
     st = ft.get();
     if (!st.ok()) {
-      LOG_FATAL << "Delivery transaction distrcit [ << " << ++cnt
+      LOG_FATAL << "Delivery transaction distrcit [ " << ++cnt
                 << "] execution failed, " << st.ToString();
       continue;
     }
@@ -65,11 +65,11 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   Status st = Status::OK();
 
   CassIterator* order_it = nullptr;
-  LOG_DEBUG << "Get Next Delivery Order";
+  LOG_INFO << "Get Next Delivery Order";
   std::tie(st, order_it) = getNextDeliveryOrder(d_id);
-  if(!st.ok()) {
+  if (!st.ok()) {
     // if can't find a null delivery order, just return ok
-    if(st.isEndOfFile()){
+    if (st.isEndOfFile()) {
       return Status::OK();
     }
     return st;
@@ -77,8 +77,9 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
   auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id").value();
   if (order_it) cass_iterator_free(order_it);
+  LOG_INFO << "Delete Next Delivery Order";
   st = deleteNextDeliveryOrder(d_id, o_id);
-  if(!st.ok()) {
+  if (!st.ok()) {
     return st;
   }
 
@@ -108,11 +109,14 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   return st;
 }
 
-Status YCQLDeliveryTxn::deleteNextDeliveryOrder(int32_t d_id, int32_t o_id) noexcept {
+Status YCQLDeliveryTxn::deleteNextDeliveryOrder(int32_t d_id,
+                                                int32_t o_id) noexcept {
   if (d_id == 1) {
     TRACE_GUARD
   }
-  std::string stmt = "DELETE FROM " + YCQLKeyspace + ".order_non_delivery WHERE o_w_id = ? AND o_d_id = ? AND o_id = ?";
+  std::string stmt =
+      "DELETE FROM " + YCQLKeyspace +
+      ".order_non_delivery WHERE o_w_id = ? AND o_d_id = ? AND o_id = ?";
   return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id, o_id);
 }
 
@@ -128,7 +132,7 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
       YCQLKeyspace +
       ".order_non_delivery "
       "WHERE o_w_id = ? AND o_d_id = ? "
-      "ORDER BY o_id ASC "
+      "ORDER BY o_d_id ASC, o_id ASC "
       "LIMIT 1 ";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id);
@@ -138,7 +142,8 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
     return {st, it};
   }
   if (!cass_iterator_next(it)) {
-    LOG_DEBUG << "Next delivery order on ["  << w_id_ << "," << d_id << "] not found";
+    LOG_DEBUG << "Next delivery order on [" << w_id_ << "," << d_id
+              << "] not found";
     cass_iterator_free(it);
     // This means we can't find a coressponding avaliable order, just skip it
     return {Status::EndOfFile("Next Delivery Order not found"), it};
