@@ -66,17 +66,7 @@ O_CARRIER_ID INT,
 O_OL_CNT INT,
 O_ALL_LOCAL INT,
 O_ENTRY_D TIMESTAMP,
-PRIMARY KEY (O_W_ID, O_ID, O_D_ID)
-);
-
-DROP TABLE IF EXISTS ybtest.order_max_quantity;
-CREATE TABLE IF NOT EXISTS ybtest.order_max_quantity (
-  O_W_ID INT,
-  O_D_ID INT,
-  O_ID INT,
-  MAX_QUANTITY INT,
-  ITEM_IDS LIST<INT>,
-  PRIMARY KEY (O_W_ID, O_D_ID, O_ID)
+PRIMARY KEY (O_W_ID, O_D_ID, O_ID)
 );
 
 DROP TABLE IF EXISTS ybtest.item;
@@ -126,7 +116,24 @@ S_DATA VARCHAR,
 PRIMARY KEY (S_W_ID,S_I_ID)
 );
 
+DROP TABLE IF EXISTS ybtest.order_max_quantity;
+CREATE TABLE IF NOT EXISTS ybtest.order_max_quantity (
+  O_W_ID INT,
+  O_D_ID INT,
+  O_ID INT,
+  MAX_QUANTITY INT,
+  ITEM_IDS LIST<INT>,
+  PRIMARY KEY (O_W_ID, O_D_ID, O_ID)
+);
 
+DROP TABLE IF EXISTS ybtest.order_non_delivery;
+CREATE TABLE IF NOT EXISTS ybtest.order_non_delivery (
+  O_W_ID INT,
+  O_D_ID INT,
+  O_ID INT,
+  O_C_ID INT
+  PRIMARY KEY (O_W_ID, O_D_ID, O_ID)
+) WITH CLUSTERING ORDER BY (O_D_ID ASC, O_ID ASC);
 
 COPY ybtest.warehouse (W_ID, W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP, W_TAX, W_YTD)
 FROM 'data/test_files/warehouse_cql.csv'
@@ -158,6 +165,10 @@ WITH DELIMITER=',' AND NULL='null' AND INGESTRATE=50000;
 
 COPY ybtest.order_max_quantity (O_W_ID, O_D_ID, O_ID, MAX_QUANTITY, ITEM_IDS)
 FROM 'data/test_files/order_max_quantity_cql.csv'
+WITH DELIMITER=',' AND NULL='null' AND INGESTRATE=50000;
+
+COPY ybtest.order_non_delivery (O_W_ID, O_D_ID, O_ID, O_C_ID)
+FROM 'data/test_files/order_non_delivery_cql.csv'
 WITH DELIMITER=',' AND NULL='null' AND INGESTRATE=50000;
 
 CREATE INDEX ON ybtest.orderline (OL_D_ID, OL_O_ID);

@@ -121,7 +121,7 @@ if __name__ == '__main__':
     # process_order_max_quantity('./data/data_files/order-line.csv', './data/data_files/order_max_quantity_cql.csv')
     # process_item_data('./data/data_files/item.csv', './data/data_files/item_cql.csv')
     # process_stock_data('./data/data_files/stock.csv', './data/data_files/stock_cql.csv')
-    process_order_non_delivery('./data/data_files/order.csv', './data/data_files/order_non_delivery.csv')
+    process_order_non_delivery('./data/data_files/order.csv', './data/data_files/order_non_delivery_cql.csv')
 
     # join_stock_item('./data/data_files/stock.csv', './data/data_files/item.csv', './data/data_files/stock_item.csv')
 
