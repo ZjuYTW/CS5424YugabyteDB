@@ -26,7 +26,11 @@ sh start_ydb.sh
 
 * Start testing
 ```
-sh start_txn.sh
+# start sql transactions
+sh start_txn.sh sql
+
+# start cql transactions
+sh start_txn.sh cql
 ```
 
 * Useful commands
