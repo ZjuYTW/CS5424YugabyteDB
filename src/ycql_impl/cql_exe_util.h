@@ -111,6 +111,10 @@ ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
   auto result = cass_future_get_result(future);
   if (result == nullptr) {
     // An error occur
+    const char* buf = nullptr;
+    size_t size;
+    cass_future_error_message(future, &buf, &size);
+    LOG_FATAL << "read failed, " << buf;
     rc = cass_future_error_code(future);
     st = ydb_util::Status::ExecutionFailed(cass_error_desc(rc));
     return st;
@@ -146,6 +150,10 @@ ydb_util::Status execute_write_cql(CassSession* session,
   // For "Write", we use cass_future_error_code
   rc = cass_future_error_code(future);
   if (rc != CASS_OK) {
+    const char* buf = nullptr;
+    size_t size;
+    cass_future_error_message(future, &buf, &size);
+    LOG_FATAL << "write failed, " << buf;
     st = ydb_util::Status::ExecutionFailed(cass_error_desc(rc));
   }
   return st;

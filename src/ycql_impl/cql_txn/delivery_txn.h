@@ -34,6 +34,7 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
 
   Status executeLocal(int32_t d_id) noexcept;
   std::pair<Status, CassIterator*> getNextDeliveryOrder(int32_t d_id) noexcept;
+  Status deleteNextDeliveryOrder(int32_t d_id, int32_t o_id) noexcept;
   std::pair<Status, CassIterator*> getOrderPaymentAmount(int32_t o_id,
                                                          int32_t d_id) noexcept;
   std::pair<Status, CassIterator*> getAllOrderLineNumber(int32_t o_id,
