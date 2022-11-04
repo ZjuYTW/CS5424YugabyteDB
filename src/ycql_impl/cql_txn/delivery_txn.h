@@ -39,7 +39,7 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
                                                          int32_t d_id) noexcept;
   std::pair<Status, CassIterator*> getAllOrderLineNumber(int32_t o_id,
                                                          int32_t d_id) noexcept;
-  Status updateCarrierId(int32_t o_id, int32_t d_id) noexcept;
+  std::pair<Status, bool> updateCarrierId(int32_t o_id, int32_t d_id) noexcept;
   Status updateOrderLineDeliveryDate(int32_t o_id, int32_t d_id) noexcept;
   Status updateCustomerBalAndDeliveryCnt(int32_t c_id, int64_t total_amount,
                                          int32_t d_id) noexcept;

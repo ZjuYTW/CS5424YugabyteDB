@@ -67,9 +67,11 @@ Status YSQLPopularItemTxn::Execute(double* diff_t) noexcept {
                    firstName, middleName, lastName));
         auto MaxOrderLinesQuery = format(
             "SELECT ol_i_id,max_ol_quantity FROM "
-            "(SELECT orderline.*, max(ol_quantity) over() as max_ol_quantity FROM "
+            "(SELECT orderline.*, max(ol_quantity) over() as max_ol_quantity "
+            "FROM "
             "orderline "
-            "WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %s) as maxOrderline "
+            "WHERE ol_w_id = %d AND ol_d_id = %d AND ol_o_id = %s) as "
+            "maxOrderline "
             "WHERE ol_quantity = max_ol_quantity",
             w_id_, d_id_, o_id);
         LOG_INFO << MaxOrderLinesQuery;

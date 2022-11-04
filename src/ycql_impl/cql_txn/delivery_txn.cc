@@ -84,8 +84,9 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   }
 
   LOG_DEBUG << "Update Carrier Id";
-  st = updateCarrierId(o_id, d_id);
-  if (!st.ok()) return st;
+  bool suc;
+  std::tie(st, suc) = updateCarrierId(o_id, d_id);
+  if (!st.ok() || !suc) return st;
 
   LOG_DEBUG << "Update Order Line Delivery Date";
   st = updateOrderLineDeliveryDate(o_id, d_id);
@@ -151,18 +152,30 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
   return {st, it};
 }
 
-Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id, int32_t d_id) noexcept {
+std::pair<Status, bool> YCQLDeliveryTxn::updateCarrierId(
+    int32_t o_id, int32_t d_id) noexcept {
   // Note: we just record one portion
   if (d_id == 1) {
     TRACE_GUARD
   }
+  // Note: Here we need to do a CAS for avoid race condition
   std::string stmt = "UPDATE " + YCQLKeyspace +
                      ".orders "
                      "SET o_carrier_id = ? "
                      "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? "
                      "IF o_carrier_id = null;";
-  return ycql_impl::execute_write_cql(conn_, stmt, carrier_id_, w_id_, d_id,
-                                      o_id);
+  CassStatement* statement = cass_statement_new(stmt.c_str(), 4);
+  auto future = cass_session_execute(conn_, statement);
+  auto result = cass_future_get_result(future);
+  if (result == nullptr) {
+    cass_statement_free(statement);
+    cass_future_free(future);
+    return {Status::ExecutionFailed("Update Carrier ID failed"), false};
+  }
+  cass_bool_t appiled;
+  auto value = cass_row_get_column(cass_result_first_row(result), 0);
+  cass_value_get_bool(value, &appiled);
+  return {Status::OK(), value};
 }
 
 Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id,

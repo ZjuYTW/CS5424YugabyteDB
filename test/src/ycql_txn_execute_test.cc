@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "ycql_impl/cql_driver.h"
+#include "ycql_impl/cql_exe_util.h"
 #include "ycql_impl/cql_txn/delivery_txn.h"
 #include "ycql_impl/cql_txn/new_order_txn.h"
 #include "ycql_impl/defines.h"
@@ -38,6 +39,21 @@ class CQLTxnExecuteTest : public ::testing::Test {
   std::ofstream err_out_;
   static constexpr char hosts[] = "127.0.0.1";
 };
+
+TEST_F(CQLTxnExecuteTest, SimpleTestUpdate) {
+  std::string stmt =
+      "UPDATE ybtest.orders SET o_carrier_id = 10 WHERE o_w_id = 1 AND o_d_id "
+      "= 1 AND o_id = 1 IF o_carrier_id = null";
+  CassStatement* statement = cass_statement_new(stmt.c_str(), 0);
+  auto future = cass_session_execute(conn, statement);
+  auto result = cass_future_get_result(future);
+  ASSERT_TRUE(result != nullptr);
+  auto row = cass_result_first_row(result);
+  auto value = cass_row_get_column(row, 0);
+  cass_bool_t appiled;
+  cass_value_get_bool(value, &appiled);
+  ASSERT_TRUE(appiled == true);
+}
 
 TEST_F(CQLTxnExecuteTest, NewOrderTest1) {
   ydb_util::Txn* txn = new YCQLNewOrderTxn(conn, txn_out_, err_out_);
