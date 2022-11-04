@@ -125,7 +125,7 @@ std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getLastOrder() noexcept {
       YCQLKeyspace +
       ".orders "
       "WHERE o_w_id = ? AND o_d_id = ? AND o_c_id = ? "
-      "ORDER BY o_id DESC "
+      "ORDER BY o_d_id DESC, o_id DESC "
       "LIMIT 1 "
       ";";
   CassIterator* it = nullptr;
