@@ -77,6 +77,10 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
   auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id").value();
   if (order_it) cass_iterator_free(order_it);
+  st = deleteNextDeliveryOrder(d_id, o_id);
+  if(!st.ok()) {
+    return st;
+  }
 
   LOG_DEBUG << "Update Carrier Id";
   st = updateCarrierId(o_id, d_id);
@@ -104,6 +108,14 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   return st;
 }
 
+Status YCQLDeliveryTxn::deleteNextDeliveryOrder(int32_t d_id, int32_t o_id) noexcept {
+  if (d_id == 1) {
+    TRACE_GUARD
+  }
+  std::string stmt = "DELETE FROM " + YCQLKeyspace + ".order_non_delivery WHERE o_w_id = ? AND o_d_id = ? AND o_id = ?";
+  return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id, o_id);
+}
+
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
     int32_t d_id) noexcept {
   // Note: we just record one portion
@@ -114,7 +126,7 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
       "SELECT o_id, o_c_id "
       "FROM " +
       YCQLKeyspace +
-      ".orders_non_delivery "
+      ".order_non_delivery "
       "WHERE o_w_id = ? AND o_d_id = ? "
       "ORDER BY o_id ASC "
       "LIMIT 1 ";
@@ -143,7 +155,7 @@ Status YCQLDeliveryTxn::updateCarrierId(int32_t o_id, int32_t d_id) noexcept {
                      ".orders "
                      "SET o_carrier_id = ? "
                      "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? "
-                     ";";
+                     "IF o_carrier_id = null;";
   return ycql_impl::execute_write_cql(conn_, stmt, carrier_id_, w_id_, d_id,
                                       o_id);
 }

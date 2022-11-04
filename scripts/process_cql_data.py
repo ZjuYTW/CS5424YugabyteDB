@@ -103,7 +103,9 @@ def process_order_max_quantity(path_order_line, output_path):
 def process_order_non_delivery(path_order, output_path):
     df_order = pd.read_csv(path_order, names=orders_header)
     print("Filter on orders where o_carrier_id = null")
-    
+    df = df_order.loc[df_order['O_CARRIER_ID'].isnull()].filter(items=['O_W_ID', 'O_D_ID', 'O_ID', 'O_C_ID'])
+    print(df)
+    df.to_csv(output_path, index=False, header=False)
 
 def main():
     data_path = "./data/data_files/"
@@ -112,14 +114,15 @@ def main():
     join_stock_item(data_path + "stock.csv", data_path + "item.csv", data_path + "stock_item.csv")
 
 if __name__ == '__main__':
-    process_warehouse_data('./data/data_files/warehouse.csv', './data/data_files/warehouse_cql.csv')
-    process_district_data('./data/data_files/district.csv', './data/data_files/district_cql.csv')
-    process_customer_data('./data/data_files/customer.csv', './data/data_files/customer_cql.csv')
-    process_orderline_data('./data/data_files/order-line.csv', './data/data_files/order-line_cql.csv')
-    process_order_max_quantity('./data/data_files/order-line.csv', './data/data_files/order_max_quantity_cql.csv')
-    process_item_data('./data/data_files/item.csv', './data/data_files/item_cql.csv')
-    process_stock_data('./data/data_files/stock.csv', './data/data_files/stock_cql.csv')
+    # process_warehouse_data('./data/data_files/warehouse.csv', './data/data_files/warehouse_cql.csv')
+    # process_district_data('./data/data_files/district.csv', './data/data_files/district_cql.csv')
+    # process_customer_data('./data/data_files/customer.csv', './data/data_files/customer_cql.csv')
+    # process_orderline_data('./data/data_files/order-line.csv', './data/data_files/order-line_cql.csv')
+    # process_order_max_quantity('./data/data_files/order-line.csv', './data/data_files/order_max_quantity_cql.csv')
+    # process_item_data('./data/data_files/item.csv', './data/data_files/item_cql.csv')
+    # process_stock_data('./data/data_files/stock.csv', './data/data_files/stock_cql.csv')
+    process_order_non_delivery('./data/data_files/order.csv', './data/data_files/order_non_delivery.csv')
 
-    join_stock_item('./data/data_files/stock.csv', './data/data_files/item.csv', './data/data_files/stock_item.csv')
+    # join_stock_item('./data/data_files/stock.csv', './data/data_files/item.csv', './data/data_files/stock_item.csv')
 
     # main()
