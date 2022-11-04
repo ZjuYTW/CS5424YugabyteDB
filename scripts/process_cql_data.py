@@ -19,39 +19,39 @@ def process_customer_data(path, output_path):
     df[16] = df[16].apply(lambda x: int(x * 100)) # C_BALANCE
     df[17] = df[17].apply(lambda x: int(x * 100)) # C_YTD_PAYMENT
     # save result
-    df.to_csv(output_path, index=False)
+    df.to_csv(output_path, index=False, header = False)
 
 def process_warehouse_data(path, output_path):
     df = pd.read_csv(path, header=None)
     df[7] = df[7].apply(lambda x: int(x * 10000)) # W_TAX
     df[8] = df[8].apply(lambda x: int(x * 100)) # W_YTD
     # save result
-    df.to_csv(output_path, index=False)
+    df.to_csv(output_path, index=False, header = False)
 
 def process_district_data(path, output_path):
     df = pd.read_csv(path, header=None)
     df[8] = df[8].apply(lambda x: int(x * 10000)) # D_TAX
     df[9] = df[9].apply(lambda x: int(x * 100)) # D_YTD
     # save result
-    df.to_csv(output_path, index=False)
+    df.to_csv(output_path, index=False, header = False)
 
 def process_orderline_data(path, output_path):
     df = pd.read_csv(path, header=None)
     df[6] = df[6].apply(lambda x: int(x * 100)) # OL_AMOUNT
     # save result
-    df.to_csv(output_path, index=False)
+    df.to_csv(output_path, index=False, header = False)
 
 def process_item_data(path, output_path):
     df = pd.read_csv(path, header=None)
     df[2] = df[2].apply(lambda x: int(x * 100)) # I_PRICE
     # save result
-    df.to_csv(output_path, index=False)
+    df.to_csv(output_path, index=False, header = False)
 
 def process_stock_data(path, output_path):
     df = pd.read_csv(path, header=None)
     df[3] = df[3].apply(lambda x: int(x * 100)) # S_YTD
     # save result
-    df.to_csv(output_path, index=False)
+    df.to_csv(output_path, index=False, header = False)
 
 
 def join_customer_district(path_customer, path_district, output_path):
@@ -86,7 +86,7 @@ def process_order_max_quantity(path_order_line, output_path):
     # (o_w_id, o_d_id, o_id), max_quantity, item_ids
     def func(data):
         max_quantity = max([line for line in data["OL_QUANTITY"]])
-        print("Max Quantity: " , max_quantity)
+        # print("Max Quantity: " , max_quantity)
         ids = []
         for i in range(data.values.shape[0]):
             line = data.values[i]
@@ -98,7 +98,7 @@ def process_order_max_quantity(path_order_line, output_path):
         # data = data.reset_index(drop=True)
         return data
     tmp_df = df_orderline[['OL_W_ID', 'OL_D_ID', 'OL_O_ID', "OL_QUANTITY", "OL_I_ID"]].groupby(['OL_W_ID', 'OL_D_ID', 'OL_O_ID'], as_index=False, group_keys=False).apply(func)
-    tmp_df.to_csv(output_path, index = False)
+    tmp_df.to_csv(output_path, index = False, header = False)
 
 def process_order_non_delivery(path_order, output_path):
     df_order = pd.read_csv(path_order, names=orders_header)
