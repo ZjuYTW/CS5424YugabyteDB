@@ -48,7 +48,7 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
   }
   auto end_time = std::chrono::system_clock::now();
   *diff_t = (end_time - start).count();
-  if (st.ok() || st.isEndOfFile()) {
+  if (st.ok()) {
     LOG_INFO << "Delivery transaction completed, time cost: " << *diff_t;
     txn_out_ << InputString << std::endl;
   } else {
@@ -67,7 +67,13 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   CassIterator* order_it = nullptr;
   LOG_DEBUG << "Get Next Delivery Order";
   std::tie(st, order_it) = getNextDeliveryOrder(d_id);
-  if (!st.ok()) return st;
+  if(!st.ok()) {
+    // if can't find a null delivery order, just return ok
+    if(st.isEndOfFile()){
+      return Status::OK();
+    }
+    return st;
+  }
   auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
   auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id").value();
   if (order_it) cass_iterator_free(order_it);
@@ -108,11 +114,10 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
       "SELECT o_id, o_c_id "
       "FROM " +
       YCQLKeyspace +
-      ".orders "
-      "WHERE o_w_id = ? AND o_d_id = ? AND o_carrier_id = NULL "
+      ".orders_non_delivery "
+      "WHERE o_w_id = ? AND o_d_id = ? "
       "ORDER BY o_id ASC "
-      "LIMIT 1 "
-      "ALLOW FILTERING;";
+      "LIMIT 1 ";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id);
   if (!st.ok()) {
@@ -121,8 +126,7 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
     return {st, it};
   }
   if (!cass_iterator_next(it)) {
-    std::cout << stmt << std::endl;
-    std::cout << "w_id: " << w_id_ << ", d_id: " << d_id << std::endl;
+    LOG_DEBUG << "Next delivery order on ["  << w_id_ << "," << d_id << "] not found";
     cass_iterator_free(it);
     // This means we can't find a coressponding avaliable order, just skip it
     return {Status::EndOfFile("Next Delivery Order not found"), it};

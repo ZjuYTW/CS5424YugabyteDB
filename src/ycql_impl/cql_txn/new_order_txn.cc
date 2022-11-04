@@ -118,6 +118,10 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
   if (!st.ok()) {
     return st;
   }
+  st = processOrderNonDelivery(next_o_id);
+  if (!st.ok()) {
+    return st;
+  }
   auto [s, total_amount] = processOrderLines(order_lines, next_o_id);
   if (!s.ok()) {
     return s;
@@ -171,6 +175,13 @@ Status YCQLNewOrderTxn::processOrderMaxQuantity(
                      "item_ids) VALUES (?, ?, ?, ?, ?)";
   return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_, next_o_id,
                                       max_quantity, item_ids);
+}
+
+Status YCQLNewOrderTxn::processOrderNonDelivery(int32_t next_o_id) noexcept {
+  TRACE_GUARD
+  Status s;
+  std::string stmt = "INSERT INTO " + YCQLKeyspace + ".order_non_delivery(o_w_id, o_d_id, o_id, o_c_id) VALUES(?, ?, ?, ?)";
+  return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_, next_o_id, c_id_);
 }
 
 // TODO(ZjuYTW): Refactor the following shit

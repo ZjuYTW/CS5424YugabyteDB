@@ -57,6 +57,8 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
 
   Status processOrderMaxQuantity(const std::vector<OrderLine>& order_lines,
                                  int32_t next_o_id) noexcept;
+  
+  Status processOrderNonDelivery(int32_t next_o_id) noexcept;
 
   void processItemOutput(size_t start_idx, const OrderLine& ol,
                          int64_t item_amount, int32_t s_quantity,
