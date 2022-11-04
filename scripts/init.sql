@@ -102,7 +102,7 @@ OL_SUPPLY_W_ID INT,
 OL_QUANTITY INT,
 OL_DIST_INFO VARCHAR,
 PRIMARY KEY (OL_W_ID,OL_I_ID,OL_D_ID,OL_O_ID,OL_NUMBER)
-);
+) WITH transactions = { 'enabled' : true };
 
 DROP TABLE IF EXISTS ybdemo.stock;
 CREATE TABLE IF NOT EXISTS ybdemo.stock (
@@ -158,3 +158,5 @@ WITH DELIMITER=',' AND NULL='null' AND INGESTRATE=50000;
 COPY ybdemo.order_max_quantity (O_W_ID, O_D_ID, O_ID, MAX_QUANTITY, ITEM_IDS)
 FROM 'data/data_files/order_max_quantity_cql.csv'
 WITH DELIMITER=',' AND NULL='null' AND INGESTRATE=50000;
+
+CREATE INDEX ON ybdemo.orderline (OL_D_ID, OL_O_ID);
