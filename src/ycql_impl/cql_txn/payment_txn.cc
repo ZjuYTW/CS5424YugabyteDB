@@ -44,7 +44,18 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
   Status st = Status::OK();
   CassIterator *customer_it = nullptr, *warehouse_it = nullptr,
                *district_it = nullptr;
-
+  const CassResult *customer_result = nullptr, *warehouse_result = nullptr,
+                   *district_result = nullptr;
+  auto free_func = [&customer_it, &warehouse_it, &district_it, &customer_result,
+                    &warehouse_result, &district_result]() {
+    if (customer_it) cass_iterator_free(customer_it);
+    if (warehouse_it) cass_iterator_free(warehouse_it);
+    if (district_it) cass_iterator_free(district_it);
+    if (customer_result) cass_result_free(customer_result);
+    if (warehouse_result) cass_result_free(warehouse_result);
+    if (district_result) cass_result_free(district_result);
+  };
+  DEFER(std::move(free_func));
   LOG_DEBUG << "Update Warehouse";
   st = updateWarehouseYTD();
   if (!st.ok()) return st;
@@ -55,7 +66,7 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
   st = updateCustomerPayment();
   if (!st.ok()) return st;
 
-  std::tie(st, customer_it) = getCustomer();
+  std::tie(st, customer_it) = getCustomer(&customer_result);
   if (!st.ok()) return st;
 
   outputs_.emplace_back("(a) Customer information:");
@@ -104,7 +115,7 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
                      100)
           .c_str()));
 
-  std::tie(st, warehouse_it) = getWarehouse();
+  std::tie(st, warehouse_it) = getWarehouse(&warehouse_result);
   if (!st.ok()) return st;
 
   outputs_.emplace_back("(b) Warehouse information:");
@@ -123,7 +134,7 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
       GetStringValue(GetValueFromCassRow<std::string>(warehouse_it, "w_zip"))
           .c_str()));
 
-  std::tie(st, district_it) = getDistrict();
+  std::tie(st, district_it) = getDistrict(&district_result);
   if (!st.ok()) return st;
 
   outputs_.emplace_back("(c) District information:");
@@ -144,9 +155,6 @@ Status YCQLPaymentTxn::executeLocal() noexcept {
 
   outputs_.push_back(format("(d) Payment: %.2f", payment_));
 
-  if (customer_it) cass_iterator_free(customer_it);
-  if (warehouse_it) cass_iterator_free(warehouse_it);
-  if (district_it) cass_iterator_free(district_it);
   return st;
 }
 
@@ -219,7 +227,8 @@ Status YCQLPaymentTxn::batchUpdateCustomerDistrictWarehouse() noexcept {
   return ycql_impl::BatchExecute(cass_stmts, conn_);
 }
 
-std::pair<Status, CassIterator*> YCQLPaymentTxn::getCustomer() noexcept {
+std::pair<Status, CassIterator*> YCQLPaymentTxn::getCustomer(
+    const CassResult** result) noexcept {
   std::string stmt =
       "SELECT c_first, c_middle, c_last, "
       "c_street_1, c_street_2, c_city, c_state, c_zip, "
@@ -231,12 +240,14 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getCustomer() noexcept {
       "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, c_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id_,
+                                        c_id_);
   cass_iterator_next(it);
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLPaymentTxn::getWarehouse() noexcept {
+std::pair<Status, CassIterator*> YCQLPaymentTxn::getWarehouse(
+    const CassResult** result) noexcept {
   std::string stmt =
       "SELECT w_street_1, w_street_2, w_city, w_state, w_zip "
       "FROM " +
@@ -245,7 +256,7 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getWarehouse() noexcept {
       "WHERE w_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_);
   if (!st.ok()) {
     assert(!it);
     return {st, it};
@@ -254,7 +265,8 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getWarehouse() noexcept {
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLPaymentTxn::getDistrict() noexcept {
+std::pair<Status, CassIterator*> YCQLPaymentTxn::getDistrict(
+    const CassResult** result) noexcept {
   std::string stmt =
       "SELECT d_street_1, d_street_2, d_city, d_state, d_zip "
       "FROM " +
@@ -263,7 +275,7 @@ std::pair<Status, CassIterator*> YCQLPaymentTxn::getDistrict() noexcept {
       "WHERE d_w_id = ? AND d_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id_);
   if (!st.ok()) {
     assert(!it);
     return {st, it};

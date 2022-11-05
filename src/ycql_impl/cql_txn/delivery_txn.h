@@ -33,12 +33,13 @@ class YCQLDeliveryTxn : public ydb_util::DeliveryTxn {
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
   Status executeLocal(int32_t d_id) noexcept;
-  std::pair<Status, CassIterator*> getNextDeliveryOrder(int32_t d_id) noexcept;
+  std::pair<Status, CassIterator*> getNextDeliveryOrder(
+      int32_t d_id, const CassResult** result) noexcept;
   Status deleteNextDeliveryOrder(int32_t d_id, int32_t o_id) noexcept;
-  std::pair<Status, CassIterator*> getOrderPaymentAmount(int32_t o_id,
-                                                         int32_t d_id) noexcept;
-  std::pair<Status, CassIterator*> getAllOrderLineNumber(int32_t o_id,
-                                                         int32_t d_id) noexcept;
+  std::pair<Status, CassIterator*> getOrderPaymentAmount(
+      int32_t o_id, int32_t d_id, const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getAllOrderLineNumber(
+      int32_t o_id, int32_t d_id, const CassResult** result) noexcept;
   std::pair<Status, bool> updateCarrierId(int32_t o_id, int32_t d_id) noexcept;
   Status updateOrderLineDeliveryDate(int32_t o_id, int32_t d_id) noexcept;
   Status updateCustomerBalAndDeliveryCnt(int32_t c_id, int64_t total_amount,

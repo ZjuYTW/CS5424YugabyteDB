@@ -47,12 +47,16 @@ class YCQLRelatedCustomerTxn : public ydb_util::RelatedCustomerTxn {
   };
 
   Status executeLocal() noexcept;
-  std::pair<Status, CassIterator*> getOrders() noexcept;
-  std::pair<Status, CassIterator*> getOrderLines(int32_t o_id) noexcept;
+  std::pair<Status, CassIterator*> getOrders(
+      const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getOrderLines(
+      int32_t o_id, const CassResult** result) noexcept;
   std::pair<Status, CassIterator*> getRelatedOrders(
-      const std::vector<int32_t>& i_ids, const int32_t w_id) noexcept;
-  std::pair<Status, CassIterator*> getCustomerId(int32_t w_id, int32_t d_id,
-                                                 int32_t o_id) noexcept;
+      const std::vector<int32_t>& i_ids, const int32_t w_id,
+      const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getCustomerId(
+      int32_t w_id, int32_t d_id, int32_t o_id,
+      const CassResult** result) noexcept;
   static std::string idSetToString(const std::vector<int32_t>& i_ids) noexcept;
   Status addRelatedCustomers(
       const std::vector<int32_t>& i_ids,

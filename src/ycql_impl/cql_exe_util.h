@@ -86,6 +86,7 @@ CassError cql_statement_fill_args(CassStatement* statement, T first,
 
 template <typename... Args>
 ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
+                                  const CassResult** result,
                                   CassIterator** iterator,
                                   Args... args) noexcept {
   CassError rc = CASS_OK;
@@ -108,8 +109,8 @@ ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
   }
   future = cass_session_execute(session, statement);
   // For "Read", we use cass_future_get_result
-  auto result = cass_future_get_result(future);
-  if (result == nullptr) {
+  *result = cass_future_get_result(future);
+  if (*result == nullptr) {
     // An error occur
     const char* buf = nullptr;
     size_t size;
@@ -120,7 +121,7 @@ ydb_util::Status execute_read_cql(CassSession* session, const std::string& stmt,
     return st;
   }
   // Else we process the result
-  *iterator = cass_iterator_from_result(result);
+  *iterator = cass_iterator_from_result(*result);
   return st;
 }
 

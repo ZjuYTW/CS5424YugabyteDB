@@ -42,8 +42,20 @@ Status YCQLOrderStatusTxn::executeLocal() noexcept {
   Status st = Status::OK();
   CassIterator *customer_it = nullptr, *order_it = nullptr,
                *orderLine_it = nullptr;
+  const CassResult *customer_result = nullptr, *order_result = nullptr,
+                   *orderLine_result = nullptr;
 
-  std::tie(st, customer_it) = getCustomerInfo();
+  auto free_func = [&customer_it, &order_it, &orderLine_it, &customer_result,
+                    &order_result, &orderLine_result]() {
+    if (customer_it) cass_iterator_free(customer_it);
+    if (order_it) cass_iterator_free(order_it);
+    if (orderLine_it) cass_iterator_free(orderLine_it);
+    if (customer_result) cass_result_free(customer_result);
+    if (order_result) cass_result_free(order_result);
+    if (orderLine_result) cass_result_free(orderLine_result);
+  };
+  DEFER(std::move(free_func));
+  std::tie(st, customer_it) = getCustomerInfo(&customer_result);
   if (!st.ok()) return st;
 
   outputs_.push_back(format(
@@ -60,7 +72,7 @@ Status YCQLOrderStatusTxn::executeLocal() noexcept {
           .c_str()));
 
   LOG_DEBUG << "Get Last Order";
-  std::tie(st, order_it) = getLastOrder();
+  std::tie(st, order_it) = getLastOrder(&order_result);
   if (!st.ok()) return st;
 
   auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
@@ -71,7 +83,7 @@ Status YCQLOrderStatusTxn::executeLocal() noexcept {
       GetStringValue(GetValueFromCassRow<int32_t>(order_it, "o_carrier_id"))
           .c_str()));
 
-  std::tie(st, orderLine_it) = getOrderLines(o_id);
+  std::tie(st, orderLine_it) = getOrderLines(o_id, &orderLine_result);
   if (!st.ok()) return st;
 
   outputs_.push_back(format("(c) For each item in the order %d", o_id));
@@ -94,14 +106,11 @@ Status YCQLOrderStatusTxn::executeLocal() noexcept {
             .c_str()));
   }
 
-  if (customer_it) cass_iterator_free(customer_it);
-  if (order_it) cass_iterator_free(order_it);
-  if (orderLine_it) cass_iterator_free(orderLine_it);
   return st;
 }
 
-std::pair<Status, CassIterator*>
-YCQLOrderStatusTxn::getCustomerInfo() noexcept {
+std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getCustomerInfo(
+    const CassResult** result) noexcept {
   std::string stmt =
       "SELECT c_first, c_middle, c_last, c_balance "
       "FROM " +
@@ -110,15 +119,16 @@ YCQLOrderStatusTxn::getCustomerInfo() noexcept {
       "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st =
-      ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, c_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, c_w_id_,
+                                        c_d_id_, c_id_);
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Customer not found"), it};
   }
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getLastOrder() noexcept {
+std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getLastOrder(
+    const CassResult** result) noexcept {
   std::string stmt =
       "SELECT o_id, o_entry_d, o_carrier_id "
       "FROM " +
@@ -129,8 +139,8 @@ std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getLastOrder() noexcept {
       "LIMIT 1 "
       ";";
   CassIterator* it = nullptr;
-  auto st =
-      ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, c_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, c_w_id_,
+                                        c_d_id_, c_id_);
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Last Order not found"), it};
   }
@@ -138,7 +148,7 @@ std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getLastOrder() noexcept {
 }
 
 std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getOrderLines(
-    int32_t o_id) noexcept {
+    int32_t o_id, const CassResult** result) noexcept {
   std::string stmt =
       "SELECT ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_delivery_d "
       "FROM " +
@@ -147,8 +157,8 @@ std::pair<Status, CassIterator*> YCQLOrderStatusTxn::getOrderLines(
       "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st =
-      ycql_impl::execute_read_cql(conn_, stmt, &it, c_w_id_, c_d_id_, o_id);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, c_w_id_,
+                                        c_d_id_, o_id);
   return {st, it};
 }
 

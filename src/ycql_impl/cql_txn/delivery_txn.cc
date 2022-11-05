@@ -64,9 +64,18 @@ Status YCQLDeliveryTxn::Execute(double* diff_t) noexcept {
 Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   Status st = Status::OK();
 
-  CassIterator* order_it = nullptr;
+  CassIterator *order_it = nullptr, *amount_it = nullptr;
+  const CassResult *order_result = nullptr, *amount_result = nullptr;
   LOG_INFO << "Get Next Delivery Order";
-  std::tie(st, order_it) = getNextDeliveryOrder(d_id);
+  auto free_func = [&order_it, &amount_it, &order_result, &amount_result]() {
+    if (order_it) cass_iterator_free(order_it);
+    if (amount_it) cass_iterator_free(amount_it);
+    if (order_result) cass_result_free(order_result);
+    if (amount_result) cass_result_free(amount_result);
+  };
+  DEFER(std::move(free_func));
+
+  std::tie(st, order_it) = getNextDeliveryOrder(d_id, &order_result);
   if (!st.ok()) {
     // if can't find a null delivery order, just return ok
     if (st.isEndOfFile()) {
@@ -76,7 +85,6 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   }
   auto o_id = GetValueFromCassRow<int32_t>(order_it, "o_id").value();
   auto c_id = GetValueFromCassRow<int32_t>(order_it, "o_c_id").value();
-  if (order_it) cass_iterator_free(order_it);
   LOG_INFO << "Delete Next Delivery Order";
   st = deleteNextDeliveryOrder(d_id, o_id);
   if (!st.ok()) {
@@ -93,12 +101,10 @@ Status YCQLDeliveryTxn::executeLocal(int32_t d_id) noexcept {
   if (!st.ok()) return st;
 
   LOG_DEBUG << "Get OrderPaymentAmount";
-  CassIterator* amount_it = nullptr;
-  std::tie(st, amount_it) = getOrderPaymentAmount(o_id, d_id);
+  std::tie(st, amount_it) = getOrderPaymentAmount(o_id, d_id, &amount_result);
   if (!st.ok()) return st;
   auto total_amount =
       GetValueFromCassRow<int64_t>(amount_it, "sum_ol_amount").value();
-  if (amount_it) cass_iterator_free(amount_it);
 
   LOG_DEBUG << "update Customer Bal And Delivery Cnt";
   st = updateCustomerBalAndDeliveryCnt(c_id, total_amount, d_id);
@@ -122,7 +128,7 @@ Status YCQLDeliveryTxn::deleteNextDeliveryOrder(int32_t d_id,
 }
 
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
-    int32_t d_id) noexcept {
+    int32_t d_id, const CassResult** result) noexcept {
   // Note: we just record one portion
   if (d_id == 1) {
     TRACE_GUARD
@@ -136,7 +142,7 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
       "ORDER BY o_d_id ASC, o_id ASC "
       "LIMIT 1 ";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id);
   if (!st.ok()) {
     assert(!it);
     LOG_DEBUG << st.ToString();
@@ -145,7 +151,6 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getNextDeliveryOrder(
   if (!cass_iterator_next(it)) {
     LOG_DEBUG << "Next delivery order on [" << w_id_ << "," << d_id
               << "] not found";
-    cass_iterator_free(it);
     // This means we can't find a coressponding avaliable order, just skip it
     return {Status::EndOfFile("Next Delivery Order not found"), it};
   }
@@ -175,6 +180,9 @@ std::pair<Status, bool> YCQLDeliveryTxn::updateCarrierId(
   cass_bool_t appiled;
   auto value = cass_row_get_column(cass_result_first_row(result), 0);
   cass_value_get_bool(value, &appiled);
+  cass_statement_free(statement);
+  cass_future_free(future);
+  cass_result_free(result);
   return {Status::OK(), value};
 }
 
@@ -186,7 +194,8 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id,
   }
   std::vector<std::pair<int32_t, int32_t>> lines;
   {
-    auto [st, it] = getAllOrderLineNumber(o_id, d_id);
+    const CassResult* result = nullptr;
+    auto [st, it] = getAllOrderLineNumber(o_id, d_id, &result);
     if (!st.ok()) {
       assert(!it);
       LOG_DEBUG << "Get All Order Line Number failed, " << st.ToString();
@@ -198,6 +207,7 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id,
       lines.emplace_back(ol_i_id, ol_number);
     }
     cass_iterator_free(it);
+    cass_result_free(result);
   }
 
   std::vector<CassStatement*> cass_stmts;
@@ -218,7 +228,7 @@ Status YCQLDeliveryTxn::updateOrderLineDeliveryDate(int32_t o_id,
 }
 
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
-    int32_t o_id, int32_t d_id) noexcept {
+    int32_t o_id, int32_t d_id, const CassResult** result) noexcept {
   // Note: we just record one portion
   if (d_id == 1) {
     TRACE_GUARD
@@ -230,7 +240,8 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
       ".order_max_quantity "
       "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? ";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id, o_id);
+  auto st =
+      ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id, o_id);
   if (!cass_iterator_next(it)) {
     return {Status::ExecutionFailed("Order Payment Amount not found"), it};
   }
@@ -238,7 +249,7 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
 }
 
 std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
-    int32_t o_id, int32_t d_id) noexcept {
+    int32_t o_id, int32_t d_id, const CassResult** result) noexcept {
   // Note: we just record one portion
   if (d_id == 1) {
     TRACE_GUARD
@@ -247,7 +258,8 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getAllOrderLineNumber(
       "SELECT ol_i_id, ol_number FROM " + YCQLKeyspace +
       ".orderline where ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id, o_id);
+  auto st =
+      ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id, o_id);
   return {st, it};
 }
 
