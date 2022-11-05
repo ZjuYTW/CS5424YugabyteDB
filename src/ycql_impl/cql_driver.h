@@ -94,7 +94,6 @@ class CQLDriver {
       // Process all single txn
 #define DO_ONE_TXN_(txn_name)                           \
   case ydb_util::TxnType::txn_name: {                   \
-    std::cout << "Pushed into " #txn_name << std::endl; \
     txn_name.push_back(processTime);                    \
     break;                                              \
   }
