@@ -8,6 +8,28 @@
 #include "ysql_impl/ysql_parser.h"
 
 namespace ysql_impl {
+#ifndef PROCESS_TXN_TIME
+#define EXPAND                  \
+  DO_ONE_TXN_(delivery)         \
+  DO_ONE_TXN_(new_order)        \
+  DO_ONE_TXN_(order_status)     \
+  DO_ONE_TXN_(payment)          \
+  DO_ONE_TXN_(popular_item)     \
+  DO_ONE_TXN_(related_customer) \
+  DO_ONE_TXN_(stock_level)      \
+  DO_ONE_TXN_(top_balance)
+
+#define INSERT_TXN_TIME                 \
+  do {                                  \
+    switch (t->GetTxnType()) { EXPAND } \
+  } while (0);
+
+#define PROCESS_TXN_TIME \
+  do {                   \
+    EXPAND               \
+  } while (0);
+
+#endif
 class SQLDriver {
   using Status = ydb_util::Status;
   using Txn = ydb_util::Txn;
@@ -81,6 +103,13 @@ class SQLDriver {
         LOG_INFO << "sql layer retry still failed";
         return Status::Invalid("sql layer retry still failed");
       }
+#define DO_ONE_TXN_(txn_name)                           \
+  case ydb_util::TxnType::txn_name: {                   \
+    txn_name.push_back(processTime);                    \
+    break;                                              \
+  }
+      INSERT_TXN_TIME
+#undef DO_ONE_TXN_
     }
     sort(elapsedTime.begin(), elapsedTime.end());
 
@@ -107,7 +136,30 @@ class SQLDriver {
                    << "99th percentile transaction latency: "
                    << elapsedTime[elapsedTime.size() * 0.99] / 1e9 << " seconds"
                    << std::endl;
+#define DO_ONE_TXN_(txn_name)                                              \
+  do {                                                                     \
+    sort(txn_name.begin(), txn_name.end());                                \
+    double total_time = 0;                                                 \
+    for (auto i : txn_name) {                                              \
+      total_time += i;                                                     \
+    }                                                                      \
+    if (total_time == 0) break;                                            \
+    out_measure_fs << ">>> Total number of " #txn_name "processed "        \
+                   << txn_name.size() << "\n"                              \
+                   << #txn_name "'s throughput "                           \
+                   << txn_name.size() / total_time * 1e9 << "\n"           \
+                   << #txn_name "'s average transaction latency: "         \
+                   << total_time / 1e9 / txn_name.size() << " seconds"     \
+                   << "\n"                                                 \
+                   << #txn_name "'s Median transaction latency: "          \
+                   << txn_name[txn_name.size() * 0.5] / 1e9 << "\n"        \
+                   << #txn_name "'s 99th percentile transaction latency: " \
+                   << txn_name[txn_name.size() * 0.99] / 1e9 << " seconds" \
+                   << std::endl;                                           \
+  } while (0);
 
+    PROCESS_TXN_TIME
+#undef DO_ONE_TXN_
     return Status::OK();
   }
 
@@ -137,6 +189,8 @@ class SQLDriver {
   static std::string xactDir, outDir;
   int idx_;
   std::vector<double> elapsedTime;
+  std::vector<double> delivery, new_order, order_status, payment,
+        popular_item, related_customer, stock_level, top_balance;
 };
 std::string SQLDriver::xactDir = "data/xact_files/";
 std::string SQLDriver::outDir = "data/output/";
