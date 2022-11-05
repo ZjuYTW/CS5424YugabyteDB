@@ -224,11 +224,11 @@ std::pair<Status, CassIterator*> YCQLDeliveryTxn::getOrderPaymentAmount(
     TRACE_GUARD
   }
   std::string stmt =
-      "SELECT SUM(ol_amount) as sum_ol_amount "
+      "SELECT total_amount as sum_ol_amount "
       "FROM " +
       YCQLKeyspace +
-      ".orderline "
-      "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? ";
+      ".order_max_quantity "
+      "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? ";
   CassIterator* it = nullptr;
   auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id, o_id);
   if (!cass_iterator_next(it)) {
