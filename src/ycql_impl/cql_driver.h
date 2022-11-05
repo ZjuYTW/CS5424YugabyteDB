@@ -92,10 +92,10 @@ class CQLDriver {
         elapsedTime.push_back(processTime);
       }
       // Process all single txn
-#define DO_ONE_TXN_(txn_name)                           \
-  case ydb_util::TxnType::txn_name: {                   \
-    txn_name.push_back(processTime);                    \
-    break;                                              \
+#define DO_ONE_TXN_(txn_name)         \
+  case ydb_util::TxnType::txn_name: { \
+    txn_name.push_back(processTime);  \
+    break;                            \
   }
       INSERT_TXN_TIME
 #undef DO_ONE_TXN_

@@ -76,7 +76,10 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
   Status st;
   CassIterator *district_it = nullptr, *custom_it = nullptr,
                *warehouse_it = nullptr;
-  auto free_func = [&district_it, &custom_it, &warehouse_it]() {
+  const CassResult *district_result = nullptr, *custom_result = nullptr,
+                   *warehouse_result = nullptr;
+  auto free_func = [&district_it, &custom_it, &warehouse_it, &district_result,
+                    &custom_result, &warehouse_result]() {
     if (district_it) {
       cass_iterator_free(district_it);
     }
@@ -86,18 +89,27 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
     if (warehouse_it) {
       cass_iterator_free(warehouse_it);
     }
+    if (district_result) {
+      cass_result_free(district_result);
+    }
+    if (custom_result) {
+      cass_result_free(custom_result);
+    }
+    if (warehouse_result) {
+      cass_result_free(warehouse_result);
+    }
   };
   DEFER(std::move(free_func));
 
-  std::tie(st, district_it) = getDistrict();
+  std::tie(st, district_it) = getDistrict(&district_result);
   if (!st.ok()) {
     return st;
   }
-  std::tie(st, custom_it) = getCustomer();
+  std::tie(st, custom_it) = getCustomer(&custom_result);
   if (!st.ok()) {
     return st;
   }
-  std::tie(st, warehouse_it) = getWarehouse();
+  std::tie(st, warehouse_it) = getWarehouse(&warehouse_result);
   if (!st.ok()) {
     return st;
   }
@@ -153,7 +165,8 @@ Status YCQLNewOrderTxn::processOrder(int32_t next_o_id, int32_t order_num,
 }
 
 Status YCQLNewOrderTxn::processOrderMaxQuantity(
-    const std::vector<OrderLine>& order_lines, int32_t next_o_id, int64_t total_amount) noexcept {
+    const std::vector<OrderLine>& order_lines, int32_t next_o_id,
+    int64_t total_amount) noexcept {
   TRACE_GUARD
   std::vector<std::pair<int32_t, int32_t>> sort_orders;
   sort_orders.reserve(order_lines.size());
@@ -203,18 +216,25 @@ std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
         TRACE_GUARD
       }
       CassIterator *stock_it = nullptr, *item_it = nullptr;
+      const CassResult *stock_result = nullptr, *item_result = nullptr;
       Status s;
-      auto free_func = [&stock_it, &item_it]() {
+      auto free_func = [&stock_it, &item_it, &stock_result, &item_result]() {
         if (stock_it) {
           cass_iterator_free(stock_it);
         }
         if (item_it) {
           cass_iterator_free(item_it);
         }
+        if (stock_result) {
+          cass_result_free(stock_result);
+        }
+        if (item_result) {
+          cass_result_free(item_result);
+        }
       };
       DEFER(std::move(free_func));
       std::tie(s, stock_it) =
-          getStock(order_lines[i].i_id, order_lines[i].w_id);
+          getStock(order_lines[i].i_id, order_lines[i].w_id, &stock_result);
       if (!s.ok()) {
         LOG_DEBUG << "Get Stock failed, " << s.ToString();
         return s;
@@ -233,7 +253,7 @@ std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
       s = updateStock(adjusted_qty, stock_quantity, order_lines[i].quantity,
                       (order_lines[i].w_id != w_id_), order_lines[i].w_id,
                       order_lines[i].i_id);
-      std::tie(s, item_it) = getItem(order_lines[i].i_id);
+      std::tie(s, item_it) = getItem(order_lines[i].i_id, &item_result);
       if (!s.ok()) {
         // Maybe timeout?
         LOG_DEBUG << "Update Stock failed, " << s.ToString();
@@ -304,10 +324,10 @@ Status YCQLNewOrderTxn::updateStock(int32_t adjusted_qty, int32_t prev_qty,
 }
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getItem(
-    int32_t item_id) noexcept {
+    int32_t item_id, const CassResult** result) noexcept {
   std::string stmt = "SELECT * FROM " + YCQLKeyspace + ".item WHERE i_id = ?";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, item_id);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, item_id);
   if (!st.ok()) {
     LOG_DEBUG << "getItem failed, " + st.ToString();
     return {st, it};
@@ -316,12 +336,13 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getItem(
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLNewOrderTxn::getDistrict() noexcept {
+std::pair<Status, CassIterator*> YCQLNewOrderTxn::getDistrict(
+    const CassResult** result) noexcept {
   TRACE_GUARD
   std::string stmt = "SELECT d_tax, d_next_o_id FROM " + YCQLKeyspace +
                      ".district WHERE d_w_id = ? and d_id = ?";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id_);
   if (!st.ok()) {
     LOG_DEBUG << "getDistrict failed, " + st.ToString();
     return {st, it};
@@ -330,12 +351,13 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getDistrict() noexcept {
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLNewOrderTxn::getWarehouse() noexcept {
+std::pair<Status, CassIterator*> YCQLNewOrderTxn::getWarehouse(
+    const CassResult** result) noexcept {
   TRACE_GUARD
   std::string stmt =
       "SELECT w_tax FROM " + YCQLKeyspace + ".warehouse WHERE w_id = ?";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_);
   if (!st.ok()) {
     LOG_DEBUG << "getWarehouse failed, " + st.ToString();
     return {st, it};
@@ -344,13 +366,15 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getWarehouse() noexcept {
   return {st, it};
 }
 
-std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer() noexcept {
+std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer(
+    const CassResult** result) noexcept {
   TRACE_GUARD
   std::string stmt = "SELECT c_last, c_credit, c_discount FROM " +
                      YCQLKeyspace +
                      ".customer WHERE c_w_id = ? and c_d_id = ? and c_id = ?";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_, c_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id_,
+                                        c_id_);
   if (!st.ok()) {
     LOG_DEBUG << "getCustomer failed, " + st.ToString();
     return {st, it};
@@ -360,13 +384,13 @@ std::pair<Status, CassIterator*> YCQLNewOrderTxn::getCustomer() noexcept {
 }
 
 std::pair<Status, CassIterator*> YCQLNewOrderTxn::getStock(
-    int32_t i_id, int32_t w_id) noexcept {
+    int32_t i_id, int32_t w_id, const CassResult** result) noexcept {
   std::string stmt = "SELECT s_quantity, s_dist_" +
                      ((d_id_ < 10 ? "0" : "") + std::to_string(d_id_)) +
                      " FROM " + YCQLKeyspace +
                      ".stock WHERE s_w_id = ? and s_i_id = ?";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id, i_id);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id, i_id);
   if (!st.ok()) {
     LOG_DEBUG << "getStock failed, " + st.ToString();
     return {st, it};

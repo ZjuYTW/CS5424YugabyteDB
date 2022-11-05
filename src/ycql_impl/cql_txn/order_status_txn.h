@@ -38,9 +38,12 @@ class YCQLOrderStatusTxn : public ydb_util::OrderStatusTxn {
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
   Status executeLocal() noexcept;
-  std::pair<Status, CassIterator*> getCustomerInfo() noexcept;
-  std::pair<Status, CassIterator*> getLastOrder() noexcept;
-  std::pair<Status, CassIterator*> getOrderLines(int32_t o_id) noexcept;
+  std::pair<Status, CassIterator*> getCustomerInfo(
+      const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getLastOrder(
+      const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getOrderLines(
+      int32_t o_id, const CassResult** result) noexcept;
 };
 }  // namespace ycql_impl
 

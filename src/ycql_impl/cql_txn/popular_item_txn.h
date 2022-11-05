@@ -40,11 +40,16 @@ class YCQLPopularItemTxn : public ydb_util::PopularItemTxn {
   constexpr static int MAX_RETRY_ATTEMPTS = 3;
 
   Status executeLocal() noexcept;
-  std::pair<Status, CassIterator*> getNextOrder() noexcept;
-  std::pair<Status, CassIterator*> getLastOrders(int32_t next_o_id) noexcept;
-  std::pair<Status, CassIterator*> getCustomerName(int32_t c_id) noexcept;
-  std::pair<Status, CassIterator*> getMaxOrderLines(int32_t o_id) noexcept;
-  std::pair<Status, CassIterator*> getItemName(int32_t i_id) noexcept;
+  std::pair<Status, CassIterator*> getNextOrder(
+      const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getLastOrders(
+      int32_t next_o_id, const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getCustomerName(
+      int32_t c_id, const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getMaxOrderLines(
+      int32_t o_id, const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getItemName(
+      int32_t i_id, const CassResult** result) noexcept;
 };
 }  // namespace ycql_impl
 

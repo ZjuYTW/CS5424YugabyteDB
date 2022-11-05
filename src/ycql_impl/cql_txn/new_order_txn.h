@@ -31,16 +31,20 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   Status executeLocal(std::vector<OrderLine>& order_lines,
                       int all_local) noexcept;
 
-  std::pair<Status, CassIterator*> getStock(int32_t item_id,
-                                            int32_t w_id) noexcept;
+  std::pair<Status, CassIterator*> getStock(int32_t item_id, int32_t w_id,
+                                            const CassResult** result) noexcept;
 
-  std::pair<Status, CassIterator*> getWarehouse() noexcept;
+  std::pair<Status, CassIterator*> getWarehouse(
+      const CassResult** result) noexcept;
 
-  std::pair<Status, CassIterator*> getDistrict() noexcept;
+  std::pair<Status, CassIterator*> getDistrict(
+      const CassResult** result) noexcept;
 
-  std::pair<Status, CassIterator*> getCustomer() noexcept;
+  std::pair<Status, CassIterator*> getCustomer(
+      const CassResult** result) noexcept;
 
-  std::pair<Status, CassIterator*> getItem(int32_t item_id) noexcept;
+  std::pair<Status, CassIterator*> getItem(int32_t item_id,
+                                           const CassResult** result) noexcept;
 
   Status updateNextOId(int32_t next_o_id, int32_t prev_next_o_id) noexcept;
 
@@ -56,7 +60,8 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
                       std::string& current_time) noexcept;
 
   Status processOrderMaxQuantity(const std::vector<OrderLine>& order_lines,
-                                 int32_t next_o_id, int64_t total_amount) noexcept;
+                                 int32_t next_o_id,
+                                 int64_t total_amount) noexcept;
 
   Status processOrderNonDelivery(int32_t next_o_id) noexcept;
 

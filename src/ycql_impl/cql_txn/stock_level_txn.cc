@@ -45,15 +45,24 @@ Status YCQLStockLevelTxn::Execute(double* diff_t) noexcept {
 Status YCQLStockLevelTxn::executeLocal() noexcept {
   Status st = Status::OK();
 
-  CassIterator* next_order_it = nullptr;
-  std::tie(st, next_order_it) = getNextOrder();
+  CassIterator *next_order_it = nullptr, *item_it = nullptr;
+  const CassResult *next_order_result = nullptr, *item_result = nullptr;
+
+  auto free_func = [&next_order_it, &item_it, &next_order_result,
+                    &item_result]() {
+    if (next_order_it) cass_iterator_free(next_order_it);
+    if (next_order_result) cass_result_free(next_order_result);
+    if (item_it) cass_iterator_free(item_it);
+    if (item_result) cass_result_free(item_result);
+  };
+  DEFER(std::move(free_func));
+
+  std::tie(st, next_order_it) = getNextOrder(&next_order_result);
   if (!st.ok()) return st;
   auto next_o_id =
       GetValueFromCassRow<int32_t>(next_order_it, "d_next_o_id").value();
-  if (next_order_it) cass_iterator_free(next_order_it);
 
-  CassIterator* item_it = nullptr;
-  std::tie(st, item_it) = getItemsInLastOrders(next_o_id);
+  std::tie(st, item_it) = getItemsInLastOrders(next_o_id, &item_result);
   if (!st.ok()) return st;
 
   int items_below_threshold = 0;
@@ -64,12 +73,19 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
     i_id_set.insert(i_id);
 
     CassIterator* quantity_it = nullptr;
-    std::tie(st, quantity_it) = getItemQuantityFromStock(i_id);
+    const CassResult* quantity_result = nullptr;
+    auto free_func2 = [&quantity_it, &quantity_result]() {
+      if (quantity_it) cass_iterator_free(quantity_it);
+      if (quantity_result) cass_result_free(quantity_result);
+    };
+    DEFER(std::move(free_func2));
+
+    std::tie(st, quantity_it) =
+        getItemQuantityFromStock(i_id, &quantity_result);
     if (!st.ok()) return st;
     auto quantity = GetValueFromCassRow<int32_t>(quantity_it, "s_quantity");
     if (quantity.value() < t_) ++items_below_threshold;
     LOG_INFO << "i_id: " << i_id << ", quantity: " << quantity.value();
-    if (quantity_it) cass_iterator_free(quantity_it);
   }
 
   outputs_.push_back(
@@ -77,11 +93,11 @@ Status YCQLStockLevelTxn::executeLocal() noexcept {
              "is below the threshold: %d",
              items_below_threshold));
 
-  if (item_it) cass_iterator_free(item_it);
   return st;
 }
 
-std::pair<Status, CassIterator*> YCQLStockLevelTxn::getNextOrder() noexcept {
+std::pair<Status, CassIterator*> YCQLStockLevelTxn::getNextOrder(
+    const CassResult** result) noexcept {
   std::string stmt =
       "SELECT d_next_o_id "
       "FROM " +
@@ -90,7 +106,7 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getNextOrder() noexcept {
       "WHERE d_w_id = ? AND d_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id_);
   if (!st.ok()) return {st, it};
   if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("NextOrder: District not found"), it};
@@ -98,7 +114,7 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getNextOrder() noexcept {
 }
 
 std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemsInLastOrders(
-    int32_t next_o_id) noexcept {
+    int32_t next_o_id, const CassResult** result) noexcept {
   std::string stmt =
       "SELECT ol_i_id "
       "FROM " +
@@ -108,13 +124,13 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemsInLastOrders(
       "AND ol_o_id >= ? AND ol_o_id < ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, d_id_,
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, d_id_,
                                         next_o_id - l_, next_o_id);
   return {st, it};
 }
 
 std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemQuantityFromStock(
-    int32_t i_id) noexcept {
+    int32_t i_id, const CassResult** result) noexcept {
   std::string stmt =
       "SELECT s_quantity "
       "FROM " +
@@ -123,7 +139,7 @@ std::pair<Status, CassIterator*> YCQLStockLevelTxn::getItemQuantityFromStock(
       "WHERE s_w_id = ? AND s_i_id = ? "
       ";";
   CassIterator* it = nullptr;
-  auto st = ycql_impl::execute_read_cql(conn_, stmt, &it, w_id_, i_id);
+  auto st = ycql_impl::execute_read_cql(conn_, stmt, result, &it, w_id_, i_id);
   if (!st.ok()) return {st, it};
   if (!cass_iterator_next(it))
     return {Status::ExecutionFailed("Item quantity not found"), it};

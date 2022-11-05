@@ -103,10 +103,10 @@ class SQLDriver {
         LOG_INFO << "sql layer retry still failed";
         return Status::Invalid("sql layer retry still failed");
       }
-#define DO_ONE_TXN_(txn_name)                           \
-  case ydb_util::TxnType::txn_name: {                   \
-    txn_name.push_back(processTime);                    \
-    break;                                              \
+#define DO_ONE_TXN_(txn_name)         \
+  case ydb_util::TxnType::txn_name: { \
+    txn_name.push_back(processTime);  \
+    break;                            \
   }
       INSERT_TXN_TIME
 #undef DO_ONE_TXN_
@@ -189,8 +189,8 @@ class SQLDriver {
   static std::string xactDir, outDir;
   int idx_;
   std::vector<double> elapsedTime;
-  std::vector<double> delivery, new_order, order_status, payment,
-        popular_item, related_customer, stock_level, top_balance;
+  std::vector<double> delivery, new_order, order_status, payment, popular_item,
+      related_customer, stock_level, top_balance;
 };
 std::string SQLDriver::xactDir = "data/xact_files/";
 std::string SQLDriver::outDir = "data/output/";

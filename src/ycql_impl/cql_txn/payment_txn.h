@@ -40,9 +40,12 @@ class YCQLPaymentTxn : public ydb_util::PaymentTxn {
   Status updateDistrictYTD() noexcept;
   Status updateCustomerPayment() noexcept;
   Status batchUpdateCustomerDistrictWarehouse() noexcept;
-  std::pair<Status, CassIterator*> getCustomer() noexcept;
-  std::pair<Status, CassIterator*> getWarehouse() noexcept;
-  std::pair<Status, CassIterator*> getDistrict() noexcept;
+  std::pair<Status, CassIterator*> getCustomer(
+      const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getWarehouse(
+      const CassResult** result) noexcept;
+  std::pair<Status, CassIterator*> getDistrict(
+      const CassResult** result) noexcept;
 };
 }  // namespace ycql_impl
 
