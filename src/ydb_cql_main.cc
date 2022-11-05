@@ -27,7 +27,7 @@
 const std::string HOST = ydb_util::getenv("YDB_HOST", "127.0.0.1");
 const std::string SERVER_NUM = ydb_util::getenv("YDB_SERVER_NUM", "5");
 const std::string SERVER_IDX = ydb_util::getenv("YDB_SERVER_IDX", "0");
-const std::string TXN_NUM = ydb_util::getenv("YDB_TXN_NUM", "20");
+const std::string TXN_NUM = ydb_util::getenv("YDB_TXN_NUM", "19");
 
 const std::string DB_NAME = "yugabyte";
 const std::string USER = "yugabyte";

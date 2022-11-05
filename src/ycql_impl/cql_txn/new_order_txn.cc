@@ -114,10 +114,6 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
     } while (!st.ok());
     next_o_id--;
   }
-  st = processOrderMaxQuantity(order_lines, next_o_id);
-  if (!st.ok()) {
-    return st;
-  }
   st = processOrderNonDelivery(next_o_id);
   if (!st.ok()) {
     return st;
@@ -125,6 +121,10 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
   auto [s, total_amount] = processOrderLines(order_lines, next_o_id);
   if (!s.ok()) {
     return s;
+  }
+  st = processOrderMaxQuantity(order_lines, next_o_id, total_amount);
+  if (!st.ok()) {
+    return st;
   }
   auto d_tax = GetDTax(district_it);
   auto w_tax = GetWTax(warehouse_it);
@@ -153,7 +153,7 @@ Status YCQLNewOrderTxn::processOrder(int32_t next_o_id, int32_t order_num,
 }
 
 Status YCQLNewOrderTxn::processOrderMaxQuantity(
-    const std::vector<OrderLine>& order_lines, int32_t next_o_id) noexcept {
+    const std::vector<OrderLine>& order_lines, int32_t next_o_id, int64_t total_amount) noexcept {
   TRACE_GUARD
   std::vector<std::pair<int32_t, int32_t>> sort_orders;
   sort_orders.reserve(order_lines.size());
@@ -172,9 +172,9 @@ Status YCQLNewOrderTxn::processOrderMaxQuantity(
   }
   std::string stmt = "INSERT INTO " + YCQLKeyspace +
                      ".order_max_quantity(o_w_id, o_d_id, o_id, max_quantity, "
-                     "item_ids) VALUES (?, ?, ?, ?, ?)";
+                     "item_ids, total_amount) VALUES (?, ?, ?, ?, ?, ?)";
   return ycql_impl::execute_write_cql(conn_, stmt, w_id_, d_id_, next_o_id,
-                                      max_quantity, item_ids);
+                                      max_quantity, item_ids, total_amount);
 }
 
 Status YCQLNewOrderTxn::processOrderNonDelivery(int32_t next_o_id) noexcept {
