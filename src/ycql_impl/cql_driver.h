@@ -134,7 +134,7 @@ class CQLDriver {
       total_time += i;                                                     \
     }                                                                      \
     if (total_time == 0) break;                                            \
-    out_measure_fs << ">>> Total number of " #txn_name " processed "        \
+    out_measure_fs << ">>> Total number of " #txn_name " processed "       \
                    << txn_name.size() << "\n"                              \
                    << #txn_name "'s throughput "                           \
                    << txn_name.size() / total_time * 1e9 << "\n"           \
