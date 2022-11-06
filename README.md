@@ -9,7 +9,7 @@ You will need
 * libpq, libpqxx (For ysql compile)
 * libuv, openssl
 
-#### Building The Project (Now a demo)
+#### Building The Project
 **Git Clone**
 ```
 mkdir <CS5424_Folder>/workspace
@@ -130,6 +130,7 @@ cd package
 ```
 sh prep_data.sh
 # write data for cql
+./{YDB_LOCAL_PATH}/bin/ycqlsh -f init.cql 192.168.48.244 --request-timeout 60 --connection-timeout 60
 
 # write data for sql
 pip install psycopg2 tqdm
