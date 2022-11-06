@@ -9,7 +9,7 @@ You will need
 * libpq, libpqxx (For ysql compile)
 * libuv, openssl
 
-#### Building The Project (Now a demo)
+#### Building The Project
 **Git Clone**
 ```
 mkdir <CS5424_Folder>/workspace
@@ -109,6 +109,58 @@ SKIP_TOP_BALANCE: skip corresponding txn, for debugging usage. default: false
 
 ### Script
 we have all set automatically booting script on cluster server.
+#### Local Side
+* Pack the toolbox
+```
+bash scripts/pack.sh
+```
+
+* upload the package to server
+```
+scp package.zip cs4224k@xcnd25.comp.nus.edu.sg:~
+```
+
+#### Server Side
+```
+unzip package.zip
+cd package
+```
+
+* Download and write data to yugabyteDB
+```
+sh prep_data.sh
+# write data for cql
+./{YDB_LOCAL_PATH}/bin/ycqlsh -f init.cql 192.168.48.244 --request-timeout 60 --connection-timeout 60
+
+# write data for sql
+pip install psycopg2 tqdm
+python3 write_data.py
+```
+
+* Start YDB
+```
+bash start_ydb.sh
+```
+
+* Start testing YSQL
+```
+bash start_txn.sh ysql
+```
+
+* Start testing YCQL
+```
+bash start_txn.sh ycql
+```
+
+* Useful commands
+```
+# check if server is alive
+pgrep yb-master
+pgrep yb-server
+
+# check if perf process is alive
+pgrep perf
+```
 
 
 ### Formatter
