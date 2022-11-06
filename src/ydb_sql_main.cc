@@ -17,7 +17,7 @@ const std::string SSL_MODE = "";
 const std::string SSL_ROOT_CERT = "";
 
 int main(int argc, char* argv[]) {
-  ThreadPool pool(10);
+  ThreadPool pool(4);
   int idx = std::stoi(SERVER_IDX);
   int totalTxn = std::stoi(TXN_NUM);
   int serverNum = std::stoi(SERVER_NUM);

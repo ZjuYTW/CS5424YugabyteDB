@@ -115,6 +115,7 @@ Status YCQLPopularItemTxn::executeLocal() noexcept {
           if (item_it) cass_iterator_free(item_it);
           if (item_result) cass_result_free(item_result);
         };
+        DEFER(std::move(free_func3));
         std::tie(st, item_it) = getItemName(i_id, &item_result);
         if (!st.ok()) return st;
         auto i_name =

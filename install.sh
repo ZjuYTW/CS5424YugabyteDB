@@ -44,11 +44,4 @@ else
   brew link --force openssl 
 fi
 
-echo "Downloading clang-format..."
-if [[ "$platform" == 'linux' ]]; then
-  apt-get install clang-format
-else
-  brew install clang-format
-fi
-
 echo "Finished!"
