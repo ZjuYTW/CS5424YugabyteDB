@@ -46,7 +46,7 @@ class YCQLNewOrderTxn : public ydb_util::NewOrderTxn {
   std::pair<Status, CassIterator*> getItem(int32_t item_id,
                                            const CassResult** result) noexcept;
 
-  Status updateNextOId(int32_t next_o_id, int32_t prev_next_o_id) noexcept;
+  bool updateNextOId(int32_t next_o_id, int32_t prev_next_o_id) noexcept;
 
   Status updateStock(int32_t adjusted_qty, int32_t prev_qty,
                      int32_t ordered_qty, int remote_cnt, int32_t w_id,

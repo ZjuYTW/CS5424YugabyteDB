@@ -121,9 +121,10 @@ Status YCQLNewOrderTxn::executeLocal(std::vector<OrderLine>& order_lines,
         ycql_impl::GetValueFromCassRow<int32_t>(district_it, "d_next_o_id")
             .value();
     auto origin_o_id = next_o_id;
+    bool succ = true;
     do {
-      st = updateNextOId(++next_o_id, origin_o_id);
-    } while (!st.ok());
+      succ = updateNextOId(++next_o_id, origin_o_id);
+    } while (!succ);
     next_o_id--;
   }
   st = processOrderNonDelivery(next_o_id);
@@ -297,15 +298,28 @@ std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
   return {Status::OK(), total_amount.load()};
 }
 
-Status YCQLNewOrderTxn::updateNextOId(int32_t next_o_id,
+bool YCQLNewOrderTxn::updateNextOId(int32_t next_o_id,
                                       int32_t prev_next_o_id) noexcept {
   TRACE_GUARD
   std::string stmt =
       "UPDATE " + YCQLKeyspace +
       ".district SET d_next_o_id = ? WHERE d_w_id = ? and d_id = ? IF "
       "d_next_o_id = ?";
-  return ycql_impl::execute_write_cql(conn_, stmt, next_o_id, w_id_, d_id_,
-                                      prev_next_o_id);
+  CassStatement* statement = cass_statement_new(stmt.c_str(), 4);
+  auto future = cass_session_execute(conn_, statement);
+  auto result = cass_future_get_result(future);
+  if (result == nullptr) {
+    cass_statement_free(statement);
+    cass_future_free(future);
+    return false; 
+  }
+  cass_bool_t appiled;
+  auto value = cass_row_get_column(cass_result_first_row(result), 0);
+  cass_value_get_bool(value, &appiled);
+  cass_statement_free(statement);
+  cass_future_free(future);
+  cass_result_free(result);
+  return value;
 }
 
 Status YCQLNewOrderTxn::updateStock(int32_t adjusted_qty, int32_t prev_qty,
