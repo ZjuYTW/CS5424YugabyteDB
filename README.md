@@ -109,6 +109,47 @@ SKIP_TOP_BALANCE: skip corresponding txn, for debugging usage. default: false
 
 ### Script
 we have all set automatically booting script on cluster server.
+#### Local Side
+* Pack the toolbox
+```
+bash scripts/pack.sh
+```
+
+* upload the package to server
+```
+scp package.zip cs4224k@xcnd25.comp.nus.edu.sg:~
+```
+
+#### Server Side
+```
+unzip package.zip
+```
+
+* Start YDB
+```
+cd package
+bash start_ydb.sh
+```
+
+* Start testing YSQL
+```
+bash start_txn.sh
+```
+
+* Start testing YCQL
+```
+bash start_txn.sh ycql
+```
+
+* Useful commands
+```
+# check if server is alive
+pgrep yb-master
+pgrep yb-server
+
+# check if perf process is alive
+pgrep perf
+```
 
 
 ### Formatter
