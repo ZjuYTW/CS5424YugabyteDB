@@ -306,6 +306,7 @@ bool YCQLNewOrderTxn::updateNextOId(int32_t next_o_id,
       ".district SET d_next_o_id = ? WHERE d_w_id = ? and d_id = ? IF "
       "d_next_o_id = ?";
   CassStatement* statement = cass_statement_new(stmt.c_str(), 4);
+  auto rc = ycql_impl::cql_statement_fill_args(statement, next_o_id, w_id_, d_id_, prev_next_o_id);
   auto future = cass_session_execute(conn_, statement);
   auto result = cass_future_get_result(future);
   if (result == nullptr) {
