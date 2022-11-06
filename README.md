@@ -123,17 +123,27 @@ scp package.zip cs4224k@xcnd25.comp.nus.edu.sg:~
 #### Server Side
 ```
 unzip package.zip
+cd package
+```
+
+* Download and write data to yugabyteDB
+```
+sh prep_data.sh
+# write data for cql
+
+# write data for sql
+pip install psycopg2 tqdm
+python3 write_data.py
 ```
 
 * Start YDB
 ```
-cd package
 bash start_ydb.sh
 ```
 
 * Start testing YSQL
 ```
-bash start_txn.sh
+bash start_txn.sh ysql
 ```
 
 * Start testing YCQL
