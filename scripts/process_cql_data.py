@@ -118,14 +118,14 @@ def main():
     join_stock_item(data_path + "stock.csv", data_path + "item.csv", data_path + "stock_item.csv")
 
 if __name__ == '__main__':
-    # process_warehouse_data('./data/data_files/warehouse.csv', './data/data_files/warehouse_cql.csv')
-    # process_district_data('./data/data_files/district.csv', './data/data_files/district_cql.csv')
-    # process_customer_data('./data/data_files/customer.csv', './data/data_files/customer_cql.csv')
-    # process_orderline_data('./data/data_files/order-line.csv', './data/data_files/order-line_cql.csv')
+    process_warehouse_data('./data/data_files/warehouse.csv', './data/data_files/warehouse_cql.csv')
+    process_district_data('./data/data_files/district.csv', './data/data_files/district_cql.csv')
+    process_customer_data('./data/data_files/customer.csv', './data/data_files/customer_cql.csv')
+    process_orderline_data('./data/data_files/order-line.csv', './data/data_files/order-line_cql.csv')
     process_order_max_quantity('./data/data_files/order-line.csv', './data/data_files/order_max_quantity_cql.csv')
-    # process_item_data('./data/data_files/item.csv', './data/data_files/item_cql.csv')
-    # process_stock_data('./data/data_files/stock.csv', './data/data_files/stock_cql.csv')
-    # process_order_non_delivery('./data/data_files/order.csv', './data/data_files/order_non_delivery_cql.csv')
+    process_item_data('./data/data_files/item.csv', './data/data_files/item_cql.csv')
+    process_stock_data('./data/data_files/stock.csv', './data/data_files/stock_cql.csv')
+    process_order_non_delivery('./data/data_files/order.csv', './data/data_files/order_non_delivery_cql.csv')
 
     # join_stock_item('./data/data_files/stock.csv', './data/data_files/item.csv', './data/data_files/stock_item.csv')
 

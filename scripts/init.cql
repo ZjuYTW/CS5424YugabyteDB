@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS ybdemo.order_max_quantity (
   O_ID INT,
   MAX_QUANTITY INT,
   ITEM_IDS LIST<INT>,
+  TOTAL_AMOUNT BIGINT,
   PRIMARY KEY (O_W_ID, O_D_ID, O_ID)
 );
 
@@ -164,7 +165,7 @@ COPY ybdemo.stock (S_W_ID, S_I_ID, S_QUANTITY, S_YTD, S_ORDER_CNT, S_REMOTE_CNT,
 FROM 'data/data_files/stock_cql.csv' 
 WITH DELIMITER=',' AND NULL='null' AND INGESTRATE=50000;
 
-COPY ybdemo.order_max_quantity (O_W_ID, O_D_ID, O_ID, MAX_QUANTITY, ITEM_IDS)
+COPY ybdemo.order_max_quantity (O_W_ID, O_D_ID, O_ID, MAX_QUANTITY, ITEM_IDS, TOTAL_AMOUNT)
 FROM 'data/data_files/order_max_quantity_cql.csv'
 WITH DELIMITER=',' AND NULL='null' AND INGESTRATE=50000;
 
