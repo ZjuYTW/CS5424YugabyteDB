@@ -170,7 +170,8 @@ std::pair<Status, bool> YCQLDeliveryTxn::updateCarrierId(
                      "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? "
                      "IF o_carrier_id = null;";
   CassStatement* statement = cass_statement_new(stmt.c_str(), 4);
-  auto rc = ycql_impl::cql_statement_fill_args(statement, carrier_id_, w_id_, d_id, o_id);
+  auto rc = ycql_impl::cql_statement_fill_args(statement, carrier_id_, w_id_,
+                                               d_id, o_id);
   assert(rc == CASS_OK);
   auto future = cass_session_execute(conn_, statement);
   auto result = cass_future_get_result(future);

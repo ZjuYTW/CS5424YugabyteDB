@@ -299,20 +299,21 @@ std::pair<Status, int64_t> YCQLNewOrderTxn::processOrderLines(
 }
 
 bool YCQLNewOrderTxn::updateNextOId(int32_t next_o_id,
-                                      int32_t prev_next_o_id) noexcept {
+                                    int32_t prev_next_o_id) noexcept {
   TRACE_GUARD
   std::string stmt =
       "UPDATE " + YCQLKeyspace +
       ".district SET d_next_o_id = ? WHERE d_w_id = ? and d_id = ? IF "
       "d_next_o_id = ?";
   CassStatement* statement = cass_statement_new(stmt.c_str(), 4);
-  auto rc = ycql_impl::cql_statement_fill_args(statement, next_o_id, w_id_, d_id_, prev_next_o_id);
+  auto rc = ycql_impl::cql_statement_fill_args(statement, next_o_id, w_id_,
+                                               d_id_, prev_next_o_id);
   auto future = cass_session_execute(conn_, statement);
   auto result = cass_future_get_result(future);
   if (result == nullptr) {
     cass_statement_free(statement);
     cass_future_free(future);
-    return false; 
+    return false;
   }
   cass_bool_t appiled;
   auto value = cass_row_get_column(cass_result_first_row(result), 0);
@@ -328,7 +329,7 @@ Status YCQLNewOrderTxn::updateStock(int32_t adjusted_qty, int32_t prev_qty,
                                     int32_t w_id, int32_t item_id) noexcept {
   std::string stmt = "UPDATE " + YCQLKeyspace +
                      ".stock SET s_quantity = ?, s_ytd = s_ytd + " +
-                     std::to_string(ordered_qty) +
+                     std::to_string(ordered_qty * 100) +
                      ", s_order_cnt = "
                      "s_order_cnt + 1, s_remote_cnt = s_remote_cnt + " +
                      std::to_string(remote_cnt) +
